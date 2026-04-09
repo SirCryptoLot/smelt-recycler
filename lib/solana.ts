@@ -1,6 +1,5 @@
 // lib/solana.ts
 import { Connection, PublicKey } from '@solana/web3.js';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 
 const MAINNET_RPC = 'https://api.mainnet-beta.solana.com';
@@ -15,6 +14,18 @@ export interface TrashAccount {
   pricePerToken: number;  // 0 if unlisted
 }
 
-export async function getTrashAccounts(_walletAddress: PublicKey): Promise<TrashAccount[]> {
+export async function getTrashAccounts(walletAddress: PublicKey): Promise<TrashAccount[]> {
+  const { value: accounts } = await connection.getParsedTokenAccountsByOwner(
+    walletAddress,
+    { programId: TOKEN_PROGRAM_ID }
+  );
+
+  const nonEmpty = accounts.filter(
+    (a) => (a.account.data.parsed.info.tokenAmount.uiAmount as number) > 0
+  );
+
+  if (nonEmpty.length === 0) return [];
+
+  // price fetching — next task
   return [];
 }

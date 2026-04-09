@@ -34,4 +34,23 @@ describe('getTrashAccounts', () => {
     expect(result).toBeInstanceOf(Promise);
     return result;
   });
+
+  it('returns empty array when wallet has no token accounts', async () => {
+    const result = await solanaModule.getTrashAccounts(WALLET);
+    expect(result).toEqual([]);
+    expect(mockGetParsed).toHaveBeenCalledWith(
+      WALLET,
+      { programId: expect.any(Object) }
+    );
+  });
+
+  it('filters out zero-balance accounts without calling Jupiter', async () => {
+    mockGetParsed.mockResolvedValue({
+      value: [makeAccount(ACCT_BONK, MINT_BONK, 0)],
+    } as any);
+
+    const result = await solanaModule.getTrashAccounts(WALLET);
+    expect(result).toEqual([]);
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
 });

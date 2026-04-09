@@ -51,17 +51,19 @@ export async function getTrashAccounts(walletAddress: PublicKey): Promise<TrashA
   const mints = nonEmpty.map((a) => a.account.data.parsed.info.mint as string);
   const prices = await fetchPrices(mints);
 
-  return nonEmpty.map((a) => {
-    const info = a.account.data.parsed.info;
-    const mintStr = info.mint as string;
-    const balance = info.tokenAmount.uiAmount as number;
-    const pricePerToken = prices[mintStr] ?? 0;
-    return {
-      pubkey: a.pubkey,
-      mint: new PublicKey(mintStr),
-      balance,
-      usdValue: balance * pricePerToken,
-      pricePerToken,
-    };
-  });
+  return nonEmpty
+    .map((a) => {
+      const info = a.account.data.parsed.info;
+      const mintStr = info.mint as string;
+      const balance = info.tokenAmount.uiAmount as number;
+      const pricePerToken = prices[mintStr] ?? 0;
+      return {
+        pubkey: a.pubkey,
+        mint: new PublicKey(mintStr),
+        balance,
+        usdValue: balance * pricePerToken,
+        pricePerToken,
+      };
+    })
+    .filter((a) => a.usdValue < 0.10);
 }

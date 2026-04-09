@@ -111,4 +111,57 @@ describe('getTrashAccounts', () => {
       'Jupiter API error: 429'
     );
   });
+
+  it('excludes accounts with usdValue >= $0.10', async () => {
+    mockGetParsed.mockResolvedValue({
+      value: [makeAccount(ACCT_USDC, MINT_USDC, 12.4)],
+    } as any);
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: async () => ({ data: { [MINT_USDC]: { price: 1.0 } } }),
+    });
+
+    const result = await solanaModule.getTrashAccounts(WALLET);
+    expect(result).toEqual([]);
+  });
+
+  it('includes accounts with usdValue < $0.10 with correct fields', async () => {
+    mockGetParsed.mockResolvedValue({
+      value: [makeAccount(ACCT_BONK, MINT_BONK, 142000)],
+    } as any);
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: async () => ({ data: { [MINT_BONK]: { price: 0.0000002 } } }),
+    });
+
+    const result = await solanaModule.getTrashAccounts(WALLET);
+    expect(result).toHaveLength(1);
+    expect(result[0].pubkey).toEqual(ACCT_BONK);
+    expect(result[0].mint.toBase58()).toBe(MINT_BONK);
+    expect(result[0].balance).toBe(142000);
+    expect(result[0].pricePerToken).toBe(0.0000002);
+    expect(result[0].usdValue).toBeCloseTo(0.0284);
+  });
+
+  it('returns only trash accounts from a mixed wallet', async () => {
+    mockGetParsed.mockResolvedValue({
+      value: [
+        makeAccount(ACCT_BONK, MINT_BONK, 142000), // $0.0284 → trash
+        makeAccount(ACCT_USDC, MINT_USDC, 12.4),   // $12.40  → kept
+      ],
+    } as any);
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        data: {
+          [MINT_BONK]: { price: 0.0000002 },
+          [MINT_USDC]: { price: 1.0 },
+        },
+      }),
+    });
+
+    const result = await solanaModule.getTrashAccounts(WALLET);
+    expect(result).toHaveLength(1);
+    expect(result[0].mint.toBase58()).toBe(MINT_BONK);
+  });
 });

@@ -29,12 +29,6 @@ describe('getTrashAccounts', () => {
     jest.restoreAllMocks();
   });
 
-  it('is exported and returns a Promise', () => {
-    const result = solanaModule.getTrashAccounts(WALLET);
-    expect(result).toBeInstanceOf(Promise);
-    return result;
-  });
-
   it('returns empty array when wallet has no token accounts', async () => {
     const result = await solanaModule.getTrashAccounts(WALLET);
     expect(result).toEqual([]);
@@ -110,6 +104,20 @@ describe('getTrashAccounts', () => {
     await expect(solanaModule.getTrashAccounts(WALLET)).rejects.toThrow(
       'Jupiter API error: 429'
     );
+  });
+
+  it('excludes accounts with usdValue === $0.10 (strict less-than boundary)', async () => {
+    // 10 tokens at $0.01/token = exactly $0.10 — should be excluded
+    mockGetParsed.mockResolvedValue({
+      value: [makeAccount(ACCT_USDC, MINT_USDC, 10)],
+    } as any);
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: async () => ({ data: { [MINT_USDC]: { price: 0.01 } } }),
+    });
+
+    const result = await solanaModule.getTrashAccounts(WALLET);
+    expect(result).toEqual([]);
   });
 
   it('excludes accounts with usdValue >= $0.10', async () => {

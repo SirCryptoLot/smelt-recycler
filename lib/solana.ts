@@ -14,6 +14,11 @@ export interface TrashAccount {
   pricePerToken: number;  // 0 if unlisted
 }
 
+interface ParsedTokenInfo {
+  mint: string;
+  tokenAmount: { uiAmount: number | null };
+}
+
 function chunk<T>(arr: T[], size: number): T[][] {
   const result: T[][] = [];
   for (let i = 0; i < arr.length; i += size) result.push(arr.slice(i, i + size));
@@ -33,7 +38,7 @@ async function fetchPrices(mints: string[]): Promise<Record<string, number>> {
       return prices;
     })
   );
-  return Object.assign({}, ...results) as Record<string, number>;
+  return Object.assign({}, ...results);
 }
 
 export async function getTrashAccounts(walletAddress: PublicKey): Promise<TrashAccount[]> {
@@ -42,9 +47,10 @@ export async function getTrashAccounts(walletAddress: PublicKey): Promise<TrashA
     { programId: TOKEN_PROGRAM_ID }
   );
 
-  const nonEmpty = accounts.filter(
-    (a) => (a.account.data.parsed.info.tokenAmount.uiAmount as number) > 0
-  );
+  const nonEmpty = accounts.filter((a) => {
+    const info = a.account.data.parsed.info as ParsedTokenInfo;
+    return info.tokenAmount.uiAmount !== null && info.tokenAmount.uiAmount > 0;
+  });
 
   if (nonEmpty.length === 0) return [];
 
@@ -53,9 +59,9 @@ export async function getTrashAccounts(walletAddress: PublicKey): Promise<TrashA
 
   return nonEmpty
     .map((a) => {
-      const info = a.account.data.parsed.info;
-      const mintStr = info.mint as string;
-      const balance = info.tokenAmount.uiAmount as number;
+      const info = a.account.data.parsed.info as ParsedTokenInfo;
+      const mintStr = info.mint;
+      const balance = info.tokenAmount.uiAmount ?? 0;
       const pricePerToken = prices[mintStr] ?? 0;
       return {
         pubkey: a.pubkey,

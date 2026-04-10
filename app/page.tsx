@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { getTrashAccounts, TrashAccount } from '@/lib/solana';
@@ -17,17 +17,9 @@ export default function Home() {
   const [accounts, setAccounts] = useState<TrashAccount[]>([]);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    if (!connected || !publicKey) {
-      setStatus('disconnected');
-      setAccounts([]);
-      return;
-    }
-    scan();
-  }, [connected, publicKey]);
-
-  async function scan() {
+  const scan = useCallback(async () => {
     setStatus('scanning');
+    setError('');
     try {
       const result = await getTrashAccounts(publicKey!);
       if (result.length === 0) {
@@ -40,7 +32,16 @@ export default function Home() {
       setError(err instanceof Error ? err.message : 'Unknown error');
       setStatus('error');
     }
-  }
+  }, [publicKey]);
+
+  useEffect(() => {
+    if (!connected || !publicKey) {
+      setStatus('disconnected');
+      setAccounts([]);
+      return;
+    }
+    scan();
+  }, [connected, publicKey, scan]);
 
   const sol = solToReclaim(accounts.length);
 

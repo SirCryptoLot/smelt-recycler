@@ -142,6 +142,29 @@ export default function Home() {
             </div>
           </div>
         )}
+
+        {status === 'empty' && (
+          <div className="flex-1 flex flex-col items-center justify-center gap-3">
+            <div className="text-4xl">✅</div>
+            <div className="text-emerald-300 font-semibold">Nothing to recycle</div>
+            <div className="text-emerald-400/50 text-sm">Your wallet is clean.</div>
+          </div>
+        )}
+
+        {status === 'error' && (
+          <div className="flex-1 flex flex-col items-center justify-center gap-4">
+            <div className="rounded-lg border border-red-500/40 bg-red-950/30 p-4 max-w-md text-center">
+              <div className="text-red-300 font-semibold mb-1">Scan failed</div>
+              <div className="text-red-300/70 text-sm">{error}</div>
+            </div>
+            <button
+              onClick={scan}
+              className="border border-emerald-700/40 text-emerald-400 text-sm rounded-lg px-4 py-2 hover:bg-emerald-900/30 transition-colors"
+            >
+              Try again
+            </button>
+          </div>
+        )}
       </main>
     </div>
   );

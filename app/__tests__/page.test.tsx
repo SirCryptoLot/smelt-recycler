@@ -98,4 +98,29 @@ describe('Home', () => {
     await screen.findByText('TRASH ACCOUNTS');
     expect(screen.getByRole('button', { name: /RECYCLE ALL/i })).toBeInTheDocument();
   });
+
+  it('shows empty state when no trash accounts found', async () => {
+    mockUseWallet.mockReturnValue({
+      publicKey: TEST_PUBKEY,
+      connected: true,
+      disconnect: jest.fn(),
+    });
+    mockGetTrashAccounts.mockResolvedValue([]);
+    render(<Home />);
+    await screen.findByText('Nothing to recycle');
+    expect(screen.getByText('Your wallet is clean.')).toBeInTheDocument();
+  });
+
+  it('shows error banner with message and Try again button when scan fails', async () => {
+    mockUseWallet.mockReturnValue({
+      publicKey: TEST_PUBKEY,
+      connected: true,
+      disconnect: jest.fn(),
+    });
+    mockGetTrashAccounts.mockRejectedValue(new Error('Jupiter API error: 429'));
+    render(<Home />);
+    await screen.findByText('Scan failed');
+    expect(screen.getByText('Jupiter API error: 429')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument();
+  });
 });

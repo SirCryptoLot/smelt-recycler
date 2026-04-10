@@ -44,4 +44,15 @@ describe('Home', () => {
     expect(screen.getByText('Connect your wallet')).toBeInTheDocument();
     expect(screen.getByText('Connect Wallet')).toBeInTheDocument();
   });
+
+  it('shows scanning spinner immediately after wallet connects', () => {
+    mockUseWallet.mockReturnValue({
+      publicKey: TEST_PUBKEY,
+      connected: true,
+      disconnect: jest.fn(),
+    });
+    mockGetTrashAccounts.mockResolvedValue([]);
+    render(<Home />);
+    expect(screen.getByText('Scanning accounts…')).toBeInTheDocument();
+  });
 });

@@ -21,8 +21,26 @@ export default function Home() {
     if (!connected || !publicKey) {
       setStatus('disconnected');
       setAccounts([]);
+      return;
     }
+    scan();
   }, [connected, publicKey]);
+
+  async function scan() {
+    setStatus('scanning');
+    try {
+      const result = await getTrashAccounts(publicKey!);
+      if (result.length === 0) {
+        setStatus('empty');
+      } else {
+        setAccounts(result);
+        setStatus('results');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error');
+      setStatus('error');
+    }
+  }
 
   const sol = solToReclaim(accounts.length);
 
@@ -37,6 +55,15 @@ export default function Home() {
           <div className="text-emerald-300 font-extrabold text-lg">♻ Recycler</div>
           <div className="text-emerald-400/50 text-xs">Reclaim your SOL</div>
         </div>
+
+        {connected && publicKey && (
+          <div className="rounded-lg border border-emerald-700/30 bg-emerald-950/40 p-3">
+            <div className="text-emerald-400 text-xs mb-1">WALLET</div>
+            <div className="text-emerald-50 text-xs font-mono truncate">
+              {publicKey.toBase58().slice(0, 4)}…{publicKey.toBase58().slice(-4)}
+            </div>
+          </div>
+        )}
 
         <div className="mt-auto">
           {!connected ? (
@@ -61,6 +88,14 @@ export default function Home() {
             <div className="text-emerald-400/50 text-sm text-center">
               Connect Phantom to scan for dust accounts
             </div>
+          </div>
+        )}
+
+        {status === 'scanning' && (
+          <div className="flex-1 flex flex-col items-center justify-center gap-3">
+            <div className="w-8 h-8 border-2 border-emerald-900 border-t-emerald-400 rounded-full animate-spin" />
+            <div className="text-emerald-300 font-semibold">Scanning accounts…</div>
+            <div className="text-emerald-400/50 text-sm">Fetching prices from Jupiter</div>
           </div>
         )}
       </main>

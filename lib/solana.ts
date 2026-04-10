@@ -41,6 +41,10 @@ async function fetchPrices(mints: string[]): Promise<Record<string, number>> {
   return Object.assign({}, ...results);
 }
 
+export function solToReclaim(accountCount: number): number {
+  return accountCount * 0.002 * 0.95;
+}
+
 export async function getTrashAccounts(walletAddress: PublicKey): Promise<TrashAccount[]> {
   const { value: accounts } = await connection.getParsedTokenAccountsByOwner(
     walletAddress,

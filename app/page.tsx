@@ -3,13 +3,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
-import { getTrashAccounts, TrashAccount } from '@/lib/solana';
+import { getTrashAccounts, solToReclaim, TrashAccount } from '@/lib/solana';
 
 type Status = 'disconnected' | 'scanning' | 'results' | 'empty' | 'error';
-
-export function solToReclaim(accountCount: number): number {
-  return accountCount * 0.002 * 0.95;
-}
 
 export default function Home() {
   const { publicKey, connected, disconnect } = useWallet();

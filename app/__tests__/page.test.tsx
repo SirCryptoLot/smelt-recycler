@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { getTrashAccounts } from '@/lib/solana';
-import Home, { solToReclaim } from '../page';
+import { getTrashAccounts, solToReclaim } from '@/lib/solana';
+import Home from '../page';
 import { PublicKey } from '@solana/web3.js';
 
 jest.mock('@solana/wallet-adapter-react');
@@ -10,6 +10,7 @@ jest.mock('@solana/wallet-adapter-react-ui', () => ({
 }));
 jest.mock('@/lib/solana', () => ({
   getTrashAccounts: jest.fn(),
+  solToReclaim: jest.requireActual('@/lib/solana').solToReclaim,
 }));
 
 const mockUseWallet = useWallet as jest.Mock;

@@ -51,7 +51,7 @@ describe('Home', () => {
       connected: true,
       disconnect: jest.fn(),
     });
-    mockGetTrashAccounts.mockResolvedValue([]);
+    mockGetTrashAccounts.mockImplementation(() => new Promise(() => {}));
     render(<Home />);
     expect(screen.getByText('Scanning accounts…')).toBeInTheDocument();
   });

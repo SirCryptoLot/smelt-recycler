@@ -6,6 +6,7 @@ module.exports = createJestConfig({
   testMatch: ['<rootDir>/app/__tests__/**/*.test.{ts,tsx}'],
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
   moduleNameMapper: {
+    '^uuid$': '<rootDir>/node_modules/uuid/dist/index.js',
     '^@/(.*)$': '<rootDir>/$1',
   },
 });

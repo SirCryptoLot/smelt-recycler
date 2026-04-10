@@ -21,7 +21,8 @@ export default function Home() {
     setStatus('scanning');
     setError('');
     try {
-      const result = await getTrashAccounts(publicKey!);
+      if (!publicKey) return;
+      const result = await getTrashAccounts(publicKey);
       if (result.length === 0) {
         setStatus('empty');
       } else {
@@ -114,9 +115,9 @@ export default function Home() {
               TRASH ACCOUNTS
             </div>
             <div className="flex-1 flex flex-col gap-2 overflow-y-auto">
-              {accounts.map((account, i) => (
+              {accounts.map((account) => (
                 <div
-                  key={i}
+                  key={account.pubkey.toBase58()}
                   className="flex items-center justify-between rounded-lg border border-red-500/25 bg-red-950/20 px-4 py-3"
                 >
                   <div>

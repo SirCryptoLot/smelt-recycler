@@ -65,6 +65,14 @@ export default function Home() {
           </div>
         )}
 
+        {status === 'results' && (
+          <div className="rounded-lg border border-emerald-700/30 bg-emerald-950/40 p-3">
+            <div className="text-emerald-400 text-xs mb-1">SOL TO RECLAIM</div>
+            <div className="text-emerald-50 text-2xl font-bold">{sol.toFixed(3)}</div>
+            <div className="text-emerald-400/50 text-xs">{accounts.length} accounts</div>
+          </div>
+        )}
+
         <div className="mt-auto">
           {!connected ? (
             <WalletMultiButton className="!w-full !bg-emerald-500 !text-white !font-bold !text-sm !rounded-lg" />
@@ -96,6 +104,42 @@ export default function Home() {
             <div className="w-8 h-8 border-2 border-emerald-900 border-t-emerald-400 rounded-full animate-spin" />
             <div className="text-emerald-300 font-semibold">Scanning accounts…</div>
             <div className="text-emerald-400/50 text-sm">Fetching prices from Jupiter</div>
+          </div>
+        )}
+
+        {status === 'results' && (
+          <div className="flex flex-col h-full">
+            <div className="text-emerald-400 text-xs font-semibold tracking-widest mb-3">
+              TRASH ACCOUNTS
+            </div>
+            <div className="flex-1 flex flex-col gap-2 overflow-y-auto">
+              {accounts.map((account, i) => (
+                <div
+                  key={i}
+                  className="flex items-center justify-between rounded-lg border border-red-500/25 bg-red-950/20 px-4 py-3"
+                >
+                  <div>
+                    <div className="text-emerald-50 text-sm font-semibold">
+                      {account.mint.toBase58().slice(0, 4)}…{account.mint.toBase58().slice(-4)}
+                    </div>
+                    <div className="text-emerald-400/50 text-xs">
+                      {account.balance.toLocaleString()} tokens
+                    </div>
+                  </div>
+                  <div className="text-red-300 text-base font-bold">
+                    ${account.usdValue.toFixed(2)}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="pt-4">
+              <button
+                onClick={() => alert('Coming soon — recycling in Step 2')}
+                className="w-full bg-emerald-500 hover:bg-emerald-400 text-white font-bold py-3 rounded-lg transition-colors"
+              >
+                ♻ RECYCLE ALL · +{sol.toFixed(3)} SOL
+              </button>
+            </div>
           </div>
         )}
       </main>

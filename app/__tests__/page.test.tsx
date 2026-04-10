@@ -55,4 +55,47 @@ describe('Home', () => {
     render(<Home />);
     expect(screen.getByText('Scanning accounts…')).toBeInTheDocument();
   });
+
+  it('shows trash account cards and SOL stat after scan completes', async () => {
+    const trashAccounts = [
+      {
+        pubkey: TEST_PUBKEY,
+        mint: new PublicKey('DezXAZ8z7PnrnRJjz3wXboRgixCa6xjnB7YaB1pPB263'),
+        balance: 142000,
+        usdValue: 0.03,
+        pricePerToken: 0.0000002,
+      },
+    ];
+    mockUseWallet.mockReturnValue({
+      publicKey: TEST_PUBKEY,
+      connected: true,
+      disconnect: jest.fn(),
+    });
+    mockGetTrashAccounts.mockResolvedValue(trashAccounts);
+    render(<Home />);
+    await screen.findByText('TRASH ACCOUNTS');
+    expect(screen.getByText('$0.03')).toBeInTheDocument();
+    expect(screen.getByText('SOL TO RECLAIM')).toBeInTheDocument();
+  });
+
+  it('shows Recycle All button with SOL amount in results state', async () => {
+    const trashAccounts = [
+      {
+        pubkey: TEST_PUBKEY,
+        mint: new PublicKey('DezXAZ8z7PnrnRJjz3wXboRgixCa6xjnB7YaB1pPB263'),
+        balance: 142000,
+        usdValue: 0.03,
+        pricePerToken: 0.0000002,
+      },
+    ];
+    mockUseWallet.mockReturnValue({
+      publicKey: TEST_PUBKEY,
+      connected: true,
+      disconnect: jest.fn(),
+    });
+    mockGetTrashAccounts.mockResolvedValue(trashAccounts);
+    render(<Home />);
+    await screen.findByText('TRASH ACCOUNTS');
+    expect(screen.getByRole('button', { name: /RECYCLE ALL/i })).toBeInTheDocument();
+  });
 });

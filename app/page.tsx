@@ -3,15 +3,21 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
-import { getTrashAccounts, solToReclaim, TrashAccount } from '@/lib/solana';
+import { getTrashAccounts, solToReclaim, TrashAccount, connection } from '@/lib/solana';
+import { recycleAccounts } from '@/lib/recycle';
 
-type Status = 'disconnected' | 'scanning' | 'results' | 'empty' | 'error';
+type Status = 'disconnected' | 'scanning' | 'results' | 'empty' | 'error' | 'recycling' | 'success';
 
 export default function Home() {
-  const { publicKey, connected, disconnect } = useWallet();
+  const { publicKey, connected, disconnect, signAllTransactions } = useWallet();
   const [status, setStatus] = useState<Status>('disconnected');
   const [accounts, setAccounts] = useState<TrashAccount[]>([]);
   const [error, setError] = useState('');
+  const [recycleResult, setRecycleResult] = useState<{
+    succeeded: number;
+    failed: number;
+    solReclaimed: number;
+  } | null>(null);
 
   const scan = useCallback(async () => {
     setStatus('scanning');
@@ -30,6 +36,19 @@ export default function Home() {
       setStatus('error');
     }
   }, [publicKey]);
+
+  const recycle = useCallback(async () => {
+    if (!publicKey || !signAllTransactions) return;
+    setStatus('recycling');
+    try {
+      const result = await recycleAccounts(accounts, publicKey, signAllTransactions, connection);
+      setRecycleResult(result);
+      setStatus('success');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Transaction cancelled');
+      setStatus('results');
+    }
+  }, [accounts, publicKey, signAllTransactions]);
 
   useEffect(() => {
     if (!connected || !publicKey) {
@@ -107,6 +126,11 @@ export default function Home() {
 
         {status === 'results' && (
           <div className="flex flex-col h-full">
+            {error && (
+              <div className="mb-3 rounded-lg border border-red-500/40 bg-red-950/30 p-3 text-red-300/80 text-sm text-center">
+                {error}
+              </div>
+            )}
             <div className="text-emerald-400 text-xs font-semibold tracking-widest mb-3">
               TRASH ACCOUNTS
             </div>
@@ -132,12 +156,48 @@ export default function Home() {
             </div>
             <div className="pt-4">
               <button
-                onClick={() => alert('Coming soon — recycling in Step 2')}
-                className="w-full bg-emerald-500 hover:bg-emerald-400 text-white font-bold py-3 rounded-lg transition-colors"
+                onClick={recycle}
+                disabled={!signAllTransactions}
+                className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-white font-bold py-3 rounded-lg transition-colors"
               >
                 ♻ RECYCLE ALL · +{sol.toFixed(3)} SOL
               </button>
             </div>
+          </div>
+        )}
+
+        {status === 'recycling' && (
+          <div className="flex-1 flex flex-col items-center justify-center gap-3">
+            <div className="w-8 h-8 border-2 border-emerald-900 border-t-emerald-400 rounded-full animate-spin" />
+            <div className="text-emerald-300 font-semibold">
+              Recycling {accounts.length} accounts…
+            </div>
+            <div className="text-emerald-400/50 text-sm">
+              Approve in Phantom, then wait for confirmation
+            </div>
+          </div>
+        )}
+
+        {status === 'success' && recycleResult && (
+          <div className="flex-1 flex flex-col items-center justify-center gap-4">
+            <div className="text-4xl">✅</div>
+            <div className="text-emerald-300 font-bold text-xl">
+              Reclaimed ~{recycleResult.solReclaimed.toFixed(3)} SOL
+            </div>
+            <div className="text-emerald-400/60 text-sm">
+              {recycleResult.succeeded} accounts recycled
+              {recycleResult.failed > 0 && (
+                <span className="text-amber-400 ml-2">
+                  · {recycleResult.failed} failed
+                </span>
+              )}
+            </div>
+            <button
+              onClick={scan}
+              className="border border-emerald-700/40 text-emerald-400 text-sm rounded-lg px-4 py-2 hover:bg-emerald-900/30 transition-colors"
+            >
+              Scan Again
+            </button>
           </div>
         )}
 

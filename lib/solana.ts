@@ -2,7 +2,7 @@
 import { Connection, PublicKey } from '@solana/web3.js';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 
-const MAINNET_RPC = 'https://api.mainnet-beta.solana.com';
+const MAINNET_RPC = 'https://mainnet.helius-rpc.com/?api-key=1a8ff065-5926-455f-a320-984253bfea15';
 
 export const connection = new Connection(MAINNET_RPC, 'confirmed');
 
@@ -12,11 +12,17 @@ export interface TrashAccount {
   balance: number;        // UI amount (decimals applied)
   usdValue: number;       // balance × pricePerToken
   pricePerToken: number;  // 0 if unlisted
+  rawAmount: bigint;      // exact token amount for transferChecked
+  decimals: number;       // mint decimals for transferChecked
 }
 
 interface ParsedTokenInfo {
   mint: string;
-  tokenAmount: { uiAmount: number | null };
+  tokenAmount: {
+    uiAmount: number | null;
+    amount: string;    // raw integer as decimal string e.g. "142000000000"
+    decimals: number;
+  };
 }
 
 function chunk<T>(arr: T[], size: number): T[][] {
@@ -28,14 +34,18 @@ function chunk<T>(arr: T[], size: number): T[][] {
 async function fetchPrices(mints: string[]): Promise<Record<string, number>> {
   const results = await Promise.all(
     chunk(mints, 50).map(async (c) => {
-      const res = await fetch(`https://price.jup.ag/v4/price?ids=${c.join(',')}`);
-      if (!res.ok) throw new Error(`Jupiter API error: ${res.status}`);
-      const json = await res.json() as { data: Record<string, { price: number }> };
-      const prices: Record<string, number> = {};
-      for (const [mint, info] of Object.entries(json.data)) {
-        prices[mint] = info.price;
+      try {
+        const res = await fetch(`https://api.jup.ag/price/v2?ids=${c.join(',')}`);
+        if (!res.ok) return {};
+        const json = await res.json() as { data: Record<string, { price: string }> };
+        const prices: Record<string, number> = {};
+        for (const [mint, info] of Object.entries(json.data ?? {})) {
+          prices[mint] = parseFloat(info.price) || 0;
+        }
+        return prices;
+      } catch {
+        return {};
       }
-      return prices;
     })
   );
   return Object.assign({}, ...results);
@@ -73,6 +83,8 @@ export async function getTrashAccounts(walletAddress: PublicKey): Promise<TrashA
         balance,
         usdValue: balance * pricePerToken,
         pricePerToken,
+        rawAmount: BigInt(info.tokenAmount.amount ?? '0'),
+        decimals: info.tokenAmount.decimals,
       };
     })
     .filter((a) => a.usdValue < 0.10);

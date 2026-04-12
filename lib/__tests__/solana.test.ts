@@ -8,10 +8,17 @@ const MINT_USDC = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 const ACCT_BONK = new PublicKey('11111111111111111111111111111112');
 const ACCT_USDC = new PublicKey('11111111111111111111111111111113');
 
-function makeAccount(pubkey: PublicKey, mint: string, uiAmount: number, amount = '0', decimals = 6) {
+function makeAccount(
+  pubkey: PublicKey,
+  mint: string,
+  uiAmount: number,
+  amount = '0',
+  decimals = 6,
+  state = 'initialized',
+) {
   return {
     pubkey,
-    account: { data: { parsed: { info: { mint, tokenAmount: { uiAmount, amount, decimals } } } } },
+    account: { data: { parsed: { info: { mint, state, tokenAmount: { uiAmount, amount, decimals } } } } },
   };
 }
 
@@ -38,14 +45,26 @@ describe('getTrashAccounts', () => {
     );
   });
 
-  it('filters out zero-balance accounts without calling Jupiter', async () => {
+  it('includes zero-balance (empty) accounts without calling Jupiter for prices', async () => {
     mockGetParsed.mockResolvedValue({
-      value: [makeAccount(ACCT_BONK, MINT_BONK, 0)],
+      value: [makeAccount(ACCT_BONK, MINT_BONK, 0, '0', 6)],
+    } as any);
+
+    const result = await solanaModule.getTrashAccounts(WALLET);
+    expect(result).toHaveLength(1);
+    expect(result[0].balance).toBe(0);
+    expect(result[0].usdValue).toBe(0);
+    expect(result[0].rawAmount).toBe(0n);
+    expect(global.fetch).not.toHaveBeenCalled(); // no Jupiter call for empty accounts
+  });
+
+  it('excludes frozen accounts', async () => {
+    mockGetParsed.mockResolvedValue({
+      value: [makeAccount(ACCT_BONK, MINT_BONK, 100, '100000', 6, 'frozen')],
     } as any);
 
     const result = await solanaModule.getTrashAccounts(WALLET);
     expect(result).toEqual([]);
-    expect(global.fetch).not.toHaveBeenCalled();
   });
 
   it('calls Jupiter with the mint address and maps pricePerToken', async () => {

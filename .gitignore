@@ -1,2 +1,9 @@
 .next/
 node_modules/
+
+# Anchor/Rust build artifacts
+target/
+.anchor/
+test-ledger/
+# Admin backend state (never commit keypairs or local data)
+data/

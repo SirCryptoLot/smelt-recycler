@@ -2,7 +2,7 @@
 import { Connection, PublicKey } from '@solana/web3.js';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 
-const MAINNET_RPC = 'https://mainnet.helius-rpc.com/?api-key=1a8ff065-5926-455f-a320-984253bfea15';
+export const MAINNET_RPC = 'https://mainnet.helius-rpc.com/?api-key=1a8ff065-5926-455f-a320-984253bfea15';
 
 export const connection = new Connection(MAINNET_RPC, 'confirmed');
 
@@ -18,6 +18,7 @@ export interface TrashAccount {
 
 interface ParsedTokenInfo {
   mint: string;
+  state: string;  // 'initialized' | 'frozen' | 'uninitialized'
   tokenAmount: {
     uiAmount: number | null;
     amount: string;    // raw integer as decimal string e.g. "142000000000"
@@ -51,6 +52,46 @@ async function fetchPrices(mints: string[]): Promise<Record<string, number>> {
   return Object.assign({}, ...results);
 }
 
+export interface TokenMeta {
+  name: string;
+  symbol: string;
+}
+
+// Uses Helius DAS getAssetBatch — covers all on-chain tokens, not just Jupiter-listed ones.
+export async function fetchTokenMetas(mints: string[]): Promise<Record<string, TokenMeta>> {
+  if (mints.length === 0) return {};
+  try {
+    const res = await fetch(MAINNET_RPC, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 'fetch-metas',
+        method: 'getAssetBatch',
+        params: { ids: mints },
+      }),
+    });
+    if (!res.ok) return {};
+    const json = await res.json() as {
+      result: Array<{
+        id: string;
+        content?: { metadata?: { name?: string; symbol?: string } };
+      } | null>;
+    };
+    const result: Record<string, TokenMeta> = {};
+    for (const asset of json.result ?? []) {
+      if (!asset) continue;
+      const meta = asset.content?.metadata;
+      if (meta?.name || meta?.symbol) {
+        result[asset.id] = { name: meta.name ?? '', symbol: meta.symbol ?? '' };
+      }
+    }
+    return result;
+  } catch {
+    return {};
+  }
+}
+
 export function solToReclaim(accountCount: number): number {
   return accountCount * 0.002 * 0.95;
 }
@@ -61,17 +102,23 @@ export async function getTrashAccounts(walletAddress: PublicKey): Promise<TrashA
     { programId: TOKEN_PROGRAM_ID }
   );
 
-  const nonEmpty = accounts.filter((a) => {
+  // Skip frozen accounts — they can't be transferred or closed
+  const eligible = accounts.filter((a) => {
     const info = a.account.data.parsed.info as ParsedTokenInfo;
-    return info.tokenAmount.uiAmount !== null && info.tokenAmount.uiAmount > 0;
+    return info.state !== 'frozen';
   });
 
-  if (nonEmpty.length === 0) return [];
+  if (eligible.length === 0) return [];
 
-  const mints = nonEmpty.map((a) => a.account.data.parsed.info.mint as string);
-  const prices = await fetchPrices(mints);
+  // Fetch prices only for accounts that actually hold tokens
+  const withBalance = eligible.filter((a) => {
+    const info = a.account.data.parsed.info as ParsedTokenInfo;
+    return (info.tokenAmount.uiAmount ?? 0) > 0;
+  });
+  const mints = withBalance.map((a) => a.account.data.parsed.info.mint as string);
+  const prices = mints.length > 0 ? await fetchPrices(mints) : {};
 
-  return nonEmpty
+  return eligible
     .map((a) => {
       const info = a.account.data.parsed.info as ParsedTokenInfo;
       const mintStr = info.mint;
@@ -87,5 +134,6 @@ export async function getTrashAccounts(walletAddress: PublicKey): Promise<TrashA
         decimals: info.tokenAmount.decimals,
       };
     })
+    // Include empty accounts (usdValue=0) and dust accounts (usdValue<$0.10)
     .filter((a) => a.usdValue < 0.10);
 }

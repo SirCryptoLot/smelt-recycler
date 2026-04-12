@@ -12,7 +12,7 @@ import {
   createTransferCheckedInstruction,
   getAssociatedTokenAddress,
 } from '@solana/spl-token';
-import { TrashAccount } from './solana';
+import { TrashAccount, MAINNET_RPC } from './solana';
 
 const VAULT = new PublicKey('DgkyF4YnwVYFqMSMo9WvDz2sVkFJSjsWueFYDrKgu87Z');
 const BATCH_SIZE = 5;
@@ -30,6 +30,39 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+// Simulate a transaction without requiring signatures.
+// Returns the last relevant log line if simulation fails, null if it passes (or if pre-sim itself errors).
+async function preSimulate(tx: Transaction): Promise<string | null> {
+  try {
+    const messageBase64 = Buffer.from(tx.serializeMessage()).toString('base64');
+    const res = await fetch(MAINNET_RPC, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'simulateTransaction',
+        params: [messageBase64, { encoding: 'base64', sigVerify: false, commitment: 'confirmed' }],
+      }),
+    });
+    if (!res.ok) return null;
+    const json = await res.json() as {
+      result?: { value?: { err?: unknown; logs?: string[] } };
+    };
+    const val = json.result?.value;
+    if (!val?.err) return null;
+    const logs = val.logs ?? [];
+    // Find the most informative log line — prefer Program log: / Error lines from the end
+    const detail =
+      [...logs].reverse().find((l) => l.includes('Error') || l.startsWith('Program log:')) ??
+      logs.at(-1) ??
+      JSON.stringify(val.err);
+    return detail;
+  } catch {
+    return null; // pre-sim failure is non-blocking — let wallet try
+  }
+}
+
 async function buildBatchTransaction(
   batch: TrashAccount[],
   owner: PublicKey,
@@ -41,14 +74,19 @@ async function buildBatchTransaction(
   tx.feePayer = owner;
 
   for (const account of batch) {
-    const vaultATA = await getAssociatedTokenAddress(account.mint, VAULT, true);
-    tx.add(
-      createAssociatedTokenAccountIdempotentInstruction(owner, vaultATA, VAULT, account.mint),
-      createTransferCheckedInstruction(
-        account.pubkey, account.mint, vaultATA, owner, account.rawAmount, account.decimals
-      ),
-      createCloseAccountInstruction(account.pubkey, owner, owner),
-    );
+    if (account.rawAmount === 0n) {
+      // Empty account — close directly, no transfer needed
+      tx.add(createCloseAccountInstruction(account.pubkey, owner, owner));
+    } else {
+      const vaultATA = await getAssociatedTokenAddress(account.mint, VAULT, true);
+      tx.add(
+        createAssociatedTokenAccountIdempotentInstruction(owner, vaultATA, VAULT, account.mint),
+        createTransferCheckedInstruction(
+          account.pubkey, account.mint, vaultATA, owner, account.rawAmount, account.decimals
+        ),
+        createCloseAccountInstruction(account.pubkey, owner, owner),
+      );
+    }
   }
 
   tx.add(
@@ -77,6 +115,7 @@ async function sendWithRetry(
       if (attempt === MAX_RETRIES - 1) return false;
     }
   }
+  return false;
 }
 
 export async function recycleAccounts(
@@ -92,7 +131,15 @@ export async function recycleAccounts(
     batches.map((batch) => buildBatchTransaction(batch, owner, blockhash, connection))
   );
 
-  // Single Phantom popup for all transactions at once
+  // Pre-simulate before presenting to wallet so we can surface real error details.
+  for (let i = 0; i < transactions.length; i++) {
+    const failDetail = await preSimulate(transactions[i]);
+    if (failDetail !== null) {
+      throw new Error(`Batch ${i + 1} simulation failed — ${failDetail}`);
+    }
+  }
+
+  // Single wallet popup for all transactions
   const signedTransactions = await signAllTransactions(transactions);
 
   const results = await Promise.all(

@@ -117,6 +117,27 @@ describe('recycleAccounts', () => {
     ).rejects.toThrow('User rejected');
   });
 
+  it('empty account (rawAmount=0n): only closeAccount instruction added, no transfer or ATA', async () => {
+    const { createCloseAccountInstruction, createTransferCheckedInstruction, createAssociatedTokenAccountIdempotentInstruction } =
+      jest.requireMock('@solana/spl-token');
+
+    const emptyAccount: TrashAccount = {
+      pubkey: new PublicKey(new Uint8Array(32).fill(1)),
+      mint: MINT_A,
+      balance: 0,
+      usdValue: 0,
+      pricePerToken: 0,
+      rawAmount: 0n,
+      decimals: 6,
+    };
+
+    await recycleAccounts([emptyAccount], OWNER, signAllTransactions, mockConnection as any);
+
+    expect(createCloseAccountInstruction).toHaveBeenCalledTimes(1);
+    expect(createTransferCheckedInstruction).not.toHaveBeenCalled();
+    expect(createAssociatedTokenAccountIdempotentInstruction).not.toHaveBeenCalled();
+  });
+
   it('fee instruction: lamports = ceil(batchSize * 0.002 * 0.05 * LAMPORTS_PER_SOL)', async () => {
     const { SystemProgram } = jest.requireActual('@solana/web3.js');
     const transferSpy = jest.spyOn(SystemProgram, 'transfer');

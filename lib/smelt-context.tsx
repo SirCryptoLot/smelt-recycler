@@ -1,8 +1,7 @@
 'use client';
 
 import React, { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
-import { useWallet } from '@solana/wallet-adapter-react';
-import { useConnection } from '@solana/wallet-adapter-react';
+import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 import { fetchSmeltBalance } from './smelt';
 
 interface SmeltContextValue {
@@ -28,7 +27,7 @@ export function SmeltProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!publicKey) { setSmeltBalance(0n); return; }
     refreshSmelt();
-  }, [refreshSmelt, publicKey]);
+  }, [refreshSmelt]);
 
   return (
     <SmeltContext.Provider value={{ smeltBalance, refreshSmelt }}>

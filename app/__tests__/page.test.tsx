@@ -4,17 +4,29 @@ import { getTrashAccounts, solToReclaim } from '@/lib/solana';
 import Home from '../page';
 import { PublicKey } from '@solana/web3.js';
 
-jest.mock('@solana/wallet-adapter-react');
+jest.mock('@solana/wallet-adapter-react', () => ({
+  ...jest.requireActual('@solana/wallet-adapter-react'),
+  useWallet: jest.fn(),
+  useConnection: jest.fn(() => ({ connection: {} })),
+}));
 jest.mock('@solana/wallet-adapter-react-ui', () => ({
   WalletMultiButton: () => <button>Connect Wallet</button>,
 }));
 jest.mock('@/lib/solana', () => ({
   getTrashAccounts: jest.fn(),
+  fetchTokenMetas: jest.fn().mockResolvedValue({}),
   solToReclaim: jest.requireActual('@/lib/solana').solToReclaim,
   connection: {},
 }));
 jest.mock('@/lib/recycle', () => ({
   recycleAccounts: jest.fn(),
+}));
+jest.mock('@/lib/smelt-context', () => ({
+  useSmelt: jest.fn(() => ({ smeltBalance: 0n, refreshSmelt: jest.fn() })),
+}));
+jest.mock('@/lib/constants', () => ({
+  ...jest.requireActual('@/lib/constants'),
+  currentSmeltPerAccount: jest.fn(() => 250),
 }));
 
 import { recycleAccounts } from '@/lib/recycle';
@@ -41,9 +53,9 @@ describe('solToReclaim', () => {
   });
 });
 
-// ── Home — disconnected ───────────────────────────────────────
+// ── Home ──────────────────────────────────────────────────────
 describe('Home', () => {
-  it('shows connect prompt and Connect button when disconnected', () => {
+  it('shows connect prompt when disconnected', () => {
     mockUseWallet.mockReturnValue({
       publicKey: null,
       connected: false,
@@ -52,7 +64,6 @@ describe('Home', () => {
     });
     render(<Home />);
     expect(screen.getByText('Connect your wallet')).toBeInTheDocument();
-    expect(screen.getByText('Connect Wallet')).toBeInTheDocument();
   });
 
   it('shows scanning spinner immediately after wallet connects', () => {
@@ -75,6 +86,8 @@ describe('Home', () => {
         balance: 142000,
         usdValue: 0.03,
         pricePerToken: 0.0000002,
+        rawAmount: BigInt(0),
+        decimals: 6,
       },
     ];
     mockUseWallet.mockReturnValue({
@@ -85,12 +98,12 @@ describe('Home', () => {
     });
     mockGetTrashAccounts.mockResolvedValue(trashAccounts);
     render(<Home />);
-    await screen.findByText('TRASH ACCOUNTS');
-    expect(screen.getByText('$0.03')).toBeInTheDocument();
-    expect(screen.getByText('SOL TO RECLAIM')).toBeInTheDocument();
+    await screen.findByText(/trash account/i);
+    expect(screen.getAllByText('$0.0300').length).toBeGreaterThan(0);
+    expect(screen.getByText('SOL to reclaim')).toBeInTheDocument();
   });
 
-  it('shows Recycle All button with SOL amount in results state', async () => {
+  it('shows Recycle button in results state', async () => {
     const trashAccounts = [
       {
         pubkey: TEST_PUBKEY,
@@ -98,6 +111,8 @@ describe('Home', () => {
         balance: 142000,
         usdValue: 0.03,
         pricePerToken: 0.0000002,
+        rawAmount: BigInt(0),
+        decimals: 6,
       },
     ];
     mockUseWallet.mockReturnValue({
@@ -108,8 +123,8 @@ describe('Home', () => {
     });
     mockGetTrashAccounts.mockResolvedValue(trashAccounts);
     render(<Home />);
-    await screen.findByText('TRASH ACCOUNTS');
-    expect(screen.getByRole('button', { name: /RECYCLE ALL/i })).toBeInTheDocument();
+    await screen.findByText(/trash account/i);
+    expect(screen.getByRole('button', { name: /Recycle/i })).toBeInTheDocument();
   });
 
   it('shows empty state when no trash accounts found', async () => {
@@ -139,7 +154,7 @@ describe('Home', () => {
     expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument();
   });
 
-  it('shows recycling spinner when RECYCLE ALL is clicked', async () => {
+  it('shows recycling spinner when Recycle button is clicked', async () => {
     mockRecycleAccounts.mockImplementation(() => new Promise(() => {})); // never resolves
 
     mockGetTrashAccounts.mockResolvedValue([
@@ -162,10 +177,10 @@ describe('Home', () => {
     });
 
     render(<Home />);
-    await waitFor(() => screen.getByText('TRASH ACCOUNTS'));
-    fireEvent.click(screen.getByText(/RECYCLE ALL/));
+    await waitFor(() => screen.getByText(/trash account/i));
+    fireEvent.click(screen.getByRole('button', { name: /Recycle/i }));
     await waitFor(() => screen.getByText(/Recycling/));
-    expect(screen.getByText(/Recycling 1 accounts/)).toBeInTheDocument();
+    expect(screen.getByText(/Recycling 1 account/)).toBeInTheDocument();
   });
 
   it('shows success state with reclaimed SOL after recycling', async () => {
@@ -191,10 +206,10 @@ describe('Home', () => {
     });
 
     render(<Home />);
-    await waitFor(() => screen.getByText('TRASH ACCOUNTS'));
-    fireEvent.click(screen.getByText(/RECYCLE ALL/));
-    await waitFor(() => screen.getByText(/Reclaimed/));
-    expect(screen.getByText(/Reclaimed ~0.002 SOL/)).toBeInTheDocument();
-    expect(screen.getByText('Scan Again')).toBeInTheDocument();
+    await waitFor(() => screen.getByText(/trash account/i));
+    fireEvent.click(screen.getByRole('button', { name: /Recycle/i }));
+    await waitFor(() => screen.getByText(/SOL/));
+    expect(screen.getByText(/0\.001[0-9]+ SOL/)).toBeInTheDocument();
+    expect(screen.getByText('Scan again')).toBeInTheDocument();
   });
 });

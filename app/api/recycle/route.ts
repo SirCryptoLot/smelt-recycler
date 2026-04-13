@@ -5,9 +5,13 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { mintSmeltReward } from '../../../scripts/mint-smelt';
 import { currentSmeltPerAccount } from '../../../lib/constants';
+import { recordRecycle as recordLeaderboard, getWalletStats } from '../../../lib/leaderboard';
+import { recordReferral } from '../../../lib/referrals';
+import { recordRecycle as recordEcosystem, incrementWalletCount } from '../../../lib/ecosystem';
 
 const FEES_PATH = path.join(process.cwd(), 'data/fees.json');
-const SOL_FEE_PER_ACCOUNT = 0.002 * 0.05; // 5% of 0.002 SOL rent
+const SOL_FEE_PER_ACCOUNT = 0.002 * 0.05;
+const SOL_RECLAIMED_PER_ACCOUNT = 0.002 * 0.95;
 
 interface FeeEntry {
   date: string;
@@ -24,17 +28,17 @@ function appendFee(entry: FeeEntry): void {
       : [];
     existing.push(entry);
     fs.writeFileSync(FEES_PATH, JSON.stringify(existing, null, 2));
-  } catch {
-    // Non-blocking — fee logging failure never breaks minting
-  }
+  } catch { /* non-blocking */ }
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
-    const { wallet, accountsClosed } = await req.json() as {
+    const body = await req.json() as {
       wallet: string;
       accountsClosed: number;
+      referredBy?: string;
     };
+    const { wallet, accountsClosed, referredBy } = body;
 
     if (!wallet || typeof accountsClosed !== 'number' || accountsClosed <= 0) {
       return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
@@ -43,8 +47,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const recipient = new PublicKey(wallet);
     const txSig = await mintSmeltReward(recipient, accountsClosed);
     const smeltMinted = currentSmeltPerAccount() * accountsClosed;
+    const solReclaimed = SOL_RECLAIMED_PER_ACCOUNT * accountsClosed;
 
-    // Log the platform fee for this recycle batch
+    // Fee log
     appendFee({
       date: new Date().toISOString(),
       wallet,
@@ -52,6 +57,23 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       solFees: SOL_FEE_PER_ACCOUNT * accountsClosed,
       distributed: false,
     });
+
+    // Check if this is a new wallet (no prior all-time stats)
+    const priorStats = getWalletStats(wallet);
+    const isNewWallet = priorStats.allTime.accounts === 0;
+
+    // Leaderboard + ecosystem
+    recordLeaderboard(wallet, accountsClosed, solReclaimed, smeltMinted);
+    recordEcosystem(accountsClosed, solReclaimed, smeltMinted);
+    if (isNewWallet) incrementWalletCount();
+
+    // Referral bonus
+    if (referredBy && referredBy !== wallet) {
+      try {
+        new PublicKey(referredBy); // validate it's a real pubkey
+        recordReferral(referredBy, wallet, accountsClosed, solReclaimed);
+      } catch { /* invalid pubkey — silently ignore */ }
+    }
 
     return NextResponse.json({ success: true, txSignature: txSig, smeltMinted });
   } catch (err) {

@@ -174,13 +174,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </span>
           )}
           {mounted ? (
-            connected ? (
-              <button onClick={() => disconnect()} className="bg-green-600 hover:bg-green-500 text-white text-sm font-bold px-4 py-2 rounded-full transition-colors">
-                Connected ✓
-              </button>
-            ) : (
-              <WalletMultiButton className="!bg-green-600 !text-white !font-bold !text-sm !rounded-full !px-4 !py-2 !h-auto" />
-            )
+            <WalletMultiButton className="!bg-green-600 !text-white !font-bold !text-sm !rounded-full !px-4 !py-2 !h-auto" />
           ) : (
             <div className="w-28 h-8 rounded-full bg-green-100 animate-pulse" />
           )}

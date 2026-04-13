@@ -73,11 +73,11 @@ export async function executeSwap(
   const buf = Buffer.from(swapTransaction, 'base64');
   const tx = VersionedTransaction.deserialize(buf);
   const signed = await signTransaction(tx);
+  const latestBlockhash = await connection.getLatestBlockhash();
   const txId = await connection.sendRawTransaction(signed.serialize(), {
     skipPreflight: false,
     maxRetries: 3,
   });
-  const latestBlockhash = await connection.getLatestBlockhash();
   await connection.confirmTransaction({ signature: txId, ...latestBlockhash }, 'confirmed');
   return txId;
 }

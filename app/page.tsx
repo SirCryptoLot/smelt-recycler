@@ -135,16 +135,16 @@ export default function Home() {
 
       {/* Stats strip */}
       {status === 'results' && (
-        <div className="grid grid-cols-2 gap-2 px-4 py-3 border-b border-white/5 flex-shrink-0">
-          <div className="rounded-xl border border-emerald-500/15 bg-emerald-500/5 px-3 py-2.5 col-span-1">
-            <div className="text-[9px] font-semibold tracking-widest text-emerald-500/50 uppercase mb-0.5">SOL to reclaim</div>
-            <div className="text-white font-bold text-lg tracking-tight">{sol.toFixed(4)}</div>
-            <div className="text-white/25 text-[10px] mt-0.5">{selected.length}/{accounts.length} selected</div>
+        <div className="grid grid-cols-2 gap-2 px-4 py-3 border-b border-gray-100 flex-shrink-0">
+          <div className="rounded-xl border border-green-200 bg-green-50 px-3 py-2.5">
+            <div className="text-[9px] font-semibold tracking-widest text-green-600/60 uppercase mb-0.5">SOL to reclaim</div>
+            <div className="text-gray-900 font-bold text-lg tracking-tight">{sol.toFixed(4)}</div>
+            <div className="text-gray-400 text-[10px] mt-0.5">{selected.length}/{accounts.length} selected</div>
           </div>
-          <div className="rounded-xl border border-white/5 bg-white/[0.02] px-3 py-2.5 col-span-1">
-            <div className="text-[9px] font-semibold tracking-widest text-white/25 uppercase mb-0.5">SMELT reward</div>
-            <div className="text-emerald-400 font-bold text-lg">+{smeltReward.toLocaleString()}</div>
-            {totalUsd > 0 && <div className="text-white/25 text-[10px] mt-0.5">dust ${totalUsd.toFixed(2)}</div>}
+          <div className="rounded-xl border border-gray-200 bg-white px-3 py-2.5">
+            <div className="text-[9px] font-semibold tracking-widest text-gray-400 uppercase mb-0.5">SMELT reward</div>
+            <div className="text-green-600 font-bold text-lg">+{smeltReward.toLocaleString()}</div>
+            {totalUsd > 0 && <div className="text-gray-400 text-[10px] mt-0.5">dust ${totalUsd.toFixed(2)}</div>}
           </div>
         </div>
       )}
@@ -152,13 +152,13 @@ export default function Home() {
       {/* Disconnected */}
       {status === 'disconnected' && (
         <div className="flex-1 flex flex-col items-center justify-center gap-5 p-6 sm:p-10">
-          <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/10 flex items-center justify-center text-3xl">🔌</div>
+          <div className="w-16 h-16 rounded-2xl bg-green-50 border border-green-200 flex items-center justify-center text-3xl">🔌</div>
           <div className="text-center">
-            <div className="text-white font-semibold text-lg">Connect your wallet</div>
-            <div className="text-white/30 text-sm mt-1.5 max-w-xs">Connect Phantom to scan for dust token accounts and reclaim rent SOL</div>
+            <div className="text-gray-900 font-semibold text-lg">Connect your wallet</div>
+            <div className="text-gray-400 text-sm mt-1.5 max-w-xs">Connect Phantom to scan for dust token accounts and reclaim rent SOL</div>
           </div>
           {mounted && (
-            <WalletMultiButton className="!bg-emerald-500 !text-white !font-semibold !text-sm !rounded-xl !px-6 !py-2.5" />
+            <WalletMultiButton className="!bg-green-600 !text-white !font-semibold !text-sm !rounded-xl !px-6 !py-2.5" />
           )}
         </div>
       )}
@@ -166,10 +166,10 @@ export default function Home() {
       {/* Scanning */}
       {status === 'scanning' && (
         <div className="flex-1 flex flex-col items-center justify-center gap-4">
-          <div className="w-9 h-9 border-2 border-emerald-900 border-t-emerald-400 rounded-full animate-spin" />
+          <div className="w-9 h-9 border-2 border-gray-200 border-t-green-600 rounded-full animate-spin" />
           <div className="text-center">
-            <div className="text-white font-semibold">Scanning accounts…</div>
-            <div className="text-white/30 text-sm mt-1">Fetching prices from Jupiter</div>
+            <div className="text-gray-900 font-semibold">Scanning accounts…</div>
+            <div className="text-gray-400 text-sm mt-1">Fetching prices from Jupiter</div>
           </div>
         </div>
       )}
@@ -177,16 +177,16 @@ export default function Home() {
       {/* Results */}
       {status === 'results' && (
         <div className="flex flex-col flex-1 overflow-hidden">
-          <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-white/5 flex-shrink-0">
-            <span className="text-white/30 text-xs font-semibold tracking-widest uppercase">
+          <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-gray-100 flex-shrink-0">
+            <span className="text-gray-400 text-xs font-semibold tracking-widest uppercase">
               {accounts.length} trash account{accounts.length !== 1 ? 's' : ''}
             </span>
-            <button onClick={toggleAll} className="text-white/30 text-xs hover:text-emerald-400 transition-colors">
+            <button onClick={toggleAll} className="text-gray-400 text-xs hover:text-green-600 transition-colors">
               {allSelected ? 'Deselect all' : 'Select all'}
             </button>
           </div>
           {error && (
-            <div className="mx-6 mt-4 flex-shrink-0 rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3 text-red-400/70 text-sm">{error}</div>
+            <div className="mx-6 mt-4 flex-shrink-0 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-600 text-sm">{error}</div>
           )}
           <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 space-y-2">
             {accounts.map((account) => {
@@ -204,38 +204,38 @@ export default function Home() {
                   onClick={() => toggleSelect(key)}
                   className={`flex items-center gap-3 rounded-xl border px-4 py-3.5 cursor-pointer select-none transition-all ${
                     isSelected
-                      ? 'border-emerald-500/20 bg-emerald-500/5 hover:bg-emerald-500/8'
-                      : 'border-white/4 bg-white/[0.02] opacity-40 hover:opacity-60'
+                      ? 'border-green-200 bg-green-50 hover:bg-green-50/70'
+                      : 'border-gray-100 bg-white opacity-50 hover:opacity-70'
                   }`}
                 >
                   <div className={`w-9 h-9 rounded-xl ${color} flex items-center justify-center text-white font-bold text-xs flex-shrink-0`}>{initials}</div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 min-w-0">
-                      <span className="text-white text-sm font-semibold truncate">{name}</span>
-                      {meta?.symbol && <span className="text-white/30 text-xs flex-shrink-0 font-mono">{meta.symbol}</span>}
+                      <span className="text-gray-900 text-sm font-semibold truncate">{name}</span>
+                      {meta?.symbol && <span className="text-gray-400 text-xs flex-shrink-0 font-mono">{meta.symbol}</span>}
                     </div>
-                    <div className="text-white/20 text-[11px] font-mono mt-0.5">{shortAddr(mintStr)}</div>
+                    <div className="text-gray-300 text-[11px] font-mono mt-0.5">{shortAddr(mintStr)}</div>
                   </div>
                   <div className="text-right flex-shrink-0 mr-2">
                     {account.balance === 0 ? (
-                      <div className="inline-flex items-center rounded-md border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold text-emerald-400/70 tracking-wide">EMPTY</div>
+                      <div className="inline-flex items-center rounded-md border border-green-200 bg-green-50 px-2 py-0.5 text-[11px] font-semibold text-green-700 tracking-wide">EMPTY</div>
                     ) : (
                       <>
-                        <div className="text-white/70 text-sm font-semibold tabular-nums">{account.usdValue > 0.0001 ? `$${account.usdValue.toFixed(4)}` : '<$0.01'}</div>
-                        <div className="text-white/20 text-[11px] mt-0.5 tabular-nums">{account.balance.toLocaleString()} tkn</div>
+                        <div className="text-gray-700 text-sm font-semibold tabular-nums">{account.usdValue > 0.0001 ? `$${account.usdValue.toFixed(4)}` : '<$0.01'}</div>
+                        <div className="text-gray-400 text-[11px] mt-0.5 tabular-nums">{account.balance.toLocaleString()} tkn</div>
                       </>
                     )}
                   </div>
-                  <input type="checkbox" checked={isSelected} onChange={() => toggleSelect(key)} onClick={(e) => e.stopPropagation()} className="accent-emerald-500 w-4 h-4 flex-shrink-0 cursor-pointer" />
+                  <input type="checkbox" checked={isSelected} onChange={() => toggleSelect(key)} onClick={(e) => e.stopPropagation()} className="accent-green-600 w-4 h-4 flex-shrink-0 cursor-pointer" />
                 </div>
               );
             })}
           </div>
-          <div className="px-4 sm:px-6 py-4 border-t border-white/5 flex-shrink-0 bg-[#060f0d]">
+          <div className="px-4 sm:px-6 py-4 border-t border-gray-100 flex-shrink-0 bg-white">
             <button
               onClick={recycle}
               disabled={!signAllTransactions || selected.length === 0}
-              className="w-full bg-emerald-500 hover:bg-emerald-400 active:scale-[0.99] disabled:opacity-25 disabled:cursor-not-allowed text-white font-semibold py-3.5 rounded-xl transition-all text-sm"
+              className="w-full bg-green-600 hover:bg-green-500 active:scale-[0.99] disabled:opacity-25 disabled:cursor-not-allowed text-white font-semibold py-3.5 rounded-xl transition-all text-sm"
             >
               ♻ Recycle {selected.length} account{selected.length !== 1 ? 's' : ''} · reclaim {sol.toFixed(4)} SOL
             </button>
@@ -246,10 +246,10 @@ export default function Home() {
       {/* Recycling */}
       {status === 'recycling' && (
         <div className="flex-1 flex flex-col items-center justify-center gap-4">
-          <div className="w-9 h-9 border-2 border-emerald-900 border-t-emerald-400 rounded-full animate-spin" />
+          <div className="w-9 h-9 border-2 border-gray-200 border-t-green-600 rounded-full animate-spin" />
           <div className="text-center">
-            <div className="text-white font-semibold">Recycling {selected.length} account{selected.length !== 1 ? 's' : ''}…</div>
-            <div className="text-white/30 text-sm mt-1">Approve in Phantom, then wait for confirmation</div>
+            <div className="text-gray-900 font-semibold">Recycling {selected.length} account{selected.length !== 1 ? 's' : ''}…</div>
+            <div className="text-gray-400 text-sm mt-1">Approve in Phantom, then wait for confirmation</div>
           </div>
         </div>
       )}
@@ -257,23 +257,23 @@ export default function Home() {
       {/* Success */}
       {status === 'success' && recycleResult && (
         <div className="flex-1 flex flex-col items-center justify-center gap-6">
-          <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/10 flex items-center justify-center text-3xl">✅</div>
+          <div className="w-16 h-16 rounded-2xl bg-green-50 border border-green-200 flex items-center justify-center text-3xl">✅</div>
           <div className="text-center">
-            <div className="text-white font-bold text-2xl tracking-tight">~{recycleResult.solReclaimed.toFixed(4)} SOL</div>
-            <div className="text-white/30 text-sm mt-1.5">reclaimed from {recycleResult.succeeded} account{recycleResult.succeeded !== 1 ? 's' : ''}</div>
-            {recycleResult.failed > 0 && <div className="text-amber-400/60 text-sm mt-1">{recycleResult.failed} failed</div>}
+            <div className="text-gray-900 font-bold text-2xl tracking-tight">~{recycleResult.solReclaimed.toFixed(4)} SOL</div>
+            <div className="text-gray-400 text-sm mt-1.5">reclaimed from {recycleResult.succeeded} account{recycleResult.succeeded !== 1 ? 's' : ''}</div>
+            {recycleResult.failed > 0 && <div className="text-amber-500 text-sm mt-1">{recycleResult.failed} failed</div>}
           </div>
-          <button onClick={scan} className="border border-white/8 text-white/40 text-sm rounded-xl px-5 py-2.5 hover:border-white/15 hover:text-white/60 transition-all">Scan again</button>
+          <button onClick={scan} className="border border-gray-200 text-gray-400 text-sm rounded-xl px-5 py-2.5 hover:border-gray-300 hover:text-gray-600 transition-all">Scan again</button>
         </div>
       )}
 
       {/* Empty */}
       {status === 'empty' && (
         <div className="flex-1 flex flex-col items-center justify-center gap-5">
-          <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/10 flex items-center justify-center text-3xl">✅</div>
+          <div className="w-16 h-16 rounded-2xl bg-green-50 border border-green-200 flex items-center justify-center text-3xl">✅</div>
           <div className="text-center">
-            <div className="text-white font-semibold text-lg">Nothing to recycle</div>
-            <div className="text-white/30 text-sm mt-1">Your wallet is clean.</div>
+            <div className="text-gray-900 font-semibold text-lg">Nothing to recycle</div>
+            <div className="text-gray-400 text-sm mt-1">Your wallet is clean.</div>
           </div>
         </div>
       )}
@@ -281,11 +281,11 @@ export default function Home() {
       {/* Error */}
       {status === 'error' && (
         <div className="flex-1 flex flex-col items-center justify-center gap-4 p-5 sm:p-8">
-          <div className="rounded-2xl border border-red-500/15 bg-red-500/5 px-6 py-5 max-w-sm w-full text-center">
-            <div className="text-red-400 font-semibold mb-1">Scan failed</div>
-            <div className="text-red-400/50 text-sm">{error}</div>
+          <div className="rounded-2xl border border-red-200 bg-red-50 px-6 py-5 max-w-sm w-full text-center">
+            <div className="text-red-600 font-semibold mb-1">Scan failed</div>
+            <div className="text-red-400 text-sm">{error}</div>
           </div>
-          <button onClick={scan} className="border border-white/8 text-white/40 text-sm rounded-xl px-5 py-2.5 hover:border-white/15 hover:text-white/60 transition-all">Try again</button>
+          <button onClick={scan} className="border border-gray-200 text-gray-400 text-sm rounded-xl px-5 py-2.5 hover:border-gray-300 hover:text-gray-600 transition-all">Try again</button>
         </div>
       )}
     </div>

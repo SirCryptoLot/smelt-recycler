@@ -152,16 +152,16 @@ export default function SwapPage() {
       <div className="max-w-lg mx-auto px-4 sm:px-6 py-8 space-y-6">
 
         {/* Mode toggle */}
-        <div className="flex rounded-xl border border-white/10 overflow-hidden">
+        <div className="flex bg-gray-100 rounded-xl p-1 gap-1">
           <button
             onClick={() => setMode('dust')}
-            className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${mode === 'dust' ? 'bg-emerald-500/20 text-emerald-400' : 'text-zinc-400 hover:text-zinc-200'}`}
+            className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-colors ${mode === 'dust' ? 'bg-white text-green-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
           >
             ♻ Dust → SMELT
           </button>
           <button
             onClick={() => setMode('buy')}
-            className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${mode === 'buy' ? 'bg-emerald-500/20 text-emerald-400' : 'text-zinc-400 hover:text-zinc-200'}`}
+            className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-colors ${mode === 'buy' ? 'bg-white text-green-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
           >
             ⇄ Buy SMELT
           </button>
@@ -169,44 +169,44 @@ export default function SwapPage() {
 
         {/* ── DUST MODE ── */}
         {mode === 'dust' && (
-          <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-6 space-y-5">
+          <div className="rounded-2xl border border-gray-200 bg-white p-6 space-y-5">
             <div>
-              <h2 className="text-zinc-100 font-semibold text-base mb-1">Convert dust directly to SMELT</h2>
-              <p className="text-zinc-500 text-xs">Close your dust accounts, reclaim SOL, and swap it to SMELT — in two steps.</p>
+              <h2 className="text-gray-900 font-semibold text-base mb-1">Convert dust directly to SMELT</h2>
+              <p className="text-gray-400 text-xs">Close your dust accounts, reclaim SOL, and swap it to SMELT — in two steps.</p>
             </div>
 
             {!connected && (
-              <div className="text-zinc-500 text-sm">Connect your wallet to scan for dust accounts.</div>
+              <div className="text-gray-400 text-sm">Connect your wallet to scan for dust accounts.</div>
             )}
 
             {connected && dustStatus === 'scanning' && (
-              <div className="flex items-center gap-3 text-zinc-400 text-sm">
-                <div className="w-4 h-4 border-2 border-zinc-700 border-t-emerald-400 rounded-full animate-spin flex-shrink-0" />
+              <div className="flex items-center gap-3 text-gray-500 text-sm">
+                <div className="w-4 h-4 border-2 border-gray-200 border-t-green-600 rounded-full animate-spin flex-shrink-0" />
                 Scanning wallet…
               </div>
             )}
 
             {connected && dustStatus === 'ready' && accounts.length === 0 && (
-              <div className="text-zinc-500 text-sm">No dust accounts found.</div>
+              <div className="text-gray-400 text-sm">No dust accounts found.</div>
             )}
 
             {connected && (dustStatus === 'ready' || dustStatus === 'step1' || dustStatus === 'step2') && accounts.length > 0 && (
               <>
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="rounded-xl bg-white/5 border border-white/5 px-3 py-2.5">
-                    <div className="text-[10px] text-zinc-500 uppercase tracking-widest mb-0.5">Accounts</div>
-                    <div className="text-zinc-100 font-bold">{accounts.length}</div>
+                  <div className="rounded-xl bg-white border border-gray-100 px-3 py-2.5">
+                    <div className="text-[10px] text-gray-400 uppercase tracking-widest mb-0.5">Accounts</div>
+                    <div className="text-gray-900 font-bold">{accounts.length}</div>
                   </div>
-                  <div className="rounded-xl bg-white/5 border border-white/5 px-3 py-2.5">
-                    <div className="text-[10px] text-zinc-500 uppercase tracking-widest mb-0.5">SOL to reclaim</div>
-                    <div className="text-zinc-100 font-bold">{sol.toFixed(4)}</div>
+                  <div className="rounded-xl bg-white border border-gray-100 px-3 py-2.5">
+                    <div className="text-[10px] text-gray-400 uppercase tracking-widest mb-0.5">SOL to reclaim</div>
+                    <div className="text-gray-900 font-bold">{sol.toFixed(4)}</div>
                   </div>
-                  <div className="rounded-xl bg-emerald-500/5 border border-emerald-500/15 px-3 py-2.5 col-span-2">
-                    <div className="text-[10px] text-emerald-500/50 uppercase tracking-widest mb-0.5">Est. SMELT received</div>
-                    <div className="text-emerald-400 font-bold text-lg">
+                  <div className="rounded-xl bg-green-50 border border-green-200 px-3 py-2.5 col-span-2">
+                    <div className="text-[10px] text-green-600/70 uppercase tracking-widest mb-0.5">Est. SMELT received</div>
+                    <div className="text-green-600 font-bold text-lg">
                       {quote ? `~${estimatedSmelt.toLocaleString()} SMELT` : '—'}
                     </div>
-                    {quote && <div className="text-zinc-600 text-[10px] mt-0.5">via Jupiter · updates every 10s</div>}
+                    {quote && <div className="text-gray-400 text-[10px] mt-0.5">via Jupiter · updates every 10s</div>}
                   </div>
                 </div>
 
@@ -221,11 +221,11 @@ export default function SwapPage() {
                   })().map(({ label, active, done }) => (
                     <div key={label} className="flex items-center gap-2 text-xs">
                       {done
-                        ? <span className="text-emerald-400 font-bold">✓</span>
+                        ? <span className="text-green-600 font-bold">✓</span>
                         : active
-                          ? <div className="w-3 h-3 border border-emerald-700 border-t-emerald-400 rounded-full animate-spin flex-shrink-0" />
-                          : <span className="text-zinc-700">·</span>}
-                      <span className={done ? 'text-emerald-400' : active ? 'text-zinc-200' : 'text-zinc-600'}>{label}</span>
+                          ? <div className="w-3 h-3 border border-green-200 border-t-green-600 rounded-full animate-spin flex-shrink-0" />
+                          : <span className="text-gray-300">·</span>}
+                      <span className={done ? 'text-green-600' : active ? 'text-gray-900' : 'text-gray-400'}>{label}</span>
                     </div>
                   ))}
                 </div>
@@ -233,7 +233,7 @@ export default function SwapPage() {
                 <button
                   onClick={convertToSmelt}
                   disabled={!quote || dustStatus === 'step1' || dustStatus === 'step2'}
-                  className="w-full bg-emerald-500 hover:bg-emerald-400 active:scale-[0.99] disabled:opacity-30 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-all text-sm"
+                  className="w-full bg-green-600 hover:bg-green-500 active:scale-[0.99] disabled:opacity-30 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-all text-sm"
                 >
                   {dustStatus === 'step1' ? 'Closing accounts…' : dustStatus === 'step2' ? 'Swapping to SMELT…' : 'Convert to SMELT'}
                 </button>
@@ -243,27 +243,27 @@ export default function SwapPage() {
             {dustStatus === 'done' && (
               <div className="text-center space-y-3">
                 <div className="text-4xl">✅</div>
-                <div className="text-emerald-400 font-bold">SMELT received!</div>
+                <div className="text-green-600 font-bold">SMELT received!</div>
                 {txSig && (
                   <a
                     href={`https://solscan.io/tx/${txSig}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-xs text-zinc-500 hover:text-zinc-300 underline"
+                    className="text-xs text-gray-400 hover:text-gray-600 underline"
                   >
                     View on Solscan
                   </a>
                 )}
-                <button onClick={scan} className="text-xs text-zinc-500 hover:text-zinc-300 underline block mx-auto">
+                <button onClick={scan} className="text-xs text-gray-400 hover:text-gray-600 underline block mx-auto">
                   Scan again
                 </button>
               </div>
             )}
 
             {dustStatus === 'error' && (
-              <div className="rounded-xl bg-red-500/5 border border-red-500/20 px-4 py-3 text-red-400/80 text-sm">
+              <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-red-600 text-sm">
                 {error}
-                <button onClick={scan} className="block mt-2 text-xs underline text-red-400/50 hover:text-red-400/80">Try again</button>
+                <button onClick={scan} className="block mt-2 text-xs underline text-red-400 hover:text-red-600">Try again</button>
               </div>
             )}
           </div>
@@ -274,23 +274,23 @@ export default function SwapPage() {
           <div className="space-y-4">
             {/* Price comparison */}
             {(smeltPrice !== null || nav !== null) && (
-              <div className="rounded-2xl border border-white/10 bg-white/[0.02] px-5 py-4 grid grid-cols-2 gap-4">
+              <div className="rounded-2xl border border-gray-200 bg-white px-5 py-4 grid grid-cols-2 gap-4">
                 <div>
-                  <div className="text-[10px] text-zinc-500 uppercase tracking-widest mb-1">Market price</div>
-                  <div className="text-zinc-100 font-bold">{smeltPrice?.toFixed(8) ?? '—'} SOL</div>
+                  <div className="text-[10px] text-gray-400 uppercase tracking-widest mb-1">Market price</div>
+                  <div className="text-gray-900 font-bold">{smeltPrice?.toFixed(8) ?? '—'} SOL</div>
                 </div>
                 <div>
-                  <div className="text-[10px] text-zinc-500 uppercase tracking-widest mb-1">Pending pool</div>
-                  <div className="text-indigo-400 font-bold">{nav?.toFixed(4) ?? '—'} SOL</div>
+                  <div className="text-[10px] text-gray-400 uppercase tracking-widest mb-1">Pending pool</div>
+                  <div className="text-indigo-500 font-bold">{nav?.toFixed(4) ?? '—'} SOL</div>
                 </div>
               </div>
             )}
 
             {/* Jupiter Terminal */}
-            <div className="rounded-2xl border border-white/10 overflow-hidden min-h-[420px]">
+            <div className="rounded-2xl border border-gray-200 overflow-hidden min-h-[420px]">
               <div id="jupiter-terminal" ref={jupiterRef} className="w-full min-h-[420px]" />
               {!jupiterLoaded && (
-                <div className="flex items-center justify-center h-40 text-zinc-600 text-sm">
+                <div className="flex items-center justify-center h-40 text-gray-400 text-sm">
                   Loading Jupiter…
                 </div>
               )}

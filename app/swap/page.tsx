@@ -273,11 +273,11 @@ export default function SwapPage() {
         {mode === 'buy' && (
           <div className="space-y-4">
             {/* Price comparison */}
-            {smeltPrice !== null && (
+            {(smeltPrice !== null || nav !== null) && (
               <div className="rounded-2xl border border-white/10 bg-white/[0.02] px-5 py-4 grid grid-cols-2 gap-4">
                 <div>
                   <div className="text-[10px] text-zinc-500 uppercase tracking-widest mb-1">Market price</div>
-                  <div className="text-zinc-100 font-bold">{smeltPrice.toFixed(8)} SOL</div>
+                  <div className="text-zinc-100 font-bold">{smeltPrice?.toFixed(8) ?? '—'} SOL</div>
                 </div>
                 <div>
                   <div className="text-[10px] text-zinc-500 uppercase tracking-widest mb-1">Pending pool</div>

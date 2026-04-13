@@ -11,6 +11,8 @@ import { SMELT_MINT } from '@/lib/constants';
 
 const NAV_ITEMS = [
   { href: '/', label: 'Recycle', icon: '♻' },
+  { href: '/swap', label: 'Swap', icon: '⇄' },
+  { href: '/community', label: 'Community', icon: '🌍' },
   { href: '/pools', label: 'Pools', icon: '🏊' },
   { href: '/how-it-works', label: 'How it works', icon: '📖' },
 ];
@@ -149,6 +151,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 </Link>
               );
             })}
+            {connected && publicKey && (
+              <Link
+                href="/dashboard"
+                className={[
+                  'flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium transition-colors mt-2 border-t border-white/5 pt-3',
+                  pathname === '/dashboard'
+                    ? 'bg-emerald-500/15 text-emerald-400'
+                    : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5',
+                ].join(' ')}
+              >
+                <span>👤</span>
+                <span>Dashboard</span>
+              </Link>
+            )}
           </nav>
 
           {/* Wallet section */}

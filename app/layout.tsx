@@ -4,6 +4,8 @@ import './globals.css';
 import { Providers } from './providers';
 import { AppShell } from '@/components/AppShell';
 import { SmeltProvider } from '@/lib/smelt-context';
+import { Suspense } from 'react';
+import { ReferralDetector } from '@/components/ReferralDetector';
 
 export const metadata: Metadata = {
   title: '♻ Recycler',
@@ -21,6 +23,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <Providers>
           <SmeltProvider>
+            <Suspense fallback={null}>
+              <ReferralDetector />
+            </Suspense>
             <AppShell>{children}</AppShell>
           </SmeltProvider>
         </Providers>

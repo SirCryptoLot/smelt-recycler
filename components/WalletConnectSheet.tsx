@@ -32,7 +32,7 @@ const WALLETS = [
     name: 'Jupiter',
     color: '#38bdf8',
     emoji: '🪐',
-    deepLink: (url: string) => `https://jup.ag/ul/browse/${url}?ref=${url}`,
+    deepLink: (_url: string) => `https://jup.ag`,
   },
 ];
 
@@ -62,7 +62,7 @@ interface WalletConnectSheetProps {
 }
 
 export function WalletConnectSheet({ open, onClose }: WalletConnectSheetProps) {
-  const { select, wallets, connect } = useWallet();
+  const { select, wallets } = useWallet();
   const [detected, setDetected] = useState<DetectedWallet>(null);
   const [isExternalMobile, setIsExternalMobile] = useState(false);
 
@@ -83,10 +83,8 @@ export function WalletConnectSheet({ open, onClose }: WalletConnectSheetProps) {
     const adapter = wallets.find(
       (w) => w.adapter.name.toLowerCase() === detectedWallet.name.toLowerCase()
     );
-    if (adapter) {
-      select(adapter.adapter.name);
-      connect().catch(() => {});
-    }
+    if (!adapter) return;
+    select(adapter.adapter.name);
     onClose();
   }
 

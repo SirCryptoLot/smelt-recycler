@@ -6,7 +6,7 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import { useConnection } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { useSmelt } from '@/lib/smelt-context';
-import { fetchSmeltBalance, fetchStakeInfo } from '@/lib/smelt';
+import { fetchStakeInfo } from '@/lib/smelt';
 
 interface DashboardData {
   activity: {
@@ -104,7 +104,7 @@ export default function DashboardPage() {
               { label: 'SMELT Balance', value: smeltUi.toLocaleString(), sub: 'total holdings', color: 'text-emerald-400' },
               { label: 'Staked', value: stakedUi.toLocaleString(), sub: '1.5× weight active', color: 'text-zinc-100', badge: stakedUi > 0 },
               { label: 'Distribution weight', value: weight.toLocaleString(undefined, { maximumFractionDigits: 0 }), sub: `${unstakedUi.toFixed(0)} × 1 + ${stakedUi.toFixed(0)} × 1.5`, color: 'text-indigo-400' },
-              { label: 'SOL earned', value: `${data?.distributions.recent.reduce((s, d) => s + d.totalSol, 0).toFixed(4) ?? '0.0000'} SOL`, sub: 'recent distributions', color: 'text-zinc-100' },
+              { label: 'SOL reclaimed', value: `${(data?.activity.allTimeSolReclaimed ?? 0).toFixed(4)} SOL`, sub: 'all-time from recycling', color: 'text-zinc-100' },
             ].map(({ label, value, sub, color, badge }) => (
               <div key={label} className="rounded-2xl bg-white/5 border border-white/10 p-4">
                 <div className="text-xs text-zinc-500 mb-1">{label}</div>

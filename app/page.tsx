@@ -98,10 +98,11 @@ export default function Home() {
       const result = await recycleAccounts(selected, publicKey, signAllTransactions, connection);
       setRecycleResult(result);
       if (result.succeeded > 0) {
+        const referredBy = typeof window !== 'undefined' ? localStorage.getItem('referredBy') ?? undefined : undefined;
         fetch('/api/recycle', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ wallet: publicKey.toBase58(), accountsClosed: result.succeeded }),
+          body: JSON.stringify({ wallet: publicKey.toBase58(), accountsClosed: result.succeeded, referredBy }),
         })
           .then(() => refreshSmelt())
           .catch(() => {});
@@ -134,28 +135,23 @@ export default function Home() {
 
       {/* Stats strip */}
       {status === 'results' && (
-        <div className="flex gap-4 px-6 py-4 border-b border-white/5 flex-shrink-0">
-          <div className="rounded-xl border border-emerald-500/15 bg-emerald-500/5 px-4 py-3 flex-1">
-            <div className="text-[10px] font-semibold tracking-widest text-emerald-500/50 uppercase mb-0.5">SOL to reclaim</div>
-            <div className="text-white font-bold text-xl tracking-tight">{sol.toFixed(4)}</div>
-            <div className="text-white/25 text-[11px] mt-0.5">{selected.length} / {accounts.length} selected</div>
+        <div className="grid grid-cols-2 gap-2 px-4 py-3 border-b border-white/5 flex-shrink-0">
+          <div className="rounded-xl border border-emerald-500/15 bg-emerald-500/5 px-3 py-2.5 col-span-1">
+            <div className="text-[9px] font-semibold tracking-widest text-emerald-500/50 uppercase mb-0.5">SOL to reclaim</div>
+            <div className="text-white font-bold text-lg tracking-tight">{sol.toFixed(4)}</div>
+            <div className="text-white/25 text-[10px] mt-0.5">{selected.length}/{accounts.length} selected</div>
           </div>
-          {totalUsd > 0 && (
-            <div className="rounded-xl border border-white/5 bg-white/[0.02] px-4 py-3 flex-1">
-              <div className="text-[10px] font-semibold tracking-widest text-white/25 uppercase mb-0.5">Dust value</div>
-              <div className="text-white/50 font-bold text-xl">${totalUsd.toFixed(4)}</div>
-            </div>
-          )}
-          <div className="rounded-xl border border-white/5 bg-white/[0.02] px-4 py-3 flex-1">
-            <div className="text-[10px] font-semibold tracking-widest text-white/25 uppercase mb-0.5">SMELT reward</div>
-            <div className="text-emerald-400 font-bold text-xl">+{smeltReward.toLocaleString()}</div>
+          <div className="rounded-xl border border-white/5 bg-white/[0.02] px-3 py-2.5 col-span-1">
+            <div className="text-[9px] font-semibold tracking-widest text-white/25 uppercase mb-0.5">SMELT reward</div>
+            <div className="text-emerald-400 font-bold text-lg">+{smeltReward.toLocaleString()}</div>
+            {totalUsd > 0 && <div className="text-white/25 text-[10px] mt-0.5">dust ${totalUsd.toFixed(2)}</div>}
           </div>
         </div>
       )}
 
       {/* Disconnected */}
       {status === 'disconnected' && (
-        <div className="flex-1 flex flex-col items-center justify-center gap-5 p-10">
+        <div className="flex-1 flex flex-col items-center justify-center gap-5 p-6 sm:p-10">
           <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/10 flex items-center justify-center text-3xl">🔌</div>
           <div className="text-center">
             <div className="text-white font-semibold text-lg">Connect your wallet</div>
@@ -181,7 +177,7 @@ export default function Home() {
       {/* Results */}
       {status === 'results' && (
         <div className="flex flex-col flex-1 overflow-hidden">
-          <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 flex-shrink-0">
+          <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-white/5 flex-shrink-0">
             <span className="text-white/30 text-xs font-semibold tracking-widest uppercase">
               {accounts.length} trash account{accounts.length !== 1 ? 's' : ''}
             </span>
@@ -192,7 +188,7 @@ export default function Home() {
           {error && (
             <div className="mx-6 mt-4 flex-shrink-0 rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3 text-red-400/70 text-sm">{error}</div>
           )}
-          <div className="flex-1 overflow-y-auto px-6 py-4 space-y-2">
+          <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 space-y-2">
             {accounts.map((account) => {
               const key = account.pubkey.toBase58();
               const mintStr = account.mint.toBase58();
@@ -235,7 +231,7 @@ export default function Home() {
               );
             })}
           </div>
-          <div className="px-6 py-4 border-t border-white/5 flex-shrink-0 bg-[#060f0d]">
+          <div className="px-4 sm:px-6 py-4 border-t border-white/5 flex-shrink-0 bg-[#060f0d]">
             <button
               onClick={recycle}
               disabled={!signAllTransactions || selected.length === 0}
@@ -284,7 +280,7 @@ export default function Home() {
 
       {/* Error */}
       {status === 'error' && (
-        <div className="flex-1 flex flex-col items-center justify-center gap-4 p-8">
+        <div className="flex-1 flex flex-col items-center justify-center gap-4 p-5 sm:p-8">
           <div className="rounded-2xl border border-red-500/15 bg-red-500/5 px-6 py-5 max-w-sm w-full text-center">
             <div className="text-red-400 font-semibold mb-1">Scan failed</div>
             <div className="text-red-400/50 text-sm">{error}</div>

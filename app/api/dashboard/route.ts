@@ -47,7 +47,6 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       allTimeSmeltEarned: stats.allTime.smeltEarned,
     },
     referral: {
-      link: '',
       referrals: referral.referrals.slice(-10).reverse(),
       pendingBonus: referral.pendingBonus,
       totalEarned: referral.totalEarned,

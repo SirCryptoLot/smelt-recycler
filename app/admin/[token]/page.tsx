@@ -48,7 +48,16 @@ export default function AdminPage() {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [actionOutput, setActionOutput] = useState('No output yet.');
   const [actionRunning, setActionRunning] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   const refresh = useCallback(async (silent = false) => {
     if (!silent) setRefreshing(true);
@@ -70,6 +79,11 @@ export default function AdminPage() {
     intervalRef.current = setInterval(() => refresh(true), 30_000);
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, [refresh]);
+
+  const navigate = useCallback((id: Section) => {
+    setSection(id);
+    setSidebarOpen(false);
+  }, []);
 
   const runAction = useCallback(async (action: 'liquidate' | 'distribute') => {
     setActionRunning(true);
@@ -117,16 +131,41 @@ export default function AdminPage() {
   return (
     <div className="flex h-screen bg-[#060f0d] text-white overflow-hidden">
 
+      {/* Mobile backdrop */}
+      {isMobile && sidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Admin sidebar */}
-      <aside className="w-36 flex-shrink-0 flex flex-col border-r border-white/5 bg-[#09140f]">
-        <div className="px-4 pt-5 pb-4 border-b border-white/5">
+      <aside
+        style={isMobile ? {
+          position: 'fixed',
+          top: 0, left: 0, bottom: 0,
+          zIndex: 50,
+          width: '200px',
+          transform: sidebarOpen ? 'translateX(0)' : 'translateX(-100%)',
+          transition: 'transform 0.25s ease',
+        } : {
+          position: 'relative',
+          width: '144px',
+          flexShrink: 0,
+        }}
+        className="flex flex-col border-r border-white/5 bg-[#09140f]"
+      >
+        <div className="px-4 pt-5 pb-4 border-b border-white/5 flex items-center justify-between">
           <div className="text-emerald-400 text-xs font-bold tracking-widest uppercase">⚙ Admin</div>
+          {isMobile && (
+            <button onClick={() => setSidebarOpen(false)} className="text-white/30 hover:text-white/60 text-lg leading-none p-1">✕</button>
+          )}
         </div>
         <nav className="flex-1 flex flex-col gap-1 p-2 pt-3">
           {NAV_ITEMS.map(({ id, label, icon }) => (
             <button
               key={id}
-              onClick={() => setSection(id)}
+              onClick={() => navigate(id)}
               className={[
                 'flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium transition-colors text-left w-full',
                 section === id
@@ -159,9 +198,22 @@ export default function AdminPage() {
       {/* Main content */}
       <main className="flex-1 flex flex-col min-w-0 overflow-y-auto">
 
+        {/* Mobile top bar */}
+        {isMobile && (
+          <div className="flex items-center gap-3 px-4 py-3 border-b border-white/5 flex-shrink-0">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="text-white/50 hover:text-white transition-colors text-xl leading-none"
+              aria-label="Open admin menu"
+            >☰</button>
+            <div className="text-emerald-400 text-xs font-bold tracking-widest uppercase">⚙ Admin</div>
+            <div className="ml-auto text-xs text-zinc-500 capitalize">{section}</div>
+          </div>
+        )}
+
         {/* ── OVERVIEW ── */}
         {section === 'overview' && (
-          <div className="p-6 space-y-6">
+          <div className="p-4 sm:p-6 space-y-6">
             <h2 className="text-lg font-bold text-zinc-100">Overview</h2>
 
             {/* Stat cards */}
@@ -217,7 +269,7 @@ export default function AdminPage() {
 
         {/* ── VAULT ── */}
         {section === 'vault' && (
-          <div className="p-6 space-y-4">
+          <div className="p-4 sm:p-6 space-y-4">
             <h2 className="text-lg font-bold text-zinc-100">Vault Contents</h2>
             {d.vault.tokens.length === 0 ? (
               <div className="rounded-2xl bg-white/5 border border-white/10 p-6 text-zinc-500 text-sm">
@@ -225,6 +277,7 @@ export default function AdminPage() {
               </div>
             ) : (
               <div className="rounded-2xl bg-white/5 border border-white/10 overflow-hidden">
+                <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-white/10 text-zinc-500 text-xs">
@@ -260,6 +313,7 @@ export default function AdminPage() {
                     ))}
                   </tbody>
                 </table>
+                </div>
               </div>
             )}
           </div>
@@ -267,7 +321,7 @@ export default function AdminPage() {
 
         {/* ── ACTIONS ── */}
         {section === 'actions' && (
-          <div className="p-6 space-y-6">
+          <div className="p-4 sm:p-6 space-y-6">
             <h2 className="text-lg font-bold text-zinc-100">Actions</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="rounded-2xl bg-white/5 border border-white/10 p-5 space-y-3">
@@ -318,7 +372,7 @@ export default function AdminPage() {
 
         {/* ── SMELT ── */}
         {section === 'smelt' && (
-          <div className="p-6 space-y-6">
+          <div className="p-4 sm:p-6 space-y-6">
             <h2 className="text-lg font-bold text-zinc-100">SMELT Token</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {[
@@ -345,7 +399,7 @@ export default function AdminPage() {
 
         {/* ── HISTORY ── */}
         {section === 'history' && (
-          <div className="p-6 space-y-8">
+          <div className="p-4 sm:p-6 space-y-8">
             <h2 className="text-lg font-bold text-zinc-100">History</h2>
 
             <section className="space-y-3">
@@ -354,6 +408,7 @@ export default function AdminPage() {
                 <div className="rounded-2xl bg-white/5 border border-white/10 p-5 text-zinc-500 text-sm">No liquidations yet.</div>
               ) : (
                 <div className="rounded-2xl bg-white/5 border border-white/10 overflow-hidden">
+                  <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-white/10 text-zinc-500 text-xs">
@@ -374,6 +429,7 @@ export default function AdminPage() {
                       ))}
                     </tbody>
                   </table>
+                  </div>
                 </div>
               )}
             </section>
@@ -384,6 +440,7 @@ export default function AdminPage() {
                 <div className="rounded-2xl bg-white/5 border border-white/10 p-5 text-zinc-500 text-sm">No distributions yet.</div>
               ) : (
                 <div className="rounded-2xl bg-white/5 border border-white/10 overflow-hidden">
+                  <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-white/10 text-zinc-500 text-xs">
@@ -404,6 +461,7 @@ export default function AdminPage() {
                       ))}
                     </tbody>
                   </table>
+                  </div>
                 </div>
               )}
             </section>

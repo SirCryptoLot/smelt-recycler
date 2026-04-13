@@ -62,7 +62,7 @@ export default function PoolsPage() {
 
   if (loading) {
     return (
-      <main className="flex-1 overflow-y-auto p-8">
+      <main className="flex-1 overflow-y-auto p-4 sm:p-8">
         <div className="max-w-4xl mx-auto space-y-4">
           {[...Array(4)].map((_, i) => (
             <div key={i} className="h-24 rounded-2xl bg-white/5 animate-pulse" />
@@ -93,14 +93,14 @@ export default function PoolsPage() {
 
   return (
     <main className="flex-1 overflow-y-auto">
-      <div className="max-w-4xl mx-auto px-6 py-8 space-y-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-8">
 
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <h1 className="text-xl font-bold text-zinc-100">Pools</h1>
           <div className="flex items-center gap-3">
             {lastUpdated && (
-              <span className="text-xs text-zinc-600">
+              <span className="text-xs text-zinc-600 hidden sm:inline">
                 Updated {lastUpdated.toLocaleTimeString()}
               </span>
             )}
@@ -124,6 +124,7 @@ export default function PoolsPage() {
             </div>
           ) : (
             <div className="rounded-2xl bg-white/5 border border-white/10 overflow-hidden">
+              <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-white/10 text-zinc-500">
@@ -154,6 +155,7 @@ export default function PoolsPage() {
                   ))}
                 </tbody>
               </table>
+              </div>
             </div>
           )}
         </section>
@@ -186,6 +188,7 @@ export default function PoolsPage() {
             </div>
           ) : (
             <div className="rounded-2xl bg-white/5 border border-white/10 overflow-hidden">
+              <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-white/10 text-zinc-500">
@@ -204,6 +207,7 @@ export default function PoolsPage() {
                   ))}
                 </tbody>
               </table>
+              </div>
             </div>
           )}
         </section>

@@ -5,6 +5,7 @@
 body {
   background: #f9fafb;
   color: #111827;
+  overflow-x: hidden;
 }
 
 /* ── Wallet Adapter: light theme overrides ── */
@@ -94,4 +95,12 @@ body {
 }
 .wallet-adapter-modal-list-more svg {
   fill: #6b7280 !important;
+}
+
+@keyframes slide-up {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+.animate-slide-up {
+  animation: slide-up 0.25s ease;
 }

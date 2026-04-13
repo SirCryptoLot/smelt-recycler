@@ -25,13 +25,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { connection } = useConnection();
   const { smeltBalance } = useSmelt();
   const [mounted, setMounted] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [pendingSol, setPendingSol] = useState(0);
   const [totalSupply, setTotalSupply] = useState(0);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    setMounted(true);
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
-  // Close sidebar on route change (mobile nav tap)
+  // Close mobile sidebar on navigation
   useEffect(() => { setSidebarOpen(false); }, [pathname]);
 
   useEffect(() => {
@@ -49,9 +56,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       (connection as Connection).getTokenSupply(SMELT_MINT)
         .then((s) => setTotalSupply(s.value.uiAmount ?? 0))
         .catch(() => {});
-    } catch {
-      // connection not available (e.g. in tests)
-    }
+    } catch { /* tests */ }
   }, [connection]);
 
   const smeltUi = Number(smeltBalance) / 1e9;
@@ -59,7 +64,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     ? (pendingSol / totalSupply).toFixed(6)
     : '0.000000';
 
-  // Admin pages provide their own full-screen layout
+  // Admin pages manage their own layout
   if (pathname.startsWith('/admin')) {
     return (
       <div className="h-screen bg-[#060f0d] text-white overflow-hidden">
@@ -68,130 +73,134 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     );
   }
 
-  const sidebarContent = (
-    <>
-      {/* Brand */}
-      <div className="px-5 pt-6 pb-5 border-b border-white/5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-emerald-500/15 flex items-center justify-center text-lg leading-none">
-              ♻
-            </div>
-            <div>
-              <div className="text-white font-bold text-sm tracking-tight">Recycler</div>
-              <div className="text-emerald-500/50 text-[11px]">Reclaim your SOL</div>
-            </div>
-          </div>
-          {/* Close button — mobile only */}
-          <button
-            onClick={() => setSidebarOpen(false)}
-            className="md:hidden text-white/30 hover:text-white/60 text-xl leading-none p-1"
-            aria-label="Close menu"
-          >
-            ✕
-          </button>
-        </div>
-      </div>
-
-      {/* Nav links */}
-      <nav className="flex-1 flex flex-col gap-1 p-3">
-        {NAV_ITEMS.map(({ href, label, icon }) => {
-          const active = href === '/' ? pathname === '/' : pathname.startsWith(href);
-          return (
-            <Link
-              key={href}
-              href={href}
-              className={[
-                'flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium transition-colors',
-                active
-                  ? 'bg-emerald-500/15 text-emerald-400'
-                  : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5',
-              ].join(' ')}
-            >
-              <span>{icon}</span>
-              <span>{label}</span>
-            </Link>
-          );
-        })}
-      </nav>
-
-      {/* Wallet section */}
-      <div className="p-4 border-t border-white/5">
-        {connected && publicKey ? (
-          <>
-            <div className="rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2.5 mb-3 space-y-1.5">
-              <div className="text-[10px] font-semibold tracking-widest text-white/25 uppercase">
-                Wallet
-              </div>
-              <div className="text-white/70 text-xs font-mono">
-                {shortAddr(publicKey.toBase58())}
-              </div>
-              <div className="flex justify-between text-xs pt-1">
-                <span className="text-zinc-500">SMELT</span>
-                <span className="text-zinc-200">{smeltUi.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between text-xs">
-                <span className="text-zinc-500">NAV</span>
-                <span className="text-indigo-400">{nav} SOL</span>
-              </div>
-            </div>
-            <button
-              onClick={() => disconnect()}
-              className="w-full text-white/30 text-xs rounded-xl py-2.5 border border-white/5 hover:border-white/10 hover:text-white/50 transition-all"
-            >
-              Disconnect
-            </button>
-          </>
-        ) : mounted ? (
-          <WalletMultiButton className="!w-full !bg-emerald-500 !text-white !font-semibold !text-sm !rounded-xl !justify-center !py-2.5" />
-        ) : (
-          <div className="h-10 w-full rounded-xl bg-emerald-500/20 animate-pulse" />
-        )}
-      </div>
-    </>
-  );
+  const sidebarVisible = !isMobile || sidebarOpen;
 
   return (
     <div className="flex h-screen bg-[#060f0d] text-white overflow-hidden">
 
-      {/* ── DESKTOP sidebar (md+) ── */}
-      <aside className="hidden md:flex w-52 flex-shrink-0 flex-col border-r border-white/5 bg-[#09140f]">
-        {sidebarContent}
-      </aside>
-
-      {/* ── MOBILE sidebar overlay ── */}
-      {sidebarOpen && (
+      {/* Backdrop — mobile only, shown when sidebar open */}
+      {isMobile && sidebarOpen && (
         <div
-          className="md:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
           onClick={() => setSidebarOpen(false)}
         />
       )}
-      <aside
-        className={[
-          'md:hidden fixed inset-y-0 left-0 z-50 w-72 flex flex-col bg-[#09140f] border-r border-white/5',
-          'transition-transform duration-300',
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full',
-        ].join(' ')}
-      >
-        {sidebarContent}
-      </aside>
+
+      {/* Single sidebar — in-flow on desktop, fixed overlay on mobile */}
+      {mounted && (
+        <aside
+          style={isMobile ? {
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            bottom: 0,
+            zIndex: 50,
+            transform: sidebarOpen ? 'translateX(0)' : 'translateX(-100%)',
+            transition: 'transform 0.25s ease',
+            width: '288px',
+          } : {
+            position: 'relative',
+            width: '208px',
+            flexShrink: 0,
+          }}
+          className="flex flex-col border-r border-white/5 bg-[#09140f]"
+        >
+          {/* Brand */}
+          <div className="px-5 pt-6 pb-5 border-b border-white/5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-emerald-500/15 flex items-center justify-center text-lg leading-none">
+                  ♻
+                </div>
+                <div>
+                  <div className="text-white font-bold text-sm tracking-tight">Recycler</div>
+                  <div className="text-emerald-500/50 text-[11px]">Reclaim your SOL</div>
+                </div>
+              </div>
+              {isMobile && (
+                <button
+                  onClick={() => setSidebarOpen(false)}
+                  className="text-white/30 hover:text-white/60 text-xl leading-none p-1"
+                  aria-label="Close menu"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Nav links */}
+          <nav className="flex-1 flex flex-col gap-1 p-3">
+            {NAV_ITEMS.map(({ href, label, icon }) => {
+              const active = href === '/' ? pathname === '/' : pathname.startsWith(href);
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className={[
+                    'flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium transition-colors',
+                    active
+                      ? 'bg-emerald-500/15 text-emerald-400'
+                      : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5',
+                  ].join(' ')}
+                >
+                  <span>{icon}</span>
+                  <span>{label}</span>
+                </Link>
+              );
+            })}
+          </nav>
+
+          {/* Wallet section */}
+          <div className="p-4 border-t border-white/5">
+            {connected && publicKey ? (
+              <>
+                <div className="rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2.5 mb-3 space-y-1.5">
+                  <div className="text-[10px] font-semibold tracking-widest text-white/25 uppercase">Wallet</div>
+                  <div className="text-white/70 text-xs font-mono">{shortAddr(publicKey.toBase58())}</div>
+                  <div className="flex justify-between text-xs pt-1">
+                    <span className="text-zinc-500">SMELT</span>
+                    <span className="text-zinc-200">{smeltUi.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-zinc-500">NAV</span>
+                    <span className="text-indigo-400">{nav} SOL</span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => disconnect()}
+                  className="w-full text-white/30 text-xs rounded-xl py-2.5 border border-white/5 hover:border-white/10 hover:text-white/50 transition-all"
+                >
+                  Disconnect
+                </button>
+              </>
+            ) : mounted ? (
+              <WalletMultiButton className="!w-full !bg-emerald-500 !text-white !font-semibold !text-sm !rounded-xl !justify-center !py-2.5" />
+            ) : (
+              <div className="h-10 w-full rounded-xl bg-emerald-500/20 animate-pulse" />
+            )}
+          </div>
+        </aside>
+      )}
 
       {/* Page content */}
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* ── MOBILE top bar ── */}
-        <div className="md:hidden flex items-center gap-3 px-4 py-3 border-b border-white/5 flex-shrink-0">
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="text-white/50 hover:text-white transition-colors text-xl leading-none"
-            aria-label="Open menu"
-          >
-            ☰
-          </button>
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded bg-emerald-500/15 flex items-center justify-center text-sm leading-none">♻</div>
-            <span className="text-white font-semibold text-sm">Recycler</span>
+        {/* Mobile top bar — only shown after mount on small screens */}
+        {mounted && isMobile && (
+          <div className="flex items-center gap-3 px-4 py-3 border-b border-white/5 flex-shrink-0">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="text-white/50 hover:text-white transition-colors text-xl leading-none"
+              aria-label="Open menu"
+            >
+              ☰
+            </button>
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded bg-emerald-500/15 flex items-center justify-center text-sm leading-none">♻</div>
+              <span className="text-white font-semibold text-sm">Recycler</span>
+            </div>
           </div>
-        </div>
+        )}
 
         {children}
       </main>

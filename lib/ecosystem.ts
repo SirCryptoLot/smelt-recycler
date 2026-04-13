@@ -29,7 +29,7 @@ function save(data: EcosystemData): void {
   try { fs.writeFileSync(PATH, JSON.stringify(data, null, 2)); } catch { /* non-blocking */ }
 }
 
-export function recordRecycle(wallet: string, accountsClosed: number, solReclaimed: number, smeltMinted: number): void {
+export function recordRecycle(accountsClosed: number, solReclaimed: number, smeltMinted: number): void {
   const data = load();
   data.totalAccountsClosed += accountsClosed;
   data.totalSolReclaimed += solReclaimed;

@@ -31,8 +31,7 @@ function save(data: ReferralsData): void {
 }
 
 export function recordReferral(referrer: string, referee: string, accountsClosed: number, solReclaimed: number): void {
-  const feeEarned = accountsClosed * 0.002 * 0.05;
-  const bonusEarned = feeEarned * 0.1;
+  const bonusEarned = solReclaimed * 0.05 * 0.1;
   const data = load();
 
   if (!data.relationships[referrer]) data.relationships[referrer] = [];

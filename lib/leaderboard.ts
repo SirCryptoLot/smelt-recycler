@@ -66,6 +66,7 @@ export function getWalletStats(wallet: string): { weekly: LeaderboardEntry; allT
 
 export function getWeeklyRank(wallet: string): number {
   const data = load();
+  // Sort by accounts closed (primary ranking metric)
   const sorted = Object.entries(data.weekly.entries)
     .sort(([, a], [, b]) => b.accounts - a.accounts);
   const idx = sorted.findIndex(([w]) => w === wallet);

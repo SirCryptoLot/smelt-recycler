@@ -8,6 +8,7 @@ import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { useSmelt } from '@/lib/smelt-context';
 import { Connection } from '@solana/web3.js';
 import { SMELT_MINT } from '@/lib/constants';
+import { WalletConnectSheet } from './WalletConnectSheet';
 
 const NAV_ITEMS = [
   { href: '/', label: 'Recycle', icon: '♻' },
@@ -28,10 +29,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { smeltBalance } = useSmelt();
   const [mounted, setMounted] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [walletSheetOpen, setWalletSheetOpen] = useState(false);
   const [pendingSol, setPendingSol] = useState(0);
   const [totalSupply, setTotalSupply] = useState(0);
 
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   useEffect(() => { setDrawerOpen(false); }, [pathname]);
 
   useEffect(() => {
@@ -70,6 +74,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
+
+      {mounted && (
+        <WalletConnectSheet
+          open={walletSheetOpen}
+          onClose={() => setWalletSheetOpen(false)}
+        />
+      )}
 
       {/* Mobile drawer backdrop */}
       {drawerOpen && (
@@ -132,7 +143,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 </button>
               </>
             ) : (
-              <WalletMultiButton style={{ width: '100%', borderRadius: '0.75rem', justifyContent: 'center' }} />
+              <button
+                onClick={() => { setDrawerOpen(false); setWalletSheetOpen(true); }}
+                className="w-full bg-green-600 hover:bg-green-500 text-white text-sm font-semibold rounded-xl py-3 transition-colors"
+              >
+                Connect Wallet
+              </button>
             )}
           </div>
         </div>
@@ -199,7 +215,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <div className="w-32 h-9 rounded-full bg-green-100 animate-pulse" />
             )}
           </div>
-          {/* Mobile: connected indicator dot (wallet is in drawer) */}
+          {/* Mobile: connected indicator or connect button */}
           {mounted && (
             <div className="md:hidden flex items-center gap-1.5">
               {connected ? (
@@ -209,7 +225,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 </span>
               ) : (
                 <button
-                  onClick={() => setDrawerOpen(true)}
+                  onClick={() => setWalletSheetOpen(true)}
                   className="text-xs font-semibold text-white bg-green-600 hover:bg-green-500 px-3 py-1.5 rounded-full transition-colors"
                 >
                   Connect

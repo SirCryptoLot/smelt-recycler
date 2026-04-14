@@ -6,6 +6,8 @@ body {
   background: #f9fafb;
   color: #111827;
   overflow-x: hidden;
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
 }
 
 /* ── Wallet Adapter: light theme overrides ── */

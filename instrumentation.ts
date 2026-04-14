@@ -1,30 +1,31 @@
 // instrumentation.ts — runs once on server startup (Next.js App Router)
 // Creates data files with empty defaults if they don't exist yet.
-import * as fs from 'fs';
-import * as path from 'path';
-
-const DATA_DIR = process.env.DATA_DIR ?? path.join(process.cwd(), 'data');
-
-const DEFAULTS: Record<string, unknown> = {
-  'fees.json': [],
-  'donations.json': [],
-  'referrals.json': [],
-  'liquidations.json': [],
-  'distributions.json': [],
-  'ecosystem.json': {
-    totalWallets: 0,
-    totalAccountsClosed: 0,
-    totalSolReclaimed: 0,
-    totalSmeltMinted: 0,
-  },
-  'leaderboard.json': {
-    weekly: { since: new Date().toISOString(), entries: [] },
-    allTime: { entries: [] },
-  },
-};
 
 export async function register() {
   if (process.env.NEXT_RUNTIME === 'nodejs') {
+    const fs = await import('fs');
+    const path = await import('path');
+
+    const DATA_DIR = process.env.DATA_DIR ?? path.join(process.cwd(), 'data');
+
+    const DEFAULTS: Record<string, unknown> = {
+      'fees.json': [],
+      'donations.json': [],
+      'referrals.json': [],
+      'liquidations.json': [],
+      'distributions.json': [],
+      'ecosystem.json': {
+        totalWallets: 0,
+        totalAccountsClosed: 0,
+        totalSolReclaimed: 0,
+        totalSmeltMinted: 0,
+      },
+      'leaderboard.json': {
+        weekly: { since: new Date().toISOString(), entries: [] },
+        allTime: { entries: [] },
+      },
+    };
+
     if (!fs.existsSync(DATA_DIR)) {
       fs.mkdirSync(DATA_DIR, { recursive: true });
     }

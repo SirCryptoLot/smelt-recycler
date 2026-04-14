@@ -1,7 +1,10 @@
 // app/layout.tsx
 import type { Metadata, Viewport } from 'next';
+import { Inter } from 'next/font/google';
 import './globals.css';
 import { Providers } from './providers';
+
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 import { AppShell } from '@/components/AppShell';
 import { SmeltProvider } from '@/lib/smelt-context';
 import { Suspense } from 'react';
@@ -21,8 +24,8 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body>
+    <html lang="en" className={inter.variable}>
+      <body className={inter.className}>
         <Providers>
           <SmeltProvider>
             <Suspense fallback={null}>

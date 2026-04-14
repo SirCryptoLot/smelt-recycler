@@ -237,8 +237,8 @@ export default function AdminPage() {
               <div className="rounded-2xl bg-white/5 border border-white/10 p-5">
                 <div className="text-sm font-semibold text-zinc-200 mb-1">⚡ Liquidate</div>
                 <div className="text-xs text-zinc-500 mb-3">
-                  Swap vault tokens → SOL when any token exceeds $10 USD value.
-                  {d.vault.tokens.some((t) => t.usdValue >= 10) && (
+                  Swap vault tokens → SOL when any token exceeds $1 USD value.
+                  {d.vault.tokens.some((t) => t.usdValue >= 1) && (
                     <span className="text-emerald-400 font-semibold"> A token is ready!</span>
                   )}
                 </div>
@@ -284,7 +284,7 @@ export default function AdminPage() {
                       <th className="text-left px-4 py-3">Token</th>
                       <th className="text-right px-4 py-3">Balance</th>
                       <th className="text-right px-4 py-3">USD Value</th>
-                      <th className="px-4 py-3 w-44">Progress to $10</th>
+                      <th className="px-4 py-3 w-44">Progress to $1</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -294,7 +294,7 @@ export default function AdminPage() {
                         <td className="px-4 py-3 text-right text-zinc-300">{t.uiAmount.toLocaleString()}</td>
                         <td className="px-4 py-3 text-right text-zinc-300">
                           ${t.usdValue.toFixed(2)}
-                          {t.usdValue >= 10 && (
+                          {t.usdValue >= 1 && (
                             <span className="ml-2 text-xs px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400">READY</span>
                           )}
                         </td>

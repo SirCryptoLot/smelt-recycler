@@ -2,7 +2,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { Connection } from '@solana/web3.js';
-import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID } from '@solana/spl-token';
 import {
   SMELT_MINT,
   VAULT_PUBKEY,
@@ -40,9 +40,11 @@ function loadJson<T>(filepath: string, fallback: T): T {
 }
 
 async function fetchVaultTokens(connection: Connection): Promise<Array<{ mint: string; uiAmount: number; usdValue?: number }>> {
-  const accounts = await connection.getParsedTokenAccountsByOwner(VAULT_PUBKEY, {
-    programId: TOKEN_PROGRAM_ID,
-  });
+  const [legacy, t22] = await Promise.all([
+    connection.getParsedTokenAccountsByOwner(VAULT_PUBKEY, { programId: TOKEN_PROGRAM_ID }),
+    connection.getParsedTokenAccountsByOwner(VAULT_PUBKEY, { programId: TOKEN_2022_PROGRAM_ID }),
+  ]);
+  const accounts = { value: [...legacy.value, ...t22.value] };
 
   const tokens = accounts.value
     .map((a) => {
@@ -60,12 +62,12 @@ async function fetchVaultTokens(connection: Connection): Promise<Array<{ mint: s
   if (tokens.length > 0) {
     const mints = tokens.map((t) => t.mint).join(',');
     try {
-      const res = await fetch(`https://price.jup.ag/v6/price?ids=${mints}`);
+      const res = await fetch(`https://api.jup.ag/price/v2?ids=${mints}`);
       if (res.ok) {
-        const json = await res.json() as { data: Record<string, { price: number }> };
+        const json = await res.json() as { data: Record<string, { price: string } | null> };
         return tokens.map((t) => ({
           ...t,
-          usdValue: (t.uiAmount * (json.data[t.mint]?.price ?? 0)),
+          usdValue: t.uiAmount * (parseFloat(json.data[t.mint]?.price ?? '0') || 0),
         }));
       }
     } catch { /* ignore */ }

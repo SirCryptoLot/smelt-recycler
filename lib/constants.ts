@@ -8,7 +8,7 @@ export const STAKING_PROGRAM_ID = new PublicKey('CiMhekpwAzLAfRr8um6Hexpnf8L8iTX
 // Updated to match data/keypairs/vault.json pubkey
 export const VAULT_PUBKEY = new PublicKey('DgkyF4YnwVYFqMSMo9WvDz2sVkFJSjsWueFYDrKgu87Z');
 
-export const LIQUIDATION_THRESHOLD_USD = 10;
+export const LIQUIDATION_THRESHOLD_USD = 1;
 export const TRASH_THRESHOLD_USD = 0.10;
 export const PLATFORM_FEE_BPS = 500; // 5%
 export const STAKING_BOOST = 1.5;

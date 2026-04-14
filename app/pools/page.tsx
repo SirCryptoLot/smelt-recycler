@@ -84,11 +84,6 @@ export default function PoolsPage() {
 
   const smeltBalanceUi = Number(smeltBalance) / 1e9;
   const smeltStakedUi = Number(smeltStaked) / 1e9;
-  const unstaked = smeltBalanceUi - smeltStakedUi;
-  const userWeight = unstaked * 1 + smeltStakedUi * 1.5;
-  const estimatedShare = userWeight > 0 && undistributedSol > 0
-    ? `~${(undistributedSol * 0.001).toFixed(4)} SOL`
-    : '—';
 
   return (
     <main className="flex-1 overflow-y-auto">
@@ -130,7 +125,7 @@ export default function PoolsPage() {
                       <th className="text-left px-4 py-3">Token</th>
                       <th className="text-right px-4 py-3">Balance</th>
                       <th className="text-right px-4 py-3">USD Value</th>
-                      <th className="px-4 py-3 w-36">Progress to $10</th>
+                      <th className="px-4 py-3 w-36">Progress to $1</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -223,7 +218,7 @@ export default function PoolsPage() {
             </div>
             <div className="rounded-2xl bg-white border border-gray-200 p-5">
               <div className="text-xs text-gray-400 mb-1">Your Est. Share</div>
-              <div className="text-green-600 font-medium">{estimatedShare}</div>
+              <div className="text-gray-400 font-medium">—</div>
             </div>
             <div className="rounded-2xl bg-white border border-gray-200 p-5">
               <div className="text-xs text-gray-400 mb-1">Total SOL Distributed</div>

@@ -4,5 +4,6 @@ const nextConfig = {
   // conflicts with our @types/react@18 during next build type-checking.
   // This is a known upstream incompatibility; dev server (next dev) works fine.
   typescript: { ignoreBuildErrors: true },
+  experimental: { instrumentationHook: true },
 };
 module.exports = nextConfig;

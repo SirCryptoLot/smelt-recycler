@@ -19,11 +19,14 @@ export interface ReferralsData {
 }
 
 function load(): ReferralsData {
+  const empty = { relationships: {}, pendingBonuses: {} };
   try {
-    if (!fs.existsSync(PATH)) return { relationships: {}, pendingBonuses: {} };
-    return JSON.parse(fs.readFileSync(PATH, 'utf-8')) as ReferralsData;
+    if (!fs.existsSync(PATH)) return empty;
+    const raw = JSON.parse(fs.readFileSync(PATH, 'utf-8'));
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw) || !raw.relationships) return empty;
+    return raw as ReferralsData;
   } catch {
-    return { relationships: {}, pendingBonuses: {} };
+    return empty;
   }
 }
 

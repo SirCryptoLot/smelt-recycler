@@ -11,7 +11,7 @@ export async function register() {
     const DEFAULTS: Record<string, unknown> = {
       'fees.json': [],
       'donations.json': [],
-      'referrals.json': [],
+      'referrals.json': { relationships: {}, pendingBonuses: {} },
       'liquidations.json': [],
       'distributions.json': [],
       'ecosystem.json': {
@@ -21,8 +21,8 @@ export async function register() {
         totalSmeltMinted: 0,
       },
       'leaderboard.json': {
-        weekly: { since: new Date().toISOString(), entries: [] },
-        allTime: { entries: [] },
+        weekly: { since: new Date().toISOString(), entries: {} },
+        allTime: { entries: {} },
       },
     };
 

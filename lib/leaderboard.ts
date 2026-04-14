@@ -17,14 +17,16 @@ export interface LeaderboardData {
 }
 
 function load(): LeaderboardData {
+  const empty = () => ({ weekly: { since: new Date().toISOString(), entries: {} as Record<string, LeaderboardEntry> }, allTime: { entries: {} as Record<string, LeaderboardEntry> } });
   try {
-    if (!fs.existsSync(PATH)) return {
-      weekly: { since: new Date().toISOString(), entries: {} },
-      allTime: { entries: {} },
-    };
-    return JSON.parse(fs.readFileSync(PATH, 'utf-8')) as LeaderboardData;
+    if (!fs.existsSync(PATH)) return empty();
+    const raw = JSON.parse(fs.readFileSync(PATH, 'utf-8')) as LeaderboardData;
+    // Migrate: entries may have been written as [] instead of {}
+    if (Array.isArray(raw?.weekly?.entries)) raw.weekly.entries = {};
+    if (Array.isArray(raw?.allTime?.entries)) raw.allTime.entries = {};
+    return raw;
   } catch {
-    return { weekly: { since: new Date().toISOString(), entries: {} }, allTime: { entries: {} } };
+    return empty();
   }
 }
 

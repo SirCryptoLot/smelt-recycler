@@ -1,6 +1,4 @@
 // scripts/mint-smelt.ts
-import * as fs from 'fs';
-import * as path from 'path';
 import {
   Connection,
   Keypair,
@@ -18,10 +16,9 @@ import {
 import { SMELT_MINT, currentSmeltPerAccount } from '../lib/constants';
 import { MAINNET_RPC } from '../lib/solana';
 
-const ADMIN_KEYPAIR_PATH = path.join(process.cwd(), 'data/keypairs/admin.json');
-
 function loadAdminKeypair(): Keypair {
-  const raw = JSON.parse(fs.readFileSync(ADMIN_KEYPAIR_PATH, 'utf-8')) as number[];
+  const raw = JSON.parse(process.env.ADMIN_KEYPAIR ?? '[]') as number[];
+  if (raw.length === 0) throw new Error('ADMIN_KEYPAIR env var not set');
   return Keypair.fromSecretKey(Uint8Array.from(raw));
 }
 

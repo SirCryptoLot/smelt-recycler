@@ -1,0 +1,98 @@
+<h2>Navigation Layout</h2>
+<p class="subtitle">Jito uses a top nav. We currently use a sidebar. Which layout should the redesign use?</p>
+
+<div class="split" style="gap:24px;margin-top:24px">
+
+  <!-- Option A: Top Nav (Jito style) -->
+  <div class="card" data-choice="a" onclick="toggleSelect(this)" style="padding:0;overflow:hidden;cursor:pointer;border:2px solid transparent">
+    <div style="background:#f9fafb;border-radius:12px;overflow:hidden">
+      <!-- Top nav bar -->
+      <div style="background:white;border-bottom:1px solid #e5e7eb;padding:12px 20px;display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;align-items:center;gap:24px">
+          <span style="font-weight:800;font-size:15px;color:#111">♻ Recycler</span>
+          <div style="display:flex;gap:16px">
+            <span style="font-size:12px;color:#374151;font-weight:500">Recycle</span>
+            <span style="font-size:12px;color:#374151;font-weight:500">Swap</span>
+            <span style="font-size:12px;color:#374151;font-weight:500">Community</span>
+            <span style="font-size:12px;color:#374151;font-weight:500">Pools</span>
+          </div>
+        </div>
+        <div style="background:#7c3aed;color:white;font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px">Connect</div>
+      </div>
+      <!-- Stats bar -->
+      <div style="background:#f3f4f6;border-bottom:1px solid #e5e7eb;padding:7px 20px;display:flex;gap:20px;font-size:11px;color:#6b7280">
+        <span><b style="color:#111">NAV</b> 0.0024 SOL</span>
+        <span style="color:#d1d5db">|</span>
+        <span><b style="color:#111">Supply</b> 1,204,000 SMELT</span>
+        <span style="color:#d1d5db">|</span>
+        <span><b style="color:#111">Pool</b> 2.89 SOL</span>
+      </div>
+      <!-- Page content -->
+      <div style="padding:24px 20px">
+        <div style="font-size:22px;font-weight:800;color:#111;margin-bottom:4px">Clean up your wallet</div>
+        <div style="font-size:12px;color:#6b7280;margin-bottom:16px">Reclaim locked SOL from dust accounts</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
+          <div style="background:white;border:1px solid #e5e7eb;border-radius:10px;padding:10px">
+            <div style="font-size:10px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.05em">SOL to reclaim</div>
+            <div style="font-size:18px;font-weight:800;color:#111">0.0420</div>
+          </div>
+          <div style="background:white;border:1px solid #e5e7eb;border-radius:10px;padding:10px">
+            <div style="font-size:10px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.05em">SMELT reward</div>
+            <div style="font-size:18px;font-weight:800;color:#16a34a">+5,250</div>
+          </div>
+        </div>
+        <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:10px;font-size:11px;color:#374151">
+          21 dust accounts selected · Recycle all →
+        </div>
+      </div>
+    </div>
+    <div class="card-body" style="padding:12px 16px">
+      <h3 style="margin:0 0 4px">A — Top Navigation</h3>
+      <p style="margin:0;font-size:12px;color:#6b7280">Full-width layout like Jito. Clean horizontal nav bar. More content space. Familiar web3 pattern.</p>
+    </div>
+  </div>
+
+  <!-- Option B: Styled Sidebar -->
+  <div class="card" data-choice="b" onclick="toggleSelect(this)" style="padding:0;overflow:hidden;cursor:pointer;border:2px solid transparent">
+    <div style="background:#f9fafb;border-radius:12px;overflow:hidden;display:flex;min-height:220px">
+      <!-- Sidebar -->
+      <div style="background:white;border-right:1px solid #e5e7eb;padding:16px 12px;min-width:130px;display:flex;flex-direction:column;gap:4px">
+        <div style="font-weight:800;font-size:13px;color:#111;margin-bottom:12px;padding-left:8px">♻ Recycler</div>
+        <div style="background:#f0fdf4;color:#15803d;font-size:11px;font-weight:600;padding:6px 8px;border-radius:8px">♻ Recycle</div>
+        <div style="color:#6b7280;font-size:11px;padding:6px 8px">⇄ Swap</div>
+        <div style="color:#6b7280;font-size:11px;padding:6px 8px">🌍 Community</div>
+        <div style="color:#6b7280;font-size:11px;padding:6px 8px">🏊 Pools</div>
+        <div style="color:#6b7280;font-size:11px;padding:6px 8px">📖 How it works</div>
+        <div style="margin-top:auto;padding:8px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px">
+          <div style="font-size:10px;color:#9ca3af">NAV</div>
+          <div style="font-size:12px;font-weight:700;color:#111">0.0024 SOL</div>
+        </div>
+      </div>
+      <!-- Content -->
+      <div style="flex:1;padding:16px">
+        <div style="font-size:18px;font-weight:800;color:#111;margin-bottom:4px">Clean up your wallet</div>
+        <div style="font-size:11px;color:#6b7280;margin-bottom:12px">21 dust accounts found</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px">
+          <div style="background:white;border:1px solid #e5e7eb;border-radius:8px;padding:8px">
+            <div style="font-size:9px;color:#9ca3af;text-transform:uppercase">SOL to reclaim</div>
+            <div style="font-size:16px;font-weight:800;color:#111">0.0420</div>
+          </div>
+          <div style="background:white;border:1px solid #e5e7eb;border-radius:8px;padding:8px">
+            <div style="font-size:9px;color:#9ca3af;text-transform:uppercase">SMELT reward</div>
+            <div style="font-size:16px;font-weight:800;color:#16a34a">+5,250</div>
+          </div>
+        </div>
+        <div style="background:#16a34a;color:white;text-align:center;padding:8px;border-radius:8px;font-size:11px;font-weight:700">
+          ♻ Recycle 21 accounts
+        </div>
+      </div>
+    </div>
+    <div class="card-body" style="padding:12px 16px">
+      <h3 style="margin:0 0 4px">B — Sidebar (Jito-styled)</h3>
+      <p style="margin:0;font-size:12px;color:#6b7280">Keep the sidebar but apply Jito's light theme. Better for a DApp with many sections.</p>
+    </div>
+  </div>
+
+</div>
+
+<p style="margin-top:20px;font-size:12px;color:#9ca3af;text-align:center">Both use Jito's light color palette. The difference is nav position.</p>

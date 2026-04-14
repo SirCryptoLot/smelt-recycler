@@ -8,7 +8,6 @@ import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { useSmelt } from '@/lib/smelt-context';
 import { Connection } from '@solana/web3.js';
 import { SMELT_MINT } from '@/lib/constants';
-import { WalletConnectSheet } from './WalletConnectSheet';
 
 const NAV_ITEMS = [
   { href: '/', label: 'Recycle', icon: '♻' },
@@ -36,13 +35,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { smeltBalance } = useSmelt();
   const [mounted, setMounted] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [walletSheetOpen, setWalletSheetOpen] = useState(false);
   const [pendingSol, setPendingSol] = useState(0);
   const [totalSupply, setTotalSupply] = useState(0);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  useEffect(() => { setMounted(true); }, []);
   useEffect(() => { setDrawerOpen(false); }, [pathname]);
 
   useEffect(() => {
@@ -82,13 +78,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
 
-      {mounted && (
-        <WalletConnectSheet
-          open={walletSheetOpen}
-          onClose={() => setWalletSheetOpen(false)}
-        />
-      )}
-
       {/* Mobile drawer backdrop */}
       {drawerOpen && (
         <div
@@ -110,6 +99,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </div>
             <button onClick={() => setDrawerOpen(false)} className="text-gray-400 hover:text-gray-600 text-xl leading-none p-1" aria-label="Close menu">✕</button>
           </div>
+
           <nav className="flex-1 p-3 flex flex-col gap-1 overflow-y-auto">
             {allNavItems.map(({ href, label, icon }) => {
               const active = href === '/' ? pathname === '/' : pathname.startsWith(href);
@@ -127,6 +117,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               );
             })}
           </nav>
+
           <div className="p-4 border-t border-gray-100">
             {connected && publicKey ? (
               <>
@@ -150,12 +141,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 </button>
               </>
             ) : (
-              <button
-                onClick={() => { setDrawerOpen(false); setWalletSheetOpen(true); }}
-                className="w-full bg-green-600 hover:bg-green-500 text-white text-sm font-semibold rounded-xl py-3 transition-colors"
-              >
-                Connect Wallet
-              </button>
+              <WalletMultiButton style={{ width: '100%', justifyContent: 'center', borderRadius: '0.75rem' }} />
             )}
           </div>
         </div>
@@ -206,45 +192,22 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </nav>
         </div>
 
-        {/* Right side */}
+        {/* Right side — wallet button (desktop) + mobile connect indicator */}
         <div className="ml-auto flex items-center gap-2">
-          {/* Desktop: address pill */}
           {mounted && connected && publicKey && (
             <span className="hidden md:inline text-xs font-mono bg-gray-100 text-gray-500 px-3 py-1.5 rounded-full">
               {shortAddr(publicKey.toBase58())}
             </span>
           )}
-          {/* Desktop: wallet button */}
-          <div className="hidden md:block">
-            {mounted ? (
-              <WalletMultiButton />
-            ) : (
-              <div className="w-32 h-9 rounded-full bg-green-100 animate-pulse" />
-            )}
-          </div>
-          {/* Mobile: connected indicator or connect button */}
-          {mounted && (
-            <div className="md:hidden flex items-center gap-1.5">
-              {connected ? (
-                <span className="flex items-center gap-1 text-xs font-medium text-green-700 bg-green-50 border border-green-200 px-2.5 py-1 rounded-full">
-                  <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block" />
-                  Connected
-                </span>
-              ) : (
-                <button
-                  onClick={() => setWalletSheetOpen(true)}
-                  className="text-xs font-semibold text-white bg-green-600 hover:bg-green-500 px-3 py-1.5 rounded-full transition-colors"
-                >
-                  Connect
-                </button>
-              )}
-            </div>
+          {mounted ? (
+            <WalletMultiButton className="!text-sm !font-semibold !rounded-xl" />
+          ) : (
+            <div className="w-32 h-9 rounded-xl bg-green-100 animate-pulse" />
           )}
         </div>
       </header>
 
       {/* STATS BAR */}
-      {/* Desktop: single row with separators */}
       <div className="hidden sm:flex bg-gray-100 border-b border-gray-200 px-6 py-2 items-center gap-5 text-xs">
         {[
           { label: 'NAV', value: `${nav} SOL` },
@@ -261,7 +224,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         ))}
       </div>
-      {/* Mobile: 2×2 compact grid */}
       <div className="sm:hidden bg-gray-100 border-b border-gray-200 px-4 py-2 grid grid-cols-2 gap-x-4 gap-y-1.5">
         {[
           { label: 'NAV', value: `${nav} SOL` },

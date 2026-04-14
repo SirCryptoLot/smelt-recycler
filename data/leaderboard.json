@@ -1,9 +1,21 @@
 {
   "weekly": {
     "since": "2026-04-13T00:00:00.000Z",
-    "entries": {}
+    "entries": {
+      "FhG6X1kh1TM4H5fs7rAecXDs8VF8iTUoafGGMjhZf8Mo": {
+        "accounts": 1,
+        "solReclaimed": 0.0019,
+        "smeltEarned": 250
+      }
+    }
   },
   "allTime": {
-    "entries": {}
+    "entries": {
+      "FhG6X1kh1TM4H5fs7rAecXDs8VF8iTUoafGGMjhZf8Mo": {
+        "accounts": 1,
+        "solReclaimed": 0.0019,
+        "smeltEarned": 250
+      }
+    }
   }
 }

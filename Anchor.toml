@@ -1,0 +1,19 @@
+[features]
+seeds = false
+skip-lint = false
+
+[programs.localnet]
+smelt_staking = "CiMhekpwAzLAfRr8um6Hexpnf8L8iTXkGZxJKin9e9Mk"
+
+[programs.devnet]
+smelt_staking = "CiMhekpwAzLAfRr8um6Hexpnf8L8iTXkGZxJKin9e9Mk"
+
+[registry]
+url = "https://api.apr.dev"
+
+[provider]
+cluster = "localnet"
+wallet = "data/keypairs/admin.json"
+
+[scripts]
+test = "node_modules/.bin/ts-mocha -p ./tsconfig.anchor.json -t 1000000 tests/**/*.ts"

@@ -1,0 +1,572 @@
+- generic [ref=e1]:
+  - generic [ref=e4]:
+    - banner [ref=e5]:
+      - generic [ref=e6]:
+        - link [ref=e7] [cursor=pointer]:
+          - /url: /restaking/
+          - button [ref=e8]: JTO (Re)staking deposits are open!
+        - link [ref=e10] [cursor=pointer]:
+          - /url: /restaking/
+          - button [ref=e11]: Learn More
+      - navigation [ref=e12]:
+        - generic [ref=e14]:
+          - generic [ref=e15]:
+            - link [ref=e17] [cursor=pointer]:
+              - /url: /
+              - img [ref=e19]
+            - generic [ref=e20]:
+              - button [ref=e23] [cursor=pointer]:
+                - generic [ref=e24]: StakeNet
+                - img [ref=e25]
+              - link [ref=e27] [cursor=pointer]:
+                - /url: /jto/
+                - button [ref=e28]: JTO Hub
+              - link [ref=e29] [cursor=pointer]:
+                - /url: /stats/
+                - button [ref=e30]: Stats
+              - link [ref=e31] [cursor=pointer]:
+                - /url: /defi/
+                - button [ref=e32]: DeFi
+              - link [ref=e33] [cursor=pointer]:
+                - /url: /restaking/
+                - button [ref=e34]: Restaking
+          - generic [ref=e35]:
+            - link [ref=e37] [cursor=pointer]:
+              - /url: /staking/
+              - button [ref=e38]:
+                - generic [ref=e39]: Stake Now
+            - button [ref=e42] [cursor=pointer]:
+              - generic [ref=e43]: Connect
+            - img [ref=e47] [cursor=pointer]
+    - generic [ref=e51]:
+      - generic [ref=e59]:
+        - generic [ref=e60]: Last Week
+        - link [ref=e61] [cursor=pointer]:
+          - /url: https://explorer.jito.wtf
+          - button [ref=e62]: Total Tips
+        - link [ref=e64] [cursor=pointer]:
+          - /url: https://explorer.jito.wtf
+          - button [ref=e65]: 7,954 SOL
+        - link [ref=e67] [cursor=pointer]:
+          - /url: https://explorer.jito.wtf
+          - button [ref=e68]: Bundles Submitted
+        - link [ref=e70] [cursor=pointer]:
+          - /url: https://explorer.jito.wtf
+          - button [ref=e71]: 68,715,228
+        - link [ref=e73] [cursor=pointer]:
+          - /url: https://explorer.jito.wtf
+          - button [ref=e74]: Total MEV Rewards
+        - link [ref=e76] [cursor=pointer]:
+          - /url: https://explorer.jito.wtf
+          - button [ref=e77]: 7,556 SOL
+      - generic [ref=e82]:
+        - generic [ref=e83]:
+          - img [ref=e87]
+          - heading [level=1] [ref=e88]:
+            - generic [ref=e89]: MEV Powered
+            - generic [ref=e90]: Staking Rewards
+          - generic [ref=e91]: Boost your yield when you stake with Jito
+          - generic [ref=e93]:
+            - heading [level=1] [ref=e95]:
+              - generic [ref=e96]: TVL
+              - generic [ref=e97]: 11.2M SOL
+            - heading [level=1] [ref=e99]:
+              - generic [ref=e101]:
+                - text: APY
+                - img [ref=e104] [cursor=pointer]
+              - generic [ref=e106]: 5.82%
+            - heading [level=1] [ref=e108]:
+              - generic [ref=e109]: Holders
+              - generic [ref=e110]: 188,243
+          - link [ref=e111] [cursor=pointer]:
+            - /url: /staking/
+            - generic [ref=e112]: Stake Now
+        - img [ref=e117]
+      - generic [ref=e119]:
+        - generic [ref=e124]:
+          - generic [ref=e125]: Jito Network powers the Solana
+          - generic [ref=e126]: ecosystem with MEV-optimized infrastructure and
+          - generic [ref=e127]: deep DeFi integrations, delivering unmatched
+          - generic [ref=e128]: staking efficiency and liquidity.
+        - generic [ref=e130]:
+          - generic [ref=e132]:
+            - generic [ref=e133]:
+              - generic [ref=e134]:
+                - img [ref=e135]
+                - text: Features
+              - heading [level=2] [ref=e136]: Powering the Solana Blockchain
+              - generic [ref=e137]:
+                - img [ref=e140]
+                - generic [ref=e141]: of network stake running on Jito enabled validators
+            - generic [ref=e142]:
+              - generic [ref=e143]:
+                - heading [level=3] [ref=e145]: MEV-Enabled Infra
+                - paragraph [ref=e147]: Optimizes transaction execution while enhancing network transparency and fairness
+              - generic [ref=e148]:
+                - heading [level=3] [ref=e150]: Extra Rewards
+                - paragraph [ref=e152]: Jito allows validators and their stakers to receive additional MEV rewards
+              - generic [ref=e153]:
+                - heading [level=3] [ref=e155]: Jito Stake Pool
+                - paragraph [ref=e157]: Deposit into the JitoSOL liquid staking pool to delegate your SOL to Jito enabled validators
+          - generic [ref=e162]:
+            - img [ref=e164]
+            - img [ref=e168]
+            - img [ref=e172]
+            - img [ref=e176]
+            - img [ref=e180]
+        - generic [ref=e181]:
+          - generic [ref=e183]:
+            - generic [ref=e184]:
+              - generic [ref=e185]:
+                - generic [ref=e186]:
+                  - img [ref=e187]
+                  - text: Liquid Staking
+                - heading [level=2] [ref=e188]: JitoSOL
+                - generic [ref=e189]:
+                  - generic [ref=e190]: APY
+                  - generic [ref=e191]: 5.82%
+              - generic [ref=e192]:
+                - heading [level=1] [ref=e194]: Maximize Your Rewards, Unlock Solana DeFi
+                - generic [ref=e195]: JitoSOL combines staking rewards with MEV rewards, offering a unique way to maximize yield on Solana. Stake now with the most liquid LST on Solana.
+                - link [ref=e196] [cursor=pointer]:
+                  - /url: /staking/
+                  - text: Stake Now
+            - button [ref=e201] [cursor=pointer]:
+              - img [ref=e202]
+          - generic [ref=e207]:
+            - heading [level=2] [ref=e208]: How it all works
+            - generic [ref=e212]:
+              - generic [ref=e213] [cursor=pointer]:
+                - generic [ref=e214]: "01"
+                - paragraph [ref=e215]: When you stake your SOL with Jito, you'll receive in return the JitoSOL LST, which accrues staking and MEV rewards and can be used in DeFi.
+              - generic [ref=e217] [cursor=pointer]:
+                - generic [ref=e218]: "02"
+                - paragraph [ref=e219]: Unlike traditional tokens, JitoSOL maintains a fixed quantity in your wallet while its exchange rate to SOL continuously increases.
+              - generic [ref=e221] [cursor=pointer]:
+                - generic [ref=e222]: "03"
+                - paragraph [ref=e223]: As validators earn and redistribute staking and MEV rewards, the total SOL in the pool grows without minting additional JitoSOL tokens
+              - generic [ref=e225] [cursor=pointer]:
+                - generic [ref=e226]: "04"
+                - paragraph [ref=e227]: Your JitoSOL automatically compounds value over time, as each token represents a growing portion of the expanding stake pool.
+              - generic [ref=e229] [cursor=pointer]:
+                - generic [ref=e230]: "05"
+                - paragraph [ref=e231]: When you unstake, you'll get back more SOL than originally deposited as your JitoSOL tokens would have increased in value relative to SOL.
+        - generic [ref=e236]:
+          - generic [ref=e237]:
+            - generic [ref=e238]:
+              - img [ref=e239]
+              - text: Opportunities
+            - heading [level=2] [ref=e240]: Compound in DeFi
+            - generic [ref=e241]: With JitoSOL, you gain access to a wide range of DeFi strategies, from yield farming to lending and liquidity provision. Take your rewards further with Solana’s leading liquid staking token.
+          - generic [ref=e242]:
+            - generic [ref=e244] [cursor=pointer]:
+              - generic [ref=e245]:
+                - generic [ref=e246]:
+                  - generic [ref=e248]:
+                    - img [ref=e250]
+                    - img [ref=e251]
+                  - generic [ref=e253]:
+                    - img [ref=e255]
+                    - img [ref=e256]
+                - generic [ref=e257]:
+                  - img [ref=e258]
+                  - text: JTO Boost
+              - generic [ref=e259]: JitoSOL / SOL
+              - generic [ref=e260]:
+                - generic [ref=e261]:
+                  - heading [level=4] [ref=e262]:
+                    - generic [ref=e263]: TVL
+                    - img [ref=e266]
+                  - generic [ref=e268]: $4.5M
+                - generic [ref=e269]:
+                  - heading [level=4] [ref=e270]:
+                    - generic [ref=e271]: Protocol
+                    - img [ref=e274]
+                  - generic [ref=e277]:
+                    - img [ref=e280]
+                    - generic [ref=e281]: Kamino
+                - generic [ref=e282]:
+                  - heading [level=4] [ref=e283]:
+                    - generic [ref=e284]: Strategy
+                    - img [ref=e287]
+                  - generic [ref=e290]: Liquidity Pool
+                - generic [ref=e291]:
+                  - heading [level=4] [ref=e292]:
+                    - generic [ref=e293]: Code Status
+                    - img [ref=e296]
+                  - generic [ref=e300]:
+                    - img [ref=e302]
+                    - img [ref=e305]
+            - generic [ref=e308] [cursor=pointer]:
+              - generic [ref=e309]:
+                - generic [ref=e310]:
+                  - generic [ref=e312]:
+                    - img [ref=e314]
+                    - img [ref=e315]
+                  - generic [ref=e317]:
+                    - img [ref=e319]
+                    - img [ref=e320]
+                - generic [ref=e321]:
+                  - img [ref=e322]
+                  - text: JTO Boost
+              - generic [ref=e323]: JitoSOL / JTO
+              - generic [ref=e324]:
+                - generic [ref=e325]:
+                  - heading [level=4] [ref=e326]:
+                    - generic [ref=e327]: TVL
+                    - img [ref=e330]
+                  - generic [ref=e332]: $675.4K
+                - generic [ref=e333]:
+                  - heading [level=4] [ref=e334]:
+                    - generic [ref=e335]: Protocol
+                    - img [ref=e338]
+                  - generic [ref=e341]:
+                    - img [ref=e344]
+                    - generic [ref=e345]: Kamino
+                - generic [ref=e346]:
+                  - heading [level=4] [ref=e347]:
+                    - generic [ref=e348]: Strategy
+                    - img [ref=e351]
+                  - generic [ref=e354]: Liquidity Pool
+                - generic [ref=e355]:
+                  - heading [level=4] [ref=e356]:
+                    - generic [ref=e357]: Code Status
+                    - img [ref=e360]
+                  - generic [ref=e364]:
+                    - img [ref=e366]
+                    - img [ref=e369]
+            - generic [ref=e372] [cursor=pointer]:
+              - generic [ref=e373]:
+                - generic [ref=e374]:
+                  - generic [ref=e376]:
+                    - img [ref=e378]
+                    - img [ref=e379]
+                  - generic [ref=e381]:
+                    - img [ref=e383]
+                    - img [ref=e384]
+                - generic [ref=e385]:
+                  - img [ref=e386]
+                  - text: JTO Boost
+              - generic [ref=e387]: JitoSOL / kySOL
+              - generic [ref=e388]:
+                - generic [ref=e389]:
+                  - heading [level=4] [ref=e390]:
+                    - generic [ref=e391]: TVL
+                    - img [ref=e394]
+                  - generic [ref=e396]: $475.3K
+                - generic [ref=e397]:
+                  - heading [level=4] [ref=e398]:
+                    - generic [ref=e399]: Protocol
+                    - img [ref=e402]
+                  - generic [ref=e405]:
+                    - img [ref=e408]
+                    - generic [ref=e409]: Kamino
+                - generic [ref=e410]:
+                  - heading [level=4] [ref=e411]:
+                    - generic [ref=e412]: Strategy
+                    - img [ref=e415]
+                  - generic [ref=e418]: Liquidity Pool
+                - generic [ref=e419]:
+                  - heading [level=4] [ref=e420]:
+                    - generic [ref=e421]: Code Status
+                    - img [ref=e424]
+                  - generic [ref=e428]:
+                    - img [ref=e430]
+                    - img [ref=e433]
+            - generic [ref=e436] [cursor=pointer]:
+              - generic [ref=e437]:
+                - generic [ref=e438]:
+                  - generic [ref=e440]:
+                    - img [ref=e442]
+                    - img [ref=e443]
+                  - generic [ref=e445]:
+                    - img [ref=e447]
+                    - img [ref=e448]
+                - generic [ref=e449]:
+                  - img [ref=e450]
+                  - text: JTO Boost
+              - generic [ref=e451]: JitoSOL / ezSOL
+              - generic [ref=e452]:
+                - generic [ref=e453]:
+                  - heading [level=4] [ref=e454]:
+                    - generic [ref=e455]: TVL
+                    - img [ref=e458]
+                  - generic [ref=e460]: $310.6K
+                - generic [ref=e461]:
+                  - heading [level=4] [ref=e462]:
+                    - generic [ref=e463]: Protocol
+                    - img [ref=e466]
+                  - generic [ref=e469]:
+                    - img [ref=e472]
+                    - generic [ref=e473]: Kamino
+                - generic [ref=e474]:
+                  - heading [level=4] [ref=e475]:
+                    - generic [ref=e476]: Strategy
+                    - img [ref=e479]
+                  - generic [ref=e482]: Liquidity Pool
+                - generic [ref=e483]:
+                  - heading [level=4] [ref=e484]:
+                    - generic [ref=e485]: Code Status
+                    - img [ref=e488]
+                  - generic [ref=e492]:
+                    - img [ref=e494]
+                    - img [ref=e497]
+          - link [ref=e499] [cursor=pointer]:
+            - /url: /defi/
+            - text: Explore All Opportunities
+        - generic [ref=e502]:
+          - generic [ref=e503]:
+            - generic [ref=e504]:
+              - img [ref=e505]
+              - text: "[Re]Staking"
+            - heading [level=2] [ref=e506]: A novel form of economic security
+            - generic [ref=e507]: Jito (Re)staking allows you to stake you Solana assets across multiple networks simultaneously. Your staked assets provide security to those networks and earn rewards in return, thus creating unique utility for all SPL tokens.
+            - link [ref=e508] [cursor=pointer]:
+              - /url: /restaking/
+              - text: (Re)stake Now
+          - img [ref=e511]
+        - generic [ref=e514]:
+          - img [ref=e517]
+          - generic [ref=e518]:
+            - generic [ref=e519]:
+              - img [ref=e520]
+              - text: TipRouter
+            - heading [level=2] [ref=e521]: Decentralizing MEV Tip Distribution
+            - generic [ref=e522]: The TipRouter NCN built on Jito (Re)staking decentralized MEV tip distribution in the Jito ecosystem, playing a key role in distributing billions in real economic value across Solana.
+            - link [ref=e523] [cursor=pointer]:
+              - /url: /restaking/tiprouter/
+              - text: Learn More
+            - generic [ref=e524]:
+              - generic [ref=e525]:
+                - img [ref=e527]
+                - heading [level=3] [ref=e528]: The First Jito NCN
+                - paragraph [ref=e529]: NCNs are sets of infrastructure providers running software for the same network, working together to achieve consensus.
+              - generic [ref=e530]:
+                - img [ref=e532]
+                - heading [level=3] [ref=e533]: Decentralization
+                - paragraph [ref=e534]: The TipRouter NCN ensures that MEV rewards are distributed fairly and transparently across the network.
+              - generic [ref=e535]:
+                - img [ref=e537]
+                - heading [level=3] [ref=e538]: Economic Value
+                - paragraph [ref=e539]: "6% of MEV tips are given to various stakeholders via TipRouter: 5.7% goes to Jito DAO, while 0.15% each goes to JitoSOL and JTO stakers."
+        - generic [ref=e543]:
+          - generic [ref=e544]:
+            - generic [ref=e545]:
+              - img [ref=e546]
+              - text: StakeNet
+            - heading [level=2] [ref=e547]: "StakeNet: An autonomous stake pool manager"
+            - generic [ref=e548]: Jito StakeNet blends Validator History and Steward Programs for secure, transparent validator management and autonomous stake operations.
+          - generic [ref=e549]:
+            - generic [ref=e550]:
+              - link [ref=e553] [cursor=pointer]:
+                - /url: /stakenet/history/
+                - generic [ref=e554]:
+                  - heading [level=2] [ref=e555]: Validator History
+                  - img [ref=e556]
+                - paragraph [ref=e559]: Creating a comprehensive, tamper-resistant ledger of validator performance and behavior, this system empowers users and smart contracts to make data-driven staking decisions, enhancing network transparency and accountability.
+              - link [ref=e562] [cursor=pointer]:
+                - /url: /stakenet/steward/
+                - generic [ref=e563]:
+                  - heading [level=2] [ref=e564]: Steward Program
+                  - img [ref=e565]
+                - paragraph [ref=e568]: Harnessing on-chain validator metrics and network data, the Steward Program employs advanced algorithms to evaluate and rank validators. Automated keepers then execute a state machine to optimally allocate stake, maximizing network security and efficiency.
+            - img [ref=e570]
+        - generic [ref=e574]:
+          - generic [ref=e575]:
+            - generic [ref=e576]:
+              - img [ref=e577]
+              - text: Governance
+            - heading [level=2] [ref=e578]: Build Jito with us
+            - generic [ref=e579]: Be part of the growing Jito ecosystem. Explore our governance tools, connect with the community, and contribute to the Jito Network’s decentralized future. Join us in helping share the future of Jito.
+          - generic [ref=e580]:
+            - generic [ref=e581]:
+              - generic [ref=e582]: The Latest Proposals
+              - generic [ref=e584]:
+                - link [ref=e585] [cursor=pointer]:
+                  - /url: https://gov.jito.network/dao/Jito/proposal/GkNkHVhCyBzudNSnEz1c7LnETFt1qvEmh6UiUmuYdyiE
+                  - generic [ref=e587]:
+                    - generic [ref=e588]:
+                      - generic [ref=e589]: completed
+                      - img [ref=e590]
+                    - generic [ref=e592]: Intervention to Resolve a Feature Gate Triggered StakeNet Bug
+                    - generic [ref=e593]: This intervention requires the temporary transfer of Validator History Program and Steward Config authority to facilitate a bug fix, introduced by a recent protocol level vote account feature gate upgrade resulting in incorrect parsing of commission data. Authority will be returned to the DAO as soon as fixes are complete.
+                    - generic [ref=e594]: Completed Apr 1, 2026
+                - link [ref=e595] [cursor=pointer]:
+                  - /url: https://gov.jito.network/dao/Jito/proposal/423Xgw3GJbnh1NCbZwukqzNtYsaSrxWTQqKQkSmsGn9P
+                  - generic [ref=e597]:
+                    - generic [ref=e598]:
+                      - generic [ref=e599]: completed
+                      - img [ref=e600]
+                    - generic [ref=e602]: Necessary Upgrade to Prepare for the SIMD-0185 Feature Gate - Part 2
+                    - generic [ref=e603]: Description The second of a two part security council intervention to prepare the protocol for the forthcoming SIMD-0185 feature gate. Transaction Details This upgrade stages VoteStateV4-compatible program builds for mainnet. These buffers are ready to be used in the DAO upgrade proposal(s).
+                    - generic [ref=e604]: Completed Feb 26, 2026
+                - link [ref=e605] [cursor=pointer]:
+                  - /url: https://gov.jito.network/dao/Jito/proposal/DSPVsbsnDAMize7VM8d24YuE18z73q9iEEJJridcencW
+                  - generic [ref=e607]:
+                    - generic [ref=e608]:
+                      - generic [ref=e609]: completed
+                      - img [ref=e610]
+                    - generic [ref=e612]: Necessary Upgrade to Prepare for the SIMD-0185 Feature Gate and Bug Fix - Part 1
+                    - generic [ref=e613]: Description The first of a two part security council intervention to prepare the protocol for the forthcoming SIMD-0185 feature gate and a bug fix to resolve a minor steward programme state transition issue. Transaction Details This upgrade stages VoteStateV4-compatible program builds for mainnet. These buffers are ready to be used in the DAO upgrade proposal(s).
+                    - generic [ref=e614]: Completed Feb 26, 2026
+            - img [ref=e617]
+          - generic [ref=e618]:
+            - link [ref=e619] [cursor=pointer]:
+              - /url: https://forum.jito.network
+              - text: View the Forum
+            - link [ref=e620] [cursor=pointer]:
+              - /url: https://jup.ag/swap?sell=So11111111111111111111111111111111111111112&buy=jtojtomepa8beP8AuQc6eXt5FriJwfFMwQx2v2f9mCL
+              - generic [ref=e621]: Get JTO to participate in Jito Governance
+              - img [ref=e622]
+    - contentinfo [ref=e623]:
+      - generic [ref=e624]:
+        - generic [ref=e625]:
+          - generic [ref=e626]:
+            - generic [ref=e627]:
+              - heading [level=3] [ref=e628]: Action
+              - link [ref=e629] [cursor=pointer]:
+                - /url: /staking/
+                - button [ref=e630]: Stake
+              - link [ref=e631] [cursor=pointer]:
+                - /url: /staking/?mode=unstake
+                - button [ref=e632]: Unstake
+              - link [ref=e633] [cursor=pointer]:
+                - /url: /restaking/
+                - button [ref=e634]: Restaking
+              - link [ref=e635] [cursor=pointer]:
+                - /url: /interceptor/
+                - button [ref=e636]: Interceptor
+              - link [ref=e637] [cursor=pointer]:
+                - /url: /manage/
+                - button [ref=e638]: Manage Stakes
+            - generic [ref=e639]:
+              - heading [level=3] [ref=e640]: ECOSYSTEM
+              - link [ref=e641] [cursor=pointer]:
+                - /url: /defi/
+                - button [ref=e642]: DeFi
+              - link [ref=e643] [cursor=pointer]:
+                - /url: /stakenet/history/
+                - button [ref=e644]: StakeNet History
+              - link [ref=e645] [cursor=pointer]:
+                - /url: /stakenet/steward/
+                - button [ref=e646]: StakeNet Steward
+              - link [ref=e647] [cursor=pointer]:
+                - /url: /stats/
+                - button [ref=e648]: Stats
+              - link [ref=e649] [cursor=pointer]:
+                - /url: /bridge/
+                - button [ref=e650]: Bridge
+            - generic [ref=e651]:
+              - heading [level=3] [ref=e652]: REWARDS & TIPS
+              - link [ref=e653] [cursor=pointer]:
+                - /url: /staking/?mode=rewards_view
+                - button [ref=e654]: Rewards History
+              - link [ref=e655] [cursor=pointer]:
+                - /url: /harvest/
+                - button [ref=e656]: Harvest MEV
+              - link [ref=e657] [cursor=pointer]:
+                - /url: /restaking/tiprouter/
+                - button [ref=e658]: TipRouter
+              - link [ref=e659] [cursor=pointer]:
+                - /url: /restaking/tiprouter/tip-claims/
+                - button [ref=e660]: Tip Claims
+              - link [ref=e661] [cursor=pointer]:
+                - /url: /let-them-eat-stake/
+                - button [ref=e662]: Eat Stake
+            - generic [ref=e663]:
+              - heading [level=3] [ref=e664]: GOVERNANCE
+              - link [ref=e665] [cursor=pointer]:
+                - /url: /jto/
+                - button [ref=e666]: JTO Hub
+              - link [ref=e667] [cursor=pointer]:
+                - /url: https://forum.jito.network/
+                - button [ref=e668]: Forum
+              - link [ref=e669] [cursor=pointer]:
+                - /url: /docs/governance/
+                - button [ref=e670]: Gov Docs
+            - generic [ref=e671]:
+              - heading [level=3] [ref=e672]: Resources
+              - link [ref=e673] [cursor=pointer]:
+                - /url: /institutions/
+                - button [ref=e674]: Institutions
+              - link [ref=e675] [cursor=pointer]:
+                - /url: /blog/
+                - button [ref=e676]: Blog
+              - link [ref=e677] [cursor=pointer]:
+                - /url: /faq/
+                - button [ref=e678]: FAQ
+              - link [ref=e679] [cursor=pointer]:
+                - /url: /docs/hub/overview/
+                - button [ref=e680]: Docs Hub
+              - link [ref=e681] [cursor=pointer]:
+                - /url: https://drive.google.com/drive/u/0/folders/1KuEn60FLsmQZDSDDZ15dCPyxFgQAaAtL
+                - button [ref=e682]: Brand Assets
+            - generic [ref=e683]:
+              - heading [level=3] [ref=e684]: COMPANY
+              - link [ref=e685] [cursor=pointer]:
+                - /url: https://jobs.lever.co/jito
+                - button [ref=e686]: Careers
+              - link [ref=e687] [cursor=pointer]:
+                - /url: /docs/jitosol/resources/terms-of-use/
+                - button [ref=e688]: Terms of Use
+              - link [ref=e689] [cursor=pointer]:
+                - /url: /docs/jitosol/resources/cookie-policy/
+                - button [ref=e690]: Cookie Policy
+              - link [ref=e691] [cursor=pointer]:
+                - /url: https://jito.network/docs/jitosol/resources/privacy-policy/
+                - button [ref=e692]: Privacy Policy
+              - button [ref=e693] [cursor=pointer]: Privacy Settings
+          - generic [ref=e694]:
+            - generic [ref=e695] [cursor=pointer]: © 2025 Jito Foundation. All rights reserved
+            - generic [ref=e697]:
+              - link [ref=e698] [cursor=pointer]:
+                - /url: https://x.com/jito_sol
+                - button [ref=e699]:
+                  - img [ref=e701]
+              - link [ref=e702] [cursor=pointer]:
+                - /url: https://discord.com/invite/jitocommunity
+                - button [ref=e703]:
+                  - img [ref=e705]
+              - link [ref=e706] [cursor=pointer]:
+                - /url: https://t.me/thejitocommunity
+                - button [ref=e707]:
+                  - img [ref=e709]
+        - link [ref=e712] [cursor=pointer]:
+          - /url: /
+          - img [ref=e713]
+  - dialog "Welcome to Jito" [ref=e714]:
+    - generic [ref=e716]:
+      - generic [ref=e717]:
+        - heading "Welcome to Jito" [level=3] [ref=e718]
+        - button "English" [active] [ref=e721] [cursor=pointer]:
+          - text: English
+          - img [ref=e722]
+      - generic [ref=e724]:
+        - paragraph [ref=e725]: Please review and agree to our Terms of Service in order to continue.
+        - generic [ref=e727]:
+          - switch [ref=e728] [cursor=pointer]
+          - generic [ref=e730]:
+            - text: I agree to the
+            - link "Terms of Service" [ref=e731] [cursor=pointer]:
+              - /url: /docs/jitosol/terms-of-use/
+      - generic [ref=e732]:
+        - paragraph [ref=e733]: We use analytics and cookies to improve your experience.
+        - generic [ref=e734]:
+          - generic [ref=e735]:
+            - switch [checked] [ref=e736] [cursor=pointer]
+            - generic [ref=e738]:
+              - text: Accept Analytics per our
+              - link "Privacy Policy" [ref=e739] [cursor=pointer]:
+                - /url: /docs/jitosol/resources/privacy-policy/
+          - generic [ref=e740]:
+            - switch [checked] [ref=e741] [cursor=pointer]
+            - generic [ref=e743]:
+              - text: Accept our
+              - link "Cookie Policy" [ref=e744] [cursor=pointer]:
+                - /url: /docs/jitosol/resources/cookie-policy/
+      - generic [ref=e745]:
+        - button "Decline" [ref=e746] [cursor=pointer]:
+          - generic [ref=e747]: Decline
+        - button "Continue" [ref=e748] [cursor=pointer]:
+          - generic [ref=e749]: Continue
+  - alert [ref=e750]

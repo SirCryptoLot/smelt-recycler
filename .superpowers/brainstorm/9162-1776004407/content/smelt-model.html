@@ -1,0 +1,45 @@
+<h2>SMELT Token — Evolution Options</h2>
+<p class="subtitle">Current SMELT is a simple reward token. Here are 3 directions to make it more interesting.</p>
+
+<div class="options">
+
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Keep current + show live NAV</h3>
+      <p>SMELT stays as-is (emissions reward, manual weekly distributions). Add one powerful display: a live <strong>NAV price</strong> — <em>pending SOL pool ÷ total supply</em> — so holders can see exactly what each SMELT is worth right now. Admin UI shows it. Pools page shows it. Simple, honest, no new program needed.</p>
+      <div style="margin-top:8px;font-size:12px;opacity:0.6">
+        ✅ No new on-chain code &nbsp;·&nbsp; ✅ Ships this week &nbsp;·&nbsp; Shows value clearly
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>JLP-style yield token (on-chain vault)</h3>
+      <p>SMELT becomes a <strong>yield-bearing receipt token</strong> like JLP. All platform SOL fees flow into an on-chain vault. NAV = vault SOL ÷ SMELT supply — it rises automatically as fees accumulate. Holders <em>redeem</em> SMELT for their share of SOL at any time. No weekly admin run needed. Price discovery is real and transparent.</p>
+      <div style="margin-top:8px;font-size:12px;opacity:0.6">
+        ⚠️ Needs new Anchor program (~2 SOL deploy) &nbsp;·&nbsp; Most DeFi-native &nbsp;·&nbsp; Like stSOL or JLP
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Algorithmic emission + deflationary burn</h3>
+      <p>Keep the existing distribution model but add two mechanics: <strong>(1) adaptive emission</strong> — rate adjusts based on 7-day recycling volume (high activity = lower rate, keeping scarcity), and <strong>(2) a burn-on-claim</strong> — when SOL is distributed, a small % of SMELT is burned from the pool. Supply shrinks over time. Each remaining token gets rarer and more valuable. Halvings + burns = strong scarcity narrative.</p>
+      <div style="margin-top:8px;font-size:12px;opacity:0.6">
+        ⚠️ Needs staking program update &nbsp;·&nbsp; Strong tokenomics story &nbsp;·&nbsp; Requires more activity data
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div style="margin-top:20px;padding:12px 16px;background:rgba(52,211,153,0.05);border:1px solid rgba(52,211,153,0.15);border-radius:10px">
+  <p style="margin:0;font-size:13px;opacity:0.8"><strong>My recommendation:</strong> Start with <strong>A</strong> now (ships immediately, makes SMELT tangibly valuable to holders today), build toward <strong>B</strong> once you have users and the SOL for program deploy. Option C is the most ambitious tokenomics but needs real activity data to tune the adaptive emission curve.</p>
+</div>
+
+<p class="subtitle" style="margin-top:16px">Click one or tell me your thinking. You can also combine — e.g. A now + B later.</p>

@@ -1,0 +1,44 @@
+<h2>Mobile wallet connect — which approach?</h2>
+<p class="subtitle">3 ways to handle wallet detection on mobile. The core problem: on Android/iOS Chrome, wallet extensions don't exist — you need deep links to open inside a wallet's browser.</p>
+
+<div class="options">
+
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Custom bottom-sheet modal with auto-detection</h3>
+      <p>Replace the current deep-link buttons with a proper modal. Detect if already inside a wallet browser (Phantom, Backpack, Solflare). If yes → show "Connect" for that wallet. If not → show all wallet deep-link buttons (Phantom, Backpack, Solflare, Jupiter).</p>
+      <div class="pros-cons" style="margin-top:10px">
+        <div class="pros"><h4>Pros</h4><ul><li>Best UX — detects context, shows right option</li><li>Covers all 4 wallets</li><li>Clean, branded feel</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Most code to write</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Keep WalletMultiButton + add missing adapters + fix detection</h3>
+      <p>Add Backpack adapter to providers.tsx (already has Phantom + Solflare). Fix <code>isInWalletBrowser()</code> to detect Backpack. Update the existing deep-link drawer buttons to include Backpack and Jupiter links.</p>
+      <div class="pros-cons" style="margin-top:10px">
+        <div class="pros"><h4>Pros</h4><ul><li>Minimal change, least risk</li><li>Reuses existing WalletMultiButton (standard UI)</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>WalletMultiButton is generic/unbranded</li><li>Mobile deep link drawer still basic</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Wallet-standard auto-discovery + custom connect button</h3>
+      <p>Use <code>@wallet-standard/app</code> to auto-discover any registered wallet (Phantom, Backpack, etc register themselves at page load). Build a small custom "Connect" modal that lists discovered wallets by name, with deep links for the rest on mobile.</p>
+      <div class="pros-cons" style="margin-top:10px">
+        <div class="pros"><h4>Pros</h4><ul><li>Future-proof — detects any wallet-standard wallet automatically</li><li>Clean custom UI</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Requires understanding wallet-standard events</li><li>Medium complexity</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:16px">My recommendation: <strong>A</strong> — gives the best user experience with clear detection logic and covers all 4 wallets cleanly.</p>

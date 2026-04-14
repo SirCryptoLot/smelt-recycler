@@ -1,0 +1,6 @@
+{
+  "name": "solana-recycler",
+  "version": "0.1.0",
+  "description": "Procedures for building atomic Solana recycling transactions and Jupiter swaps.",
+  "skills": ["skills/solana-recycler"]
+}

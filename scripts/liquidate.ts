@@ -6,6 +6,7 @@ import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { swapToSol } from '../lib/jupiter';
 import { VAULT_PUBKEY, LIQUIDATION_THRESHOLD_USD } from '../lib/constants';
 import { MAINNET_RPC } from '../lib/solana';
+import { DATA_DIR } from '../lib/paths';
 
 interface LiquidationEntry {
   date: string;
@@ -16,11 +17,11 @@ interface LiquidationEntry {
   distributed: boolean;
 }
 
-const DATA_PATH = path.join(__dirname, '../data/liquidations.json');
-const VAULT_KEYPAIR_PATH = path.join(__dirname, '../data/keypairs/vault.json');
+const DATA_PATH = path.join(DATA_DIR, 'liquidations.json');
 
-function loadKeypair(filepath: string): Keypair {
-  const raw = JSON.parse(fs.readFileSync(filepath, 'utf-8')) as number[];
+function loadVaultKeypair(): Keypair {
+  const raw = JSON.parse(process.env.VAULT_KEYPAIR ?? '[]') as number[];
+  if (raw.length === 0) throw new Error('VAULT_KEYPAIR env var not set');
   return Keypair.fromSecretKey(Uint8Array.from(raw));
 }
 
@@ -74,7 +75,7 @@ async function main(): Promise<void> {
   console.log('=== SMELT Liquidator ===\n');
 
   const connection = new Connection(MAINNET_RPC, 'confirmed');
-  const vaultKeypair = loadKeypair(VAULT_KEYPAIR_PATH);
+  const vaultKeypair = loadVaultKeypair();
 
   console.log(`Vault: ${VAULT_PUBKEY.toBase58()}`);
   console.log('Fetching vault balances...');

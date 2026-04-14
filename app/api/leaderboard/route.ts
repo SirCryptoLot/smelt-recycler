@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 // app/api/leaderboard/route.ts
 import { NextResponse } from 'next/server';
 import { getLeaderboard } from '../../../lib/leaderboard';

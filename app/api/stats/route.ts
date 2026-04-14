@@ -1,4 +1,5 @@
 // app/api/stats/route.ts
+export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import * as fs from 'fs';
 import * as path from 'path';

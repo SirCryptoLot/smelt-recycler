@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 // app/api/vault/route.ts
 import { NextResponse } from 'next/server';
 import { Connection } from '@solana/web3.js';

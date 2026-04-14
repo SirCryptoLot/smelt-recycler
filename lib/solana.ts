@@ -1,8 +1,9 @@
 // lib/solana.ts
 import { Connection, PublicKey } from '@solana/web3.js';
-import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID } from '@solana/spl-token';
+import { SMELT_MINT } from './constants';
 
-export const MAINNET_RPC = 'https://mainnet.helius-rpc.com/?api-key=1a8ff065-5926-455f-a320-984253bfea15';
+export const MAINNET_RPC = process.env.SOLANA_RPC ?? 'https://mainnet.helius-rpc.com/?api-key=1a8ff065-5926-455f-a320-984253bfea15';
 
 export const connection = new Connection(MAINNET_RPC, 'confirmed');
 
@@ -97,15 +98,19 @@ export function solToReclaim(accountCount: number): number {
 }
 
 export async function getTrashAccounts(walletAddress: PublicKey): Promise<TrashAccount[]> {
-  const { value: accounts } = await connection.getParsedTokenAccountsByOwner(
-    walletAddress,
-    { programId: TOKEN_PROGRAM_ID }
-  );
+  // Fetch both legacy SPL and Token-2022 accounts in parallel
+  const [{ value: legacyAccounts }, { value: t22Accounts }] = await Promise.all([
+    connection.getParsedTokenAccountsByOwner(walletAddress, { programId: TOKEN_PROGRAM_ID }),
+    connection.getParsedTokenAccountsByOwner(walletAddress, { programId: TOKEN_2022_PROGRAM_ID }),
+  ]);
+  const accounts = [...legacyAccounts, ...t22Accounts];
 
-  // Skip frozen accounts — they can't be transferred or closed
+  const smeltStr = SMELT_MINT.toBase58();
+
+  // Skip frozen accounts and our own SMELT token
   const eligible = accounts.filter((a) => {
     const info = a.account.data.parsed.info as ParsedTokenInfo;
-    return info.state !== 'frozen';
+    return info.state !== 'frozen' && info.mint !== smeltStr;
   });
 
   if (eligible.length === 0) return [];

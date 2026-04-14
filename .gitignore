@@ -1,5 +1,6 @@
 .next/
 node_modules/
+tsconfig.tsbuildinfo
 
 # Anchor/Rust build artifacts
 target/

@@ -184,7 +184,7 @@ describe('Home', () => {
   });
 
   it('shows success state with reclaimed SOL after recycling', async () => {
-    mockRecycleAccounts.mockResolvedValue({ succeeded: 1, failed: 0, solReclaimed: 0.0019 });
+    mockRecycleAccounts.mockResolvedValue({ succeeded: 1, failed: 0, solReclaimed: 0.0019, solDonated: 0 });
 
     mockGetTrashAccounts.mockResolvedValue([
       {

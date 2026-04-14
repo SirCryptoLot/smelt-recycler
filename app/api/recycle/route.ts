@@ -8,6 +8,7 @@ import { currentSmeltPerAccount } from '../../../lib/constants';
 import { recordRecycle as recordLeaderboard, getWalletStats } from '../../../lib/leaderboard';
 import { recordReferral } from '../../../lib/referrals';
 import { recordRecycle as recordEcosystem, incrementWalletCount } from '../../../lib/ecosystem';
+import { appendDonation } from '../../../lib/donations';
 
 const FEES_PATH = path.join(process.cwd(), 'data/fees.json');
 const SOL_FEE_PER_ACCOUNT = 0.002 * 0.05;
@@ -37,8 +38,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       wallet: string;
       accountsClosed: number;
       referredBy?: string;
+      solDonated?: number;
     };
-    const { wallet, accountsClosed, referredBy } = body;
+    const { wallet, accountsClosed, referredBy, solDonated } = body;
 
     if (!wallet || typeof accountsClosed !== 'number' || accountsClosed <= 0) {
       return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
@@ -57,6 +59,17 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       solFees: SOL_FEE_PER_ACCOUNT * accountsClosed,
       distributed: false,
     });
+
+    // Donation log
+    if (solDonated && solDonated > 0) {
+      appendDonation({
+        date: new Date().toISOString(),
+        wallet,
+        solDonated,
+        pct: Math.round(solDonated / (SOL_RECLAIMED_PER_ACCOUNT * accountsClosed) * 100),
+        txSignature: txSig,
+      });
+    }
 
     // Check if this is a new wallet (no prior all-time stats)
     const priorStats = getWalletStats(wallet);

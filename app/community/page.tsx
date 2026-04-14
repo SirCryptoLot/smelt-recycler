@@ -30,16 +30,22 @@ export default function CommunityPage() {
   const [tab, setTab] = useState<Tab>('weekly');
   const [loading, setLoading] = useState(true);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [totalSolDonated, setTotalSolDonated] = useState(0);
 
   const refresh = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
     try {
-      const [ecoRes, lbRes] = await Promise.all([
+      const [ecoRes, lbRes, donationsRes] = await Promise.all([
         fetch('/api/ecosystem', { cache: 'no-store' }),
         fetch('/api/leaderboard', { cache: 'no-store' }),
+        fetch('/api/donations', { cache: 'no-store' }),
       ]);
       if (ecoRes.ok) setEco(await ecoRes.json() as EcosystemData);
       if (lbRes.ok) setLb(await lbRes.json() as LeaderboardData);
+      if (donationsRes.ok) {
+        const d = await donationsRes.json() as { totalSolDonated: number };
+        setTotalSolDonated(d.totalSolDonated);
+      }
     } finally {
       setLoading(false);
     }
@@ -77,12 +83,13 @@ export default function CommunityPage() {
             <h2 className="text-lg font-bold text-gray-900">🌍 Ecosystem Health</h2>
             <span className="text-xs text-gray-400">All-time · Solana-wide</span>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
             {[
               { label: 'Wallets cleaned', value: (eco?.totalWallets ?? 0).toLocaleString(), color: 'text-green-600' },
               { label: 'Accounts closed', value: (eco?.totalAccountsClosed ?? 0).toLocaleString(), color: 'text-gray-900' },
               { label: 'SOL unlocked', value: `${(eco?.totalSolReclaimed ?? 0).toFixed(2)} SOL`, color: 'text-indigo-500', sub: 'returned to users' },
               { label: 'SMELT minted', value: (eco?.totalSmeltMinted ?? 0).toLocaleString(), color: 'text-gray-900', sub: 'earned by recyclers' },
+              { label: 'SOL donated', value: `${totalSolDonated.toFixed(4)} SOL`, color: 'text-green-600', sub: 'given back to ecosystem' },
             ].map(({ label, value, color, sub }) => (
               <div key={label} className="rounded-2xl bg-white border border-gray-200 p-4">
                 <div className="text-xs text-gray-400 mb-1">{label}</div>

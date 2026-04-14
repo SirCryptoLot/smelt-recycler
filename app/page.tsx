@@ -18,6 +18,15 @@ import { currentSmeltPerAccount } from '@/lib/constants';
 
 type Status = 'disconnected' | 'scanning' | 'results' | 'empty' | 'error' | 'recycling' | 'success';
 
+// Each SPL token account occupies exactly 165 bytes of on-chain data.
+const BYTES_PER_ACCOUNT = 165;
+
+function fmtBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+}
+
 const AVATAR_COLORS = [
   'bg-violet-500', 'bg-blue-500', 'bg-sky-500', 'bg-teal-500',
   'bg-emerald-500', 'bg-amber-500', 'bg-orange-500', 'bg-rose-500',
@@ -46,10 +55,20 @@ export default function Home() {
     succeeded: number;
     failed: number;
     solReclaimed: number;
+    solDonated: number;
   } | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [totalAccountsClosed, setTotalAccountsClosed] = useState(0);
+  const [donationEnabled, setDonationEnabled] = useState(false);
+  const [donationPct, setDonationPct] = useState(25);
 
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    setMounted(true);
+    fetch('/api/stats', { cache: 'no-store' })
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => { if (d) setTotalAccountsClosed(d.fees?.totalAccountsClosed ?? 0); })
+      .catch(() => {});
+  }, []);
 
   const scan = useCallback(async () => {
     setStatus('scanning');
@@ -95,14 +114,14 @@ export default function Home() {
     if (selected.length === 0) return;
     setStatus('recycling');
     try {
-      const result = await recycleAccounts(selected, publicKey, signAllTransactions, connection);
+      const result = await recycleAccounts(selected, publicKey, signAllTransactions, connection, donationEnabled ? donationPct : 0);
       setRecycleResult(result);
       if (result.succeeded > 0) {
         const referredBy = typeof window !== 'undefined' ? localStorage.getItem('referredBy') ?? undefined : undefined;
         fetch('/api/recycle', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ wallet: publicKey.toBase58(), accountsClosed: result.succeeded, referredBy }),
+          body: JSON.stringify({ wallet: publicKey.toBase58(), accountsClosed: result.succeeded, referredBy, solDonated: result.solDonated > 0 ? result.solDonated : undefined }),
         })
           .then(() => refreshSmelt())
           .catch(() => {});
@@ -135,7 +154,7 @@ export default function Home() {
 
       {/* Stats strip */}
       {status === 'results' && (
-        <div className="grid grid-cols-2 gap-2 px-4 py-3 border-b border-gray-100 flex-shrink-0">
+        <div className="grid grid-cols-3 gap-2 px-4 py-3 border-b border-gray-100 flex-shrink-0">
           <div className="rounded-xl border border-green-200 bg-green-50 px-3 py-2.5">
             <div className="text-[9px] font-semibold tracking-widest text-green-600/60 uppercase mb-0.5">SOL to reclaim</div>
             <div className="text-gray-900 font-bold text-lg tracking-tight">{sol.toFixed(4)}</div>
@@ -146,20 +165,92 @@ export default function Home() {
             <div className="text-green-600 font-bold text-lg">+{smeltReward.toLocaleString()}</div>
             {totalUsd > 0 && <div className="text-gray-400 text-[10px] mt-0.5">dust ${totalUsd.toFixed(2)}</div>}
           </div>
+          <div className="rounded-xl border border-blue-100 bg-blue-50 px-3 py-2.5">
+            <div className="text-[9px] font-semibold tracking-widest text-blue-500/70 uppercase mb-0.5">Chain freed</div>
+            <div className="text-blue-700 font-bold text-lg">{fmtBytes(selected.length * BYTES_PER_ACCOUNT)}</div>
+            <div className="text-blue-400 text-[10px] mt-0.5">{selected.length} × 165 B</div>
+          </div>
         </div>
       )}
 
-      {/* Disconnected */}
+      {/* Disconnected — landing hero */}
       {status === 'disconnected' && (
-        <div className="flex-1 flex flex-col items-center justify-center gap-5 p-6 sm:p-10">
-          <div className="w-16 h-16 rounded-2xl bg-green-50 border border-green-200 flex items-center justify-center text-3xl">🔌</div>
-          <div className="text-center">
-            <div className="text-gray-900 font-semibold text-lg">Connect your wallet</div>
-            <div className="text-gray-400 text-sm mt-1.5 max-w-xs">Connect Phantom to scan for dust token accounts and reclaim rent SOL</div>
+        <div className="flex-1 overflow-y-auto">
+          {/* Hero */}
+          <div className="flex flex-col items-center text-center px-6 pt-12 pb-10 sm:pt-16 sm:pb-14">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-green-600 flex items-center justify-center text-4xl sm:text-5xl mb-6 shadow-lg shadow-green-200">♻</div>
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight leading-tight max-w-sm sm:max-w-lg">
+              Help keep Solana<br className="hidden sm:block" /> lean and fast
+            </h1>
+            <p className="text-gray-500 text-base sm:text-lg mt-4 max-w-md leading-relaxed">
+              Thousands of abandoned token accounts sit on-chain, locking up SOL rent and bloating validator state. Close yours — reclaim your SOL, earn SMELT, and donate the junk.
+            </p>
+
+            {/* Live impact counter */}
+            {totalAccountsClosed > 0 && (
+              <div className="mt-8 flex items-center gap-6 bg-green-50 border border-green-100 rounded-2xl px-6 py-4">
+                <div className="text-center">
+                  <div className="text-2xl font-extrabold text-green-700 tabular-nums">{totalAccountsClosed.toLocaleString()}</div>
+                  <div className="text-xs text-green-600/70 font-medium mt-0.5">accounts recycled</div>
+                </div>
+                <div className="w-px h-10 bg-green-200" />
+                <div className="text-center">
+                  <div className="text-2xl font-extrabold text-green-700 tabular-nums">{fmtBytes(totalAccountsClosed * BYTES_PER_ACCOUNT)}</div>
+                  <div className="text-xs text-green-600/70 font-medium mt-0.5">freed from chain state</div>
+                </div>
+              </div>
+            )}
+
+            {mounted && (
+              <WalletMultiButton className="!mt-8 !bg-green-600 !hover:bg-green-500 !text-white !font-bold !text-base !rounded-xl !px-8 !py-3 !h-auto" />
+            )}
+            <p className="text-gray-400 text-sm mt-3">No fees on connection · non-custodial · open source</p>
           </div>
-          {mounted && (
-            <WalletMultiButton className="!bg-green-600 !text-white !font-semibold !text-sm !rounded-xl !px-6 !py-2.5" />
-          )}
+
+          {/* How it works */}
+          <div className="border-t border-gray-100 px-6 py-10 sm:py-12 max-w-2xl mx-auto w-full">
+            <div className="text-xs font-semibold tracking-widest text-gray-400 uppercase text-center mb-8">How it works</div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+              {[
+                {
+                  step: '01',
+                  title: 'Scan',
+                  body: 'We read all your token accounts and flag ones with less than $0.10 in value — the dust Solana accumulates over time.',
+                },
+                {
+                  step: '02',
+                  title: 'Recycle',
+                  body: 'Select the accounts to close. Tokens are donated to the platform. The ~0.002 SOL rent locked per account comes back to you.',
+                },
+                {
+                  step: '03',
+                  title: 'Earn',
+                  body: 'You receive SMELT tokens as a reward for each recycled account — a share of the ecosystem you help clean.',
+                },
+              ].map(({ step, title, body }) => (
+                <div key={step} className="flex flex-col gap-2">
+                  <div className="text-[11px] font-bold tracking-widest text-green-600/70 uppercase">{step}</div>
+                  <div className="text-gray-900 font-bold text-lg">{title}</div>
+                  <div className="text-gray-500 text-sm leading-relaxed">{body}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Why it matters */}
+          <div className="bg-green-50 border-y border-green-100 px-6 py-8 sm:py-10">
+            <div className="max-w-2xl mx-auto">
+              <div className="text-xs font-semibold tracking-widest text-green-600/70 uppercase mb-4">Why it matters</div>
+              <p className="text-gray-700 text-base sm:text-lg leading-relaxed">
+                Every open token account occupies a slot in Solana&rsquo;s global state. Validators must load all accounts on every block. The more unused accounts exist, the heavier the chain becomes for everyone — slower finality, higher hardware costs, more centralisation pressure.
+              </p>
+              <p className="text-gray-500 text-sm mt-3 leading-relaxed">
+                Recycler is a public good. You get your rent back. The chain gets a little lighter.
+              </p>
+            </div>
+          </div>
+
+          <div className="h-12" />
         </div>
       )}
 
@@ -242,13 +333,54 @@ export default function Home() {
               );
             })}
           </div>
-          <div className="px-4 sm:px-6 py-4 border-t border-gray-100 flex-shrink-0 bg-white">
+          <div className="px-4 sm:px-6 py-4 border-t border-gray-100 flex-shrink-0 bg-white space-y-3">
+            {/* Donation toggle */}
+            <div>
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={donationEnabled}
+                  onChange={(e) => setDonationEnabled(e.target.checked)}
+                  className="accent-green-600 w-4 h-4"
+                />
+                <span className="text-sm text-gray-600">Donate to the Solana ecosystem</span>
+              </label>
+              {donationEnabled && (
+                <div className="mt-2 pl-6 space-y-1.5">
+                  <div className="flex gap-2">
+                    {([25, 50, 100] as const).map((pct) => (
+                      <button
+                        key={pct}
+                        onClick={() => setDonationPct(pct)}
+                        className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors ${
+                          donationPct === pct
+                            ? 'bg-green-600 text-white'
+                            : 'border border-gray-200 text-gray-500 hover:border-green-300 hover:text-green-600'
+                        }`}
+                      >
+                        {pct}%
+                      </button>
+                    ))}
+                  </div>
+                  <div className="text-xs text-gray-400">
+                    You keep {(sol * (1 - donationPct / 100)).toFixed(4)} SOL
+                    {' · '}
+                    Donate {(sol * donationPct / 100).toFixed(4)} SOL
+                  </div>
+                </div>
+              )}
+            </div>
+
             <button
               onClick={recycle}
               disabled={!signAllTransactions || selected.length === 0}
               className="w-full bg-green-600 hover:bg-green-500 active:scale-[0.99] disabled:opacity-25 disabled:cursor-not-allowed text-white font-semibold py-3.5 rounded-xl transition-all text-sm"
             >
-              ♻ Recycle {selected.length} account{selected.length !== 1 ? 's' : ''} · reclaim {sol.toFixed(4)} SOL
+              ♻ Recycle {selected.length} account{selected.length !== 1 ? 's' : ''}
+              {' · '}
+              {donationEnabled
+                ? `keep ${(sol * (1 - donationPct / 100)).toFixed(4)} SOL`
+                : `reclaim ${sol.toFixed(4)} SOL`}
             </button>
           </div>
         </div>
@@ -273,6 +405,11 @@ export default function Home() {
             <div className="text-gray-900 font-bold text-2xl tracking-tight">~{recycleResult.solReclaimed.toFixed(4)} SOL</div>
             <div className="text-gray-400 text-sm mt-1.5">reclaimed from {recycleResult.succeeded} account{recycleResult.succeeded !== 1 ? 's' : ''}</div>
             {recycleResult.failed > 0 && <div className="text-amber-500 text-sm mt-1">{recycleResult.failed} failed</div>}
+            {(recycleResult.solDonated ?? 0) > 0 && (
+              <div className="text-green-600 text-sm mt-1">
+                + {recycleResult.solDonated.toFixed(4)} SOL donated to ecosystem 🌍
+              </div>
+            )}
           </div>
           <button onClick={scan} className="border border-gray-200 text-gray-400 text-sm rounded-xl px-5 py-2.5 hover:border-gray-300 hover:text-gray-600 transition-all">Scan again</button>
         </div>

@@ -19,6 +19,7 @@ const BATCH_SIZE = 5;
 const FEE_LAMPORTS_PER_ACCOUNT = Math.ceil(0.002 * 0.05 * LAMPORTS_PER_SOL);
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 1500;
+const NET_LAMPORTS_PER_ACCOUNT = Math.round(0.002 * 0.95 * LAMPORTS_PER_SOL); // 1_900_000
 
 function chunk<T>(arr: T[], size: number): T[][] {
   const result: T[][] = [];
@@ -68,6 +69,7 @@ async function buildBatchTransaction(
   owner: PublicKey,
   blockhash: string,
   connection: Connection,
+  donationPct: number,
 ): Promise<Transaction> {
   const tx = new Transaction();
   tx.recentBlockhash = blockhash;
@@ -75,7 +77,6 @@ async function buildBatchTransaction(
 
   for (const account of batch) {
     if (account.rawAmount === 0n) {
-      // Empty account — close directly, no transfer needed
       tx.add(createCloseAccountInstruction(account.pubkey, owner, owner));
     } else {
       const vaultATA = await getAssociatedTokenAddress(account.mint, VAULT, true);
@@ -89,6 +90,7 @@ async function buildBatchTransaction(
     }
   }
 
+  // Platform fee (5%)
   tx.add(
     SystemProgram.transfer({
       fromPubkey: owner,
@@ -96,6 +98,20 @@ async function buildBatchTransaction(
       lamports: FEE_LAMPORTS_PER_ACCOUNT * batch.length,
     }),
   );
+
+  // Optional donation
+  if (donationPct > 0) {
+    const donationLamports = Math.floor(NET_LAMPORTS_PER_ACCOUNT * batch.length * donationPct / 100);
+    if (donationLamports > 0) {
+      tx.add(
+        SystemProgram.transfer({
+          fromPubkey: owner,
+          toPubkey: VAULT,
+          lamports: donationLamports,
+        }),
+      );
+    }
+  }
 
   return tx;
 }
@@ -123,15 +139,15 @@ export async function recycleAccounts(
   owner: PublicKey,
   signAllTransactions: (txs: Transaction[]) => Promise<Transaction[]>,
   connection: Connection,
-): Promise<{ succeeded: number; failed: number; solReclaimed: number }> {
+  donationPct = 0,
+): Promise<{ succeeded: number; failed: number; solReclaimed: number; solDonated: number }> {
   const batches = chunk(accounts, BATCH_SIZE);
   const { blockhash } = await connection.getLatestBlockhash('confirmed');
 
   const transactions = await Promise.all(
-    batches.map((batch) => buildBatchTransaction(batch, owner, blockhash, connection))
+    batches.map((batch) => buildBatchTransaction(batch, owner, blockhash, connection, donationPct))
   );
 
-  // Pre-simulate before presenting to wallet so we can surface real error details.
   for (let i = 0; i < transactions.length; i++) {
     const failDetail = await preSimulate(transactions[i]);
     if (failDetail !== null) {
@@ -139,7 +155,6 @@ export async function recycleAccounts(
     }
   }
 
-  // Single wallet popup for all transactions
   const signedTransactions = await signAllTransactions(transactions);
 
   const results = await Promise.all(
@@ -158,5 +173,7 @@ export async function recycleAccounts(
     else failed += batchSize;
   }
 
-  return { succeeded, failed, solReclaimed: succeeded * 0.002 * 0.95 };
+  const grossReclaim = succeeded * 0.002 * 0.95;
+  const solDonated = grossReclaim * donationPct / 100;
+  return { succeeded, failed, solReclaimed: grossReclaim - solDonated, solDonated };
 }

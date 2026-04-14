@@ -13,6 +13,7 @@ import {
   EPOCH_DURATION_MS,
 } from '@/lib/constants';
 import { MAINNET_RPC } from '@/lib/solana';
+import { DATA_DIR } from '@/lib/paths';
 
 interface LiquidationEntry {
   date: string; mint: string; amountIn: number;
@@ -38,10 +39,9 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const DATA = path.join(process.cwd(), 'data');
-  const liquidations = loadJson<LiquidationEntry[]>(`${DATA}/liquidations.json`, []);
-  const distributions = loadJson<DistributionEntry[]>(`${DATA}/distributions.json`, []);
-  const fees = loadJson<FeeEntry[]>(`${DATA}/fees.json`, []);
+  const liquidations = loadJson<LiquidationEntry[]>(path.join(DATA_DIR, 'liquidations.json'), []);
+  const distributions = loadJson<DistributionEntry[]>(path.join(DATA_DIR, 'distributions.json'), []);
+  const fees = loadJson<FeeEntry[]>(path.join(DATA_DIR, 'fees.json'), []);
 
   // File-based stats
   const undistributedLiqSol = liquidations.filter((l) => !l.distributed).reduce((s, l) => s + l.solReceived, 0);

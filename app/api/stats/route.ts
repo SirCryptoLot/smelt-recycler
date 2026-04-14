@@ -2,6 +2,7 @@
 import { NextResponse } from 'next/server';
 import * as fs from 'fs';
 import * as path from 'path';
+import { DATA_DIR } from '../../../lib/paths';
 
 interface LiquidationEntry {
   date: string;
@@ -37,9 +38,9 @@ function loadJson<T>(filepath: string, fallback: T): T {
 }
 
 export async function GET(): Promise<NextResponse> {
-  const LIQUIDATIONS_PATH = path.join(process.cwd(), 'data/liquidations.json');
-  const DISTRIBUTIONS_PATH = path.join(process.cwd(), 'data/distributions.json');
-  const FEES_PATH = path.join(process.cwd(), 'data/fees.json');
+  const LIQUIDATIONS_PATH = path.join(DATA_DIR, 'liquidations.json');
+  const DISTRIBUTIONS_PATH = path.join(DATA_DIR, 'distributions.json');
+  const FEES_PATH = path.join(DATA_DIR, 'fees.json');
 
   const liquidations = loadJson<LiquidationEntry[]>(LIQUIDATIONS_PATH, []);
   const distributions = loadJson<DistributionEntry[]>(DISTRIBUTIONS_PATH, []);

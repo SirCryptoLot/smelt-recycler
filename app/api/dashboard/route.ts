@@ -4,6 +4,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { getWalletStats, getWeeklyRank } from '../../../lib/leaderboard';
 import { getReferralStats } from '../../../lib/referrals';
+import { DATA_DIR } from '../../../lib/paths';
 
 interface DistributionEntry {
   date: string;
@@ -12,7 +13,7 @@ interface DistributionEntry {
   txSignatures: string[];
 }
 
-const DISTRIBUTIONS_PATH = path.join(process.cwd(), 'data/distributions.json');
+const DISTRIBUTIONS_PATH = path.join(DATA_DIR, 'distributions.json');
 
 function loadDistributions(): DistributionEntry[] {
   try {

@@ -5,6 +5,13 @@ import { useMemo } from 'react';
 import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
 import { PhantomWalletAdapter, SolflareWalletAdapter } from '@solana/wallet-adapter-wallets';
+import {
+  SolanaMobileWalletAdapter,
+  createDefaultAddressSelector,
+  createDefaultAuthorizationResultCache,
+  createDefaultWalletNotFoundHandler,
+} from '@solana-mobile/wallet-adapter-mobile';
+import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
 import type { Adapter } from '@solana/wallet-adapter-base';
 import '@solana/wallet-adapter-react-ui/styles.css';
 
@@ -16,6 +23,13 @@ const WMP = WalletModalProvider as ComponentType<{ children: React.ReactNode }>;
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const wallets = useMemo(() => [
+    new SolanaMobileWalletAdapter({
+      appIdentity: { name: 'Recycler', uri: 'https://recycler.app', icon: '/favicon.ico' },
+      addressSelector: createDefaultAddressSelector(),
+      authorizationResultCache: createDefaultAuthorizationResultCache(),
+      cluster: WalletAdapterNetwork.Mainnet,
+      onWalletNotFound: createDefaultWalletNotFoundHandler(),
+    }),
     new PhantomWalletAdapter(),
     new SolflareWalletAdapter(),
   ], []);

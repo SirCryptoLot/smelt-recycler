@@ -25,6 +25,9 @@
     "paths": {
       "@/*": [
         "./*"
+      ],
+      "@solana-mobile/wallet-adapter-mobile": [
+        "./node_modules/@solana-mobile/wallet-adapter-mobile/lib/types/index.d.ts"
       ]
     }
   },

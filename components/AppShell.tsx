@@ -22,6 +22,13 @@ function shortAddr(addr: string): string {
   return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
 }
 
+function fmtSupply(n: number): string {
+  if (n === 0) return '—';
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(2)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
+  return n.toLocaleString();
+}
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { publicKey, connected, disconnect } = useWallet();
@@ -241,7 +248,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="hidden sm:flex bg-gray-100 border-b border-gray-200 px-6 py-2 items-center gap-5 text-xs">
         {[
           { label: 'NAV', value: `${nav} SOL` },
-          { label: 'Supply', value: `${totalSupply > 0 ? `${(totalSupply / 1e6).toFixed(2)}M` : '—'} SMELT` },
+          { label: 'Supply', value: `${fmtSupply(totalSupply)} SMELT` },
           { label: 'Pool', value: `${pendingSol > 0 ? pendingSol.toFixed(4) : '—'} SOL` },
           { label: 'Emission', value: '250 SMELT/acc' },
         ].map(({ label, value }, i) => (
@@ -258,7 +265,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="sm:hidden bg-gray-100 border-b border-gray-200 px-4 py-2 grid grid-cols-2 gap-x-4 gap-y-1.5">
         {[
           { label: 'NAV', value: `${nav} SOL` },
-          { label: 'Supply', value: `${totalSupply > 0 ? `${(totalSupply / 1e6).toFixed(1)}M` : '—'} SMELT` },
+          { label: 'Supply', value: `${fmtSupply(totalSupply)} SMELT` },
           { label: 'Pool', value: `${pendingSol > 0 ? pendingSol.toFixed(4) : '—'} SOL` },
           { label: 'Emission', value: '250/acc' },
         ].map(({ label, value }) => (

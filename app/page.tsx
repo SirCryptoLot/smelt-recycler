@@ -178,9 +178,20 @@ export default function Home() {
       {status === 'results' && (
         <div className="flex flex-col flex-1 overflow-hidden">
           <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-gray-100 flex-shrink-0">
-            <span className="text-gray-400 text-xs font-semibold tracking-widest uppercase">
-              {accounts.length} trash account{accounts.length !== 1 ? 's' : ''}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-gray-400 text-xs font-semibold tracking-widest uppercase">
+                {accounts.length} trash account{accounts.length !== 1 ? 's' : ''}
+              </span>
+              <button
+                onClick={scan}
+                title="Refresh"
+                className="text-gray-300 hover:text-green-600 transition-colors"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </button>
+            </div>
             <button onClick={toggleAll} className="text-gray-400 text-xs hover:text-green-600 transition-colors">
               {allSelected ? 'Deselect all' : 'Select all'}
             </button>

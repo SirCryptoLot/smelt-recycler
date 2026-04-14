@@ -18,6 +18,7 @@ import {
   STAKING_BOOST,
 } from '../lib/constants';
 import { MAINNET_RPC } from '../lib/solana';
+import { DATA_DIR } from '../lib/paths';
 
 interface LiquidationEntry {
   date: string;
@@ -41,15 +42,15 @@ interface StakeAccountData {
   bump: number;
 }
 
-const LIQUIDATIONS_PATH = path.join(__dirname, '../data/liquidations.json');
-const DISTRIBUTIONS_PATH = path.join(__dirname, '../data/distributions.json');
-const FEES_PATH = path.join(__dirname, '../data/fees.json');
-const ADMIN_KEYPAIR_PATH = path.join(__dirname, '../data/keypairs/admin.json');
+const LIQUIDATIONS_PATH = path.join(DATA_DIR, 'liquidations.json');
+const DISTRIBUTIONS_PATH = path.join(DATA_DIR, 'distributions.json');
+const FEES_PATH = path.join(DATA_DIR, 'fees.json');
 
 const TRANSFERS_PER_TX = 20;
 
-function loadKeypair(filepath: string): Keypair {
-  const raw = JSON.parse(fs.readFileSync(filepath, 'utf-8')) as number[];
+function loadAdminKeypair(): Keypair {
+  const raw = JSON.parse(process.env.ADMIN_KEYPAIR ?? '[]') as number[];
+  if (raw.length === 0) throw new Error('ADMIN_KEYPAIR env var not set');
   return Keypair.fromSecretKey(Uint8Array.from(raw));
 }
 
@@ -129,7 +130,7 @@ async function main(): Promise<void> {
   console.log('=== SMELT Distributor ===\n');
 
   const connection = new Connection(MAINNET_RPC, 'confirmed');
-  const adminKeypair = loadKeypair(ADMIN_KEYPAIR_PATH);
+  const adminKeypair = loadAdminKeypair();
 
   // 1. Sum undistributed SOL from liquidations + platform fees
   const liquidations = loadLiquidations();

@@ -1,8 +1,9 @@
 // lib/ecosystem.ts
 import * as fs from 'fs';
 import * as path from 'path';
+import { DATA_DIR } from './paths';
 
-const PATH = path.join(process.cwd(), 'data/ecosystem.json');
+const PATH = path.join(DATA_DIR, 'ecosystem.json');
 
 export interface EcosystemData {
   totalWallets: number;

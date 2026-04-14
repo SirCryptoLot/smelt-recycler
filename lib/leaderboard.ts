@@ -1,8 +1,9 @@
 // lib/leaderboard.ts
 import * as fs from 'fs';
 import * as path from 'path';
+import { DATA_DIR } from './paths';
 
-const PATH = path.join(process.cwd(), 'data/leaderboard.json');
+const PATH = path.join(DATA_DIR, 'leaderboard.json');
 
 export interface LeaderboardEntry {
   accounts: number;

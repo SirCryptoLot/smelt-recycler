@@ -1,6 +1,7 @@
 // lib/donations.ts
 import * as fs from 'fs';
 import * as path from 'path';
+import { DATA_DIR } from './paths';
 
 export interface DonationEntry {
   date: string;
@@ -10,7 +11,7 @@ export interface DonationEntry {
   txSignature: string;
 }
 
-const DONATIONS_PATH = path.join(process.cwd(), 'data/donations.json');
+const DONATIONS_PATH = path.join(DATA_DIR, 'donations.json');
 
 export function loadDonations(): DonationEntry[] {
   if (!fs.existsSync(DONATIONS_PATH)) return [];

@@ -1,8 +1,9 @@
 // lib/referrals.ts
 import * as fs from 'fs';
 import * as path from 'path';
+import { DATA_DIR } from './paths';
 
-const PATH = path.join(process.cwd(), 'data/referrals.json');
+const PATH = path.join(DATA_DIR, 'referrals.json');
 
 export interface ReferralEvent {
   referee: string;

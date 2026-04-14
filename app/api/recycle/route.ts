@@ -9,8 +9,9 @@ import { recordRecycle as recordLeaderboard, getWalletStats } from '../../../lib
 import { recordReferral } from '../../../lib/referrals';
 import { recordRecycle as recordEcosystem, incrementWalletCount } from '../../../lib/ecosystem';
 import { appendDonation } from '../../../lib/donations';
+import { DATA_DIR } from '../../../lib/paths';
 
-const FEES_PATH = path.join(process.cwd(), 'data/fees.json');
+const FEES_PATH = path.join(DATA_DIR, 'fees.json');
 const SOL_FEE_PER_ACCOUNT = 0.002 * 0.05;
 const SOL_RECLAIMED_PER_ACCOUNT = 0.002 * 0.95;
 

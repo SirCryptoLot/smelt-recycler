@@ -164,20 +164,20 @@ export default function Home() {
       {/* Stats strip */}
       {status === 'results' && (
         <div className="grid grid-cols-3 border-b border-gray-100 flex-shrink-0">
-          <div className="px-3 sm:px-5 py-3.5 border-r border-gray-100">
-            <div className="text-[9px] font-bold tracking-widest text-gray-400 uppercase mb-1">SOL to reclaim</div>
-            <div className="text-gray-900 font-extrabold text-xl sm:text-2xl tracking-tight tabular-nums leading-none">{sol.toFixed(4)}</div>
-            <div className="text-gray-400 text-[11px] mt-1">{selected.length}/{accounts.length} accts</div>
+          <div className="px-2.5 sm:px-5 py-3 border-r border-gray-100">
+            <div className="text-[8px] sm:text-[9px] font-bold tracking-widest text-gray-400 uppercase mb-1">SOL</div>
+            <div className="text-gray-900 font-extrabold text-lg sm:text-2xl tracking-tight tabular-nums leading-none">{sol.toFixed(4)}</div>
+            <div className="text-gray-400 text-[10px] mt-1">{selected.length}/{accounts.length}</div>
           </div>
-          <div className="px-3 sm:px-5 py-3.5 border-r border-gray-100">
-            <div className="text-[9px] font-bold tracking-widest text-gray-400 uppercase mb-1">SMELT reward</div>
-            <div className="text-green-600 font-extrabold text-xl sm:text-2xl leading-none tabular-nums">+{smeltReward.toLocaleString()}</div>
-            {totalUsd > 0 && <div className="text-gray-400 text-[11px] mt-1">${totalUsd.toFixed(2)} dust</div>}
+          <div className="px-2.5 sm:px-5 py-3 border-r border-gray-100">
+            <div className="text-[8px] sm:text-[9px] font-bold tracking-widest text-gray-400 uppercase mb-1">SMELT</div>
+            <div className="text-green-600 font-extrabold text-lg sm:text-2xl leading-none tabular-nums">+{smeltReward.toLocaleString()}</div>
+            {totalUsd > 0 && <div className="text-gray-400 text-[10px] mt-1">${totalUsd.toFixed(2)}</div>}
           </div>
-          <div className="px-3 sm:px-5 py-3.5">
-            <div className="text-[9px] font-bold tracking-widest text-gray-400 uppercase mb-1">Chain freed</div>
-            <div className="text-gray-900 font-extrabold text-xl sm:text-2xl leading-none tabular-nums">{fmtBytes(selected.length * BYTES_PER_ACCOUNT)}</div>
-            <div className="text-gray-400 text-[11px] mt-1">{selected.length} × 165 B</div>
+          <div className="px-2.5 sm:px-5 py-3">
+            <div className="text-[8px] sm:text-[9px] font-bold tracking-widest text-gray-400 uppercase mb-1">Freed</div>
+            <div className="text-gray-900 font-extrabold text-lg sm:text-2xl leading-none tabular-nums">{fmtBytes(selected.length * BYTES_PER_ACCOUNT)}</div>
+            <div className="text-gray-400 text-[10px] mt-1">{selected.length} × 165B</div>
           </div>
         </div>
       )}

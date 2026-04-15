@@ -153,22 +153,22 @@ export default function DashboardPage() {
         <section>
           <h2 className="text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-4">Referrals</h2>
           <div className="rounded-2xl bg-white border border-gray-100 p-5 space-y-4">
-            <div>
-              <div className="text-xs text-gray-400 mb-2">Your referral link</div>
+            <div className="space-y-2">
+              <div className="text-xs text-gray-400">Your referral link</div>
+              <div className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-xs text-gray-500 font-mono break-all leading-relaxed">
+                {referralLink}
+              </div>
               <div className="flex gap-2">
-                <div className="flex-1 min-w-0 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-500 font-mono truncate">
-                  {referralLink}
-                </div>
                 <button
                   onClick={copyLink}
-                  className="px-3 py-2 rounded-xl border border-gray-200 text-xs text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-all flex-shrink-0"
+                  className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:text-gray-800 hover:border-gray-300 transition-all"
                 >
-                  {copied ? '✓ Copied' : 'Copy'}
+                  {copied ? '✓ Copied' : 'Copy link'}
                 </button>
                 {typeof navigator !== 'undefined' && 'share' in navigator && (
                   <button
                     onClick={shareLink}
-                    className="px-3 py-2 rounded-xl border border-gray-200 text-xs text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-all flex-shrink-0"
+                    className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:text-gray-800 hover:border-gray-300 transition-all"
                   >
                     Share
                   </button>
@@ -190,14 +190,17 @@ export default function DashboardPage() {
             {(data?.referral.referrals.length ?? 0) > 0 && (
               <div className="space-y-2">
                 <div className="text-xs text-gray-400">Recent referrals</div>
-                {data!.referral.referrals.map((r, i) => (
-                  <div key={i} className="flex items-center justify-between text-xs">
-                    <span className="text-gray-500 font-mono">{shortAddr(r.referee)}</span>
-                    <span className="text-gray-400">{r.accountsClosed} accounts</span>
-                    <span className="text-green-600">+{r.bonusEarned.toFixed(6)} SOL</span>
-                    <span className="text-gray-400">{formatDate(r.date)}</span>
-                  </div>
-                ))}
+                <div className="divide-y divide-gray-100 rounded-xl border border-gray-100 overflow-hidden">
+                  {data!.referral.referrals.map((r, i) => (
+                    <div key={i} className="flex items-center justify-between px-3 py-3 gap-3">
+                      <div>
+                        <div className="text-gray-700 font-mono text-xs">{shortAddr(r.referee)}</div>
+                        <div className="text-gray-400 text-[11px] mt-0.5">{r.accountsClosed} accounts · {formatDate(r.date)}</div>
+                      </div>
+                      <span className="text-green-600 font-semibold text-sm flex-shrink-0">+{r.bonusEarned.toFixed(4)} SOL</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>

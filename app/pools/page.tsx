@@ -116,19 +116,38 @@ export default function PoolsPage() {
         <section>
           <h2 className="text-lg font-bold text-gray-900 mb-4">Vault Contents</h2>
           {tokens.length === 0 ? (
-            <div className="rounded-2xl bg-white border border-gray-200 p-6 text-gray-400 text-sm">
+            <div className="rounded-2xl bg-white border border-gray-100 p-6 text-gray-400 text-sm">
               Vault is empty — no tokens accumulated yet.
             </div>
           ) : (
-            <div className="rounded-2xl bg-white border border-gray-200 overflow-hidden">
-              <div className="overflow-x-auto">
+            <div className="rounded-2xl bg-white border border-gray-100 overflow-hidden">
+              {/* Mobile: stacked cards */}
+              <div className="sm:hidden divide-y divide-gray-100">
+                {tokens.map((token) => (
+                  <div key={token.mint} className="px-4 py-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono text-sm text-gray-700">{shortAddr(token.mint)}</span>
+                      <span className="text-gray-900 font-bold tabular-nums">${token.usdValue.toFixed(2)}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 h-2 rounded-full bg-gray-100 overflow-hidden">
+                        <div className="h-full rounded-full bg-green-600 transition-all" style={{ width: `${token.pctOfThreshold}%` }} />
+                      </div>
+                      <span className="text-xs text-gray-400 tabular-nums w-16 text-right">{token.pctOfThreshold.toFixed(0)}% of $10</span>
+                    </div>
+                    <div className="text-xs text-gray-400 tabular-nums">{token.uiAmount.toLocaleString()} tokens</div>
+                  </div>
+                ))}
+              </div>
+              {/* Desktop: table */}
+              <div className="hidden sm:block overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-gray-100 text-gray-400 text-xs">
                       <th className="text-left px-4 py-3">Token</th>
                       <th className="text-right px-4 py-3">Balance</th>
                       <th className="text-right px-4 py-3">USD Value</th>
-                      <th className="px-4 py-3 w-36">Progress to $1</th>
+                      <th className="px-4 py-3 w-36">Progress to $10</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -139,14 +158,9 @@ export default function PoolsPage() {
                         <td className="px-4 py-3 text-right text-gray-700">${token.usdValue.toFixed(2)}</td>
                         <td className="px-4 py-3">
                           <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
-                            <div
-                              className="h-full rounded-full bg-green-600 transition-all"
-                              style={{ width: `${token.pctOfThreshold}%` }}
-                            />
+                            <div className="h-full rounded-full bg-green-600 transition-all" style={{ width: `${token.pctOfThreshold}%` }} />
                           </div>
-                          <span className="text-xs text-gray-400 mt-1 block text-right">
-                            {token.pctOfThreshold.toFixed(0)}%
-                          </span>
+                          <span className="text-xs text-gray-400 mt-1 block text-right">{token.pctOfThreshold.toFixed(0)}%</span>
                         </td>
                       </tr>
                     ))}
@@ -160,18 +174,18 @@ export default function PoolsPage() {
         {/* Fee Revenue */}
         <section>
           <h2 className="text-lg font-bold text-gray-900 mb-4">Fee Revenue</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="rounded-2xl bg-white border border-gray-100 p-5">
-              <div className="text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-2">Accounts Closed</div>
-              <div className="text-gray-900 font-extrabold text-2xl tabular-nums">{totalAccountsClosed.toLocaleString()}</div>
+          <div className="grid grid-cols-3 gap-3 sm:gap-4">
+            <div className="rounded-2xl bg-white border border-gray-100 px-3 sm:px-5 py-4 sm:py-5">
+              <div className="text-[9px] sm:text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-2">Closed</div>
+              <div className="text-gray-900 font-extrabold text-xl sm:text-2xl tabular-nums">{totalAccountsClosed.toLocaleString()}</div>
             </div>
-            <div className="rounded-2xl bg-white border border-gray-100 p-5">
-              <div className="text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-2">Fees Collected</div>
-              <div className="text-green-600 font-extrabold text-2xl tabular-nums">{totalFeesCollected.toFixed(4)}<span className="text-base font-medium ml-1">SOL</span></div>
+            <div className="rounded-2xl bg-white border border-gray-100 px-3 sm:px-5 py-4 sm:py-5">
+              <div className="text-[9px] sm:text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-2">Fees</div>
+              <div className="text-green-600 font-extrabold text-xl sm:text-2xl tabular-nums leading-tight">{totalFeesCollected.toFixed(3)}<span className="text-xs sm:text-base font-medium ml-0.5">SOL</span></div>
             </div>
-            <div className="rounded-2xl bg-white border border-gray-100 p-5">
-              <div className="text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-2">Pending Distribution</div>
-              <div className="text-gray-900 font-extrabold text-2xl tabular-nums">{undistributedFeeSol.toFixed(4)}<span className="text-base font-medium ml-1">SOL</span></div>
+            <div className="rounded-2xl bg-white border border-gray-100 px-3 sm:px-5 py-4 sm:py-5">
+              <div className="text-[9px] sm:text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-2">Pending</div>
+              <div className="text-gray-900 font-extrabold text-xl sm:text-2xl tabular-nums leading-tight">{undistributedFeeSol.toFixed(3)}<span className="text-xs sm:text-base font-medium ml-0.5">SOL</span></div>
             </div>
           </div>
         </section>
@@ -180,12 +194,25 @@ export default function PoolsPage() {
         <section>
           <h2 className="text-lg font-bold text-gray-900 mb-4">Recent Liquidations</h2>
           {recentLiquidations.length === 0 ? (
-            <div className="rounded-2xl bg-white border border-gray-200 p-6 text-gray-400 text-sm">
+            <div className="rounded-2xl bg-white border border-gray-100 p-6 text-gray-400 text-sm">
               No liquidations yet.
             </div>
           ) : (
-            <div className="rounded-2xl bg-white border border-gray-200 overflow-hidden">
-              <div className="overflow-x-auto">
+            <div className="rounded-2xl bg-white border border-gray-100 overflow-hidden">
+              {/* Mobile: stacked cards */}
+              <div className="sm:hidden divide-y divide-gray-100">
+                {recentLiquidations.map((liq, i) => (
+                  <div key={i} className="px-4 py-4 flex items-center justify-between gap-3">
+                    <div>
+                      <div className="text-green-600 font-bold tabular-nums">{liq.solReceived.toFixed(4)} SOL</div>
+                      <div className="text-gray-400 text-xs font-mono mt-0.5">{shortAddr(liq.mint)}</div>
+                    </div>
+                    <div className="text-gray-400 text-xs text-right">{formatDate(liq.date)}</div>
+                  </div>
+                ))}
+              </div>
+              {/* Desktop: table */}
+              <div className="hidden sm:block">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-gray-100 text-gray-400 text-xs">

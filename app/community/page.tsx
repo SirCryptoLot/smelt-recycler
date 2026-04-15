@@ -89,7 +89,7 @@ export default function CommunityPage() {
             <h2 className="text-lg font-bold text-gray-900">Ecosystem Health</h2>
             <span className="text-xs text-gray-400">All-time · Solana mainnet</span>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
             {[
               { label: 'Wallets cleaned', value: (eco?.totalWallets ?? 0).toLocaleString(), accent: false },
               { label: 'Accounts closed', value: (eco?.totalAccountsClosed ?? 0).toLocaleString(), accent: false },
@@ -97,10 +97,10 @@ export default function CommunityPage() {
               { label: 'SMELT minted', value: (eco?.totalSmeltMinted ?? 0).toLocaleString(), accent: true },
               { label: 'SOL donated', value: totalSolDonated.toFixed(4), unit: 'SOL', accent: true },
             ].map(({ label, value, unit, accent }) => (
-              <div key={label} className="rounded-2xl bg-white border border-gray-100 px-4 py-4">
-                <div className="text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-2">{label}</div>
-                <div className={`font-extrabold text-xl tabular-nums leading-tight ${accent ? 'text-green-600' : 'text-gray-900'}`}>
-                  {value}{unit && <span className="text-sm font-medium ml-0.5">{unit}</span>}
+              <div key={label} className="rounded-2xl bg-white border border-gray-100 px-3 sm:px-4 py-4">
+                <div className="text-[9px] sm:text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-2">{label}</div>
+                <div className={`font-extrabold text-lg sm:text-xl tabular-nums leading-tight ${accent ? 'text-green-600' : 'text-gray-900'}`}>
+                  {value}{unit && <span className="text-xs sm:text-sm font-medium ml-0.5">{unit}</span>}
                 </div>
               </div>
             ))}
@@ -131,19 +131,46 @@ export default function CommunityPage() {
           </div>
 
           {currentEntries.length === 0 ? (
-            <div className="rounded-2xl bg-white border border-gray-200 p-6 text-gray-400 text-sm">
+            <div className="rounded-2xl bg-white border border-gray-100 p-6 text-gray-400 text-sm">
               No recycling activity yet.
             </div>
           ) : (
-            <div className="rounded-2xl bg-white border border-gray-200 overflow-hidden">
-              <table className="w-full text-sm">
+            <div className="rounded-2xl bg-white border border-gray-100 overflow-hidden">
+              {/* Mobile: stacked cards */}
+              <div className="sm:hidden divide-y divide-gray-100">
+                {currentEntries.map((entry, i) => {
+                  const isUser = entry.wallet === userWallet;
+                  const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : null;
+                  return (
+                    <div key={entry.wallet} className={`px-4 py-3.5 flex items-center gap-3 ${isUser ? 'bg-green-50' : ''}`}>
+                      <span className="text-base w-6 text-center flex-shrink-0">{medal ?? <span className="text-gray-400 text-sm font-medium">{i + 1}</span>}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-sm text-gray-700">{shortAddr(entry.wallet)}</span>
+                          {isUser && <span className="text-green-700 text-[10px] font-bold bg-green-100 px-1.5 py-0.5 rounded-full">you</span>}
+                        </div>
+                        <div className="text-xs text-gray-400 mt-0.5">{entry.solReclaimed.toFixed(4)} SOL reclaimed</div>
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <div className="text-gray-900 font-bold tabular-nums">{entry.accounts}</div>
+                        <div className="text-[10px] text-gray-400">accounts</div>
+                        {tab === 'weekly' && PRIZES[i] && (
+                          <div className="text-green-600 text-[10px] font-bold mt-0.5">+{PRIZES[i]} SMELT</div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              {/* Desktop: table */}
+              <table className="hidden sm:table w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-100 text-gray-400 text-xs">
                     <th className="text-left px-4 py-3 w-8">#</th>
                     <th className="text-left px-4 py-3">Wallet</th>
                     <th className="text-right px-4 py-3">Accounts</th>
-                    <th className="text-right px-4 py-3 hidden sm:table-cell">SOL reclaimed</th>
-                    {tab === 'weekly' && <th className="text-right px-4 py-3 hidden sm:table-cell">Prize</th>}
+                    <th className="text-right px-4 py-3">SOL reclaimed</th>
+                    {tab === 'weekly' && <th className="text-right px-4 py-3">Prize</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -158,9 +185,9 @@ export default function CommunityPage() {
                           {isUser && <span className="ml-2 text-green-700 text-[10px] font-semibold bg-green-100 px-1.5 py-0.5 rounded">you</span>}
                         </td>
                         <td className="px-4 py-3 text-right text-gray-900 font-semibold">{entry.accounts}</td>
-                        <td className="px-4 py-3 text-right text-gray-500 hidden sm:table-cell">{entry.solReclaimed.toFixed(4)}</td>
+                        <td className="px-4 py-3 text-right text-gray-500">{entry.solReclaimed.toFixed(4)}</td>
                         {tab === 'weekly' && (
-                          <td className="px-4 py-3 text-right hidden sm:table-cell">
+                          <td className="px-4 py-3 text-right">
                             {PRIZES[i] ? (
                               <span className="text-xs text-green-600 font-semibold">+{PRIZES[i]} SMELT</span>
                             ) : (
@@ -175,8 +202,8 @@ export default function CommunityPage() {
               </table>
 
               {userRank === -1 && userWallet && (
-                <div className="border-t border-gray-100 px-4 py-3 flex items-center justify-between text-xs bg-green-50">
-                  <span className="text-gray-400">Your rank: not in top 20</span>
+                <div className="border-t border-gray-100 px-4 py-3 flex items-center justify-between gap-3 text-xs bg-green-50">
+                  <span className="text-gray-400">Not in top 20</span>
                   <span className="text-gray-500 font-mono">{shortAddr(userWallet)}</span>
                   <span className="text-green-700 text-[10px] bg-green-100 px-1.5 py-0.5 rounded font-semibold">you</span>
                 </div>

@@ -213,7 +213,22 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* STATS BAR */}
       <div className="bg-white/70 backdrop-blur-sm border-b border-green-100/60">
-        <div className="flex items-stretch w-full max-w-5xl mx-auto">
+        {/* Mobile: 2×2 grid */}
+        <div className="grid grid-cols-2 sm:hidden w-full divide-x divide-y divide-green-100/60">
+          {[
+            { label: 'Supply', value: `${fmtSupply(totalSupply)} SMELT`, accent: false },
+            { label: 'Pool', value: `${pendingSol > 0 ? pendingSol.toFixed(4) : '—'} SOL`, accent: false },
+            { label: 'Recycled', value: totalAccountsClosed > 0 ? totalAccountsClosed.toLocaleString() : '—', accent: true },
+            { label: 'Chain freed', value: fmtBytes(totalAccountsClosed * 165), accent: true },
+          ].map(({ label, value, accent }) => (
+            <div key={label} className="px-3 py-2.5">
+              <div className="text-[9px] font-bold tracking-widest uppercase text-gray-400 mb-0.5">{label}</div>
+              <span className={`text-sm font-bold tabular-nums leading-tight ${accent ? 'text-green-600' : 'text-gray-900'}`}>{value}</span>
+            </div>
+          ))}
+        </div>
+        {/* Desktop: single row */}
+        <div className="hidden sm:flex items-stretch w-full max-w-5xl mx-auto">
           {[
             { label: 'Supply', value: `${fmtSupply(totalSupply)} SMELT`, tooltip: 'Total circulating SMELT supply on-chain.' },
             { label: 'Pool', value: `${pendingSol > 0 ? pendingSol.toFixed(4) : '—'} SOL`, tooltip: 'Undistributed SOL waiting for holders.' },
@@ -222,16 +237,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           ].map(({ label, value, tooltip, accent }, i) => (
             <div key={label} className="relative group flex-1 flex items-stretch">
               {i > 0 && <div className="w-px bg-green-100 my-2.5 flex-shrink-0" />}
-              <div className="flex-1 flex flex-col justify-center px-3 sm:px-5 py-3 cursor-default select-none">
+              <div className="flex-1 flex flex-col justify-center px-5 py-3 cursor-default select-none">
                 <div className="flex items-center gap-1 mb-1">
                   <span className="text-[10px] font-bold tracking-widest uppercase text-gray-400 whitespace-nowrap">{label}</span>
                   <svg className="w-3 h-3 text-gray-300 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
                   </svg>
                 </div>
-                <span className={`text-sm sm:text-base font-bold tabular-nums leading-tight ${accent ? 'text-green-600' : 'text-gray-900'}`}>
-                  {value}
-                </span>
+                <span className={`text-base font-bold tabular-nums leading-tight ${accent ? 'text-green-600' : 'text-gray-900'}`}>{value}</span>
               </div>
               <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 bg-gray-900 text-white text-xs rounded-xl px-3 py-2.5 leading-relaxed opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-150 z-50 shadow-xl text-center">
                 {tooltip}

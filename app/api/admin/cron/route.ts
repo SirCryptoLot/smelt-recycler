@@ -21,14 +21,10 @@ import { swapToSol } from '../../../../lib/jupiter';
 import { VAULT_PUBKEY, SMELT_MINT, STAKING_PROGRAM_ID, STAKING_BOOST } from '../../../../lib/constants';
 import { MAINNET_RPC } from '../../../../lib/solana';
 import { DATA_DIR } from '../../../../lib/paths';
-import { loadDonations } from '../../../../lib/donations';
 
 export const dynamic = 'force-dynamic';
 
-const LIQUIDATIONS_PATH = path.join(DATA_DIR, 'liquidations.json');
 const DISTRIBUTIONS_PATH = path.join(DATA_DIR, 'distributions.json');
-const FEES_PATH = path.join(DATA_DIR, 'fees.json');
-const DONATIONS_PATH = path.join(DATA_DIR, 'donations.json');
 const TRANSFERS_PER_TX = 18; // leave headroom under 20 instruction limit
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -39,14 +35,6 @@ interface LiquidationEntry {
   amountIn: number;
   solReceived: number;
   txSignature: string;
-  distributed: boolean;
-}
-
-interface FeeEntry {
-  date: string;
-  wallet: string;
-  accountsClosed: number;
-  solFees: number;
   distributed: boolean;
 }
 
@@ -175,7 +163,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const tokens = await fetchVaultTokens(connection);
     log.push(`  ${tokens.length} token(s) in vault`);
 
-    const liquidations = loadJson<LiquidationEntry>(LIQUIDATIONS_PATH);
     let newLiquidationSol = 0;
 
     for (const token of tokens) {
@@ -184,15 +171,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         const result = await swapToSol(connection, vaultKeypair, token.mint, token.rawAmount);
         log.push(`    ✓ ${result.solReceived.toFixed(6)} SOL  tx: ${result.txSignature.slice(0, 16)}...`);
         newLiquidationSol += result.solReceived;
-        liquidations.push({
-          date: ts(),
-          mint: token.mint,
-          amountIn: token.rawAmount,
-          solReceived: result.solReceived,
-          txSignature: result.txSignature,
-          distributed: false,
-        });
-        saveJson(LIQUIDATIONS_PATH, liquidations); // persist after each swap
       } catch (err) {
         log.push(`    ✗ swap failed: ${err instanceof Error ? err.message : String(err)}`);
       }
@@ -200,31 +178,23 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     log.push(`  New SOL from liquidations: ${newLiquidationSol.toFixed(6)}`);
 
-    // ── Phase 2: Tally undistributed SOL ─────────────────────────────────────
+    // ── Phase 2: Use vault's actual on-chain balance as source of truth ──────
+    // Railway's filesystem is ephemeral — JSON files reset on redeploy.
+    // We use vault balance directly; JSON files are only for audit/marking.
 
-    log.push(`[${ts()}] Phase 2: tallying undistributed SOL`);
+    log.push(`[${ts()}] Phase 2: vault balance`);
 
-    const allLiquidations = loadJson<LiquidationEntry>(LIQUIDATIONS_PATH);
-    const undistributedLiq = allLiquidations.filter((e) => !e.distributed);
-    const liquidationSol = undistributedLiq.reduce((s, e) => s + e.solReceived, 0);
+    const VAULT_RESERVE_SOL = 0.01; // keep for rent + future tx fees
+    const vaultBalanceLamports = await connection.getBalance(vaultKeypair.publicKey);
+    const vaultBalance = vaultBalanceLamports / LAMPORTS_PER_SOL;
+    const distributableSol = Math.max(0, vaultBalance - VAULT_RESERVE_SOL);
 
-    const fees = loadJson<FeeEntry>(FEES_PATH);
-    const undistributedFees = fees.filter((e) => !e.distributed);
-    const feeSol = undistributedFees.reduce((s, e) => s + e.solFees, 0);
+    log.push(`  Vault balance: ${vaultBalance.toFixed(6)} SOL`);
+    log.push(`  Reserve: ${VAULT_RESERVE_SOL} SOL`);
+    log.push(`  Distributable: ${distributableSol.toFixed(6)} SOL`);
 
-    const allDonations = loadDonations();
-    const undistributedDonations = allDonations.filter((e) => !e.distributed);
-    const donationSol = undistributedDonations.reduce((s, e) => s + e.solDonated, 0);
-
-    const totalSol = liquidationSol + feeSol + donationSol;
-
-    log.push(`  Liquidations: ${liquidationSol.toFixed(6)} SOL`);
-    log.push(`  Platform fees: ${feeSol.toFixed(6)} SOL`);
-    log.push(`  Donations: ${donationSol.toFixed(6)} SOL`);
-    log.push(`  Total: ${totalSol.toFixed(6)} SOL`);
-
-    if (totalSol < 0.001) {
-      log.push('  Less than 0.001 SOL to distribute — skipping distribution.');
+    if (distributableSol < 0.001) {
+      log.push('  Less than 0.001 SOL above reserve — skipping distribution.');
       return NextResponse.json({ ok: true, log, liquidated: tokens.length, distributed: 0 });
     }
 
@@ -253,22 +223,17 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     log.push(`[${ts()}] Phase 4: distribution`);
 
-    // Reserve 0.01 SOL in vault for rent exemption + future tx fees
-    const VAULT_RESERVE_SOL = 0.01;
-    const vaultBalance = await connection.getBalance(vaultKeypair.publicKey) / LAMPORTS_PER_SOL;
-    const distributableSol = Math.max(0, Math.min(totalSol, vaultBalance - VAULT_RESERVE_SOL));
-    log.push(`  Vault balance: ${vaultBalance.toFixed(6)} SOL, reserve: ${VAULT_RESERVE_SOL} SOL, distributable: ${distributableSol.toFixed(6)} SOL`);
-
-    if (distributableSol < 0.001) {
-      log.push('  Not enough SOL above reserve to distribute — vault needs funding.');
-      return NextResponse.json({ ok: true, log, liquidated: tokens.length, distributed: 0 });
-    }
+    // Solana rent-exempt minimum for a system account (~0.00089 SOL)
+    const RENT_EXEMPT_MIN = await connection.getMinimumBalanceForRentExemption(0);
 
     const totalLamports = Math.floor(distributableSol * LAMPORTS_PER_SOL);
     const recipients: Array<{ address: PublicKey; lamports: number }> = [];
     for (const [owner, weight] of Object.entries(weights)) {
       const share = Math.floor((weight / totalWeight) * totalLamports);
-      if (share > 0) recipients.push({ address: new PublicKey(owner), lamports: share });
+      // Only include if share meets rent-exempt minimum (new wallets require it)
+      if (share >= RENT_EXEMPT_MIN) {
+        recipients.push({ address: new PublicKey(owner), lamports: share });
+      }
     }
 
     log.push(`  Distributing to ${recipients.length} recipient(s) in batches of ${TRANSFERS_PER_TX}`);
@@ -297,24 +262,15 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       }
     }
 
-    // ── Phase 5: Mark as distributed ─────────────────────────────────────────
-
-    for (const e of undistributedLiq) e.distributed = true;
-    saveJson(LIQUIDATIONS_PATH, allLiquidations);
-
-    for (const e of undistributedFees) e.distributed = true;
-    saveJson(FEES_PATH, fees);
-
-    for (const e of undistributedDonations) e.distributed = true;
-    saveJson(DONATIONS_PATH, allDonations);
+    // ── Phase 5: Record distribution (JSON files are audit-only on Railway) ───
 
     const distributions = loadJson<DistributionEntry>(DISTRIBUTIONS_PATH);
     distributions.push({
       date: ts(),
-      totalSol,
-      liquidationSol,
-      feeSol,
-      donationSol,
+      totalSol: distributableSol,
+      liquidationSol: 0,
+      feeSol: 0,
+      donationSol: 0,
       recipientCount: recipients.length,
       txSignatures,
     });
@@ -326,7 +282,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       ok: true,
       liquidated: tokens.length,
       distributed: recipients.length,
-      totalSol,
+      totalSol: distributableSol,
       txSignatures,
       log,
     });

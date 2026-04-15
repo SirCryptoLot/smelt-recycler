@@ -157,16 +157,19 @@ export async function recycleAccounts(
     batches.map((batch) => buildBatchTransaction(batch, owner, blockhash, connection, donationPct))
   );
 
-  // Prepend SMELT ATA creation to the first transaction so the user's wallet
-  // pays for it (idempotent — free no-op if the account already exists).
+  // Append SMELT ATA creation to the first transaction ONLY if it doesn't exist yet.
+  // Placed at the end so it's funded by SOL reclaimed from the closes above it.
   const ownerSmeltATA = await getAssociatedTokenAddress(
     SMELT_MINT, owner, false, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID,
   );
-  transactions[0].instructions.unshift(
-    createAssociatedTokenAccountIdempotentInstruction(
-      owner, ownerSmeltATA, owner, SMELT_MINT, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID,
-    )
-  );
+  const smeltATAInfo = await connection.getAccountInfo(ownerSmeltATA);
+  if (!smeltATAInfo) {
+    transactions[0].add(
+      createAssociatedTokenAccountIdempotentInstruction(
+        owner, ownerSmeltATA, owner, SMELT_MINT, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID,
+      )
+    );
+  }
 
   for (let i = 0; i < transactions.length; i++) {
     const failDetail = await preSimulate(transactions[i]);

@@ -131,7 +131,7 @@ export default function Home() {
       setError(err instanceof Error ? err.message : 'Transaction cancelled');
       setStatus('results');
     }
-  }, [accounts, selectedKeys, publicKey, signAllTransactions, refreshSmelt]);
+  }, [accounts, selectedKeys, publicKey, signAllTransactions, refreshSmelt, donationEnabled, donationPct]);
 
   useEffect(() => {
     if (!connected || !publicKey) {

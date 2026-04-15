@@ -14,6 +14,7 @@ const NAV_ITEMS = [
   { href: '/swap', label: 'Swap', icon: '⇄' },
   { href: '/community', label: 'Community', icon: '🌍' },
   { href: '/pools', label: 'Pools', icon: '🏊' },
+  { href: '/stake', label: 'Stake', icon: '🔒' },
   { href: '/how-it-works', label: 'How it works', icon: '📖' },
 ];
 

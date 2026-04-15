@@ -11,7 +11,7 @@ export const VAULT_PUBKEY = new PublicKey('DgkyF4YnwVYFqMSMo9WvDz2sVkFJSjsWueFYD
 // Staking pool — SMELT ATA owned by vault keypair. Created by scripts/setup-staking-ata.ts.
 // Address is deterministic: getAssociatedTokenAddress(SMELT_MINT, VAULT_PUBKEY)
 // Run the setup script once to create it on-chain, then replace the placeholder below.
-export const STAKING_POOL_ATA = new PublicKey('11111111111111111111111111111111'); // placeholder — replaced after setup script runs
+export const STAKING_POOL_ATA = new PublicKey('9TTxxr5tYAdq6HDWMUNRz1xgppBNmrAVzKyarEfhPdok');
 export const COOLDOWN_DAYS = 7;
 
 export const LIQUIDATION_THRESHOLD_USD = 1;

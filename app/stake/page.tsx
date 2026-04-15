@@ -179,6 +179,15 @@ export default function StakePage() {
     void refreshStake();
   }, [refreshStake]);
 
+  // Clear stale wallet data on disconnect
+  useEffect(() => {
+    if (!publicKey) {
+      setStakeData(null);
+      setWalletSmelt(0);
+      setMsg('');
+    }
+  }, [publicKey]);
+
   // Derived epoch values (computed each render)
   const epochDurationMs = 48 * 60 * 60 * 1000;
   const epochStartMs = poolData ? new Date(poolData.epochStart).getTime() : 0;
@@ -395,7 +404,7 @@ export default function StakePage() {
                       className="flex-1 border border-gray-200 rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-green-300"
                     />
                     <button
-                      onClick={() => setStakeAmount(walletSmelt.toFixed(2))}
+                      onClick={() => setStakeAmount((Math.floor(walletSmelt * 1e9) / 1e9).toString())}
                       className="px-3 py-2 text-xs font-bold text-green-700 bg-green-50 rounded-xl hover:bg-green-100"
                     >
                       MAX

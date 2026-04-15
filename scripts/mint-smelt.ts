@@ -69,6 +69,15 @@ export async function mintSmeltReward(
     )
   );
 
+  // Guard: ensure admin has enough SOL for fees (ATA creation + tx fee)
+  const adminBalance = await connection.getBalance(adminKeypair.publicKey);
+  if (adminBalance < 5_000_000) { // 0.005 SOL minimum
+    throw new Error(
+      `Admin wallet ${adminKeypair.publicKey.toBase58()} has insufficient SOL (${(adminBalance / 1e9).toFixed(6)} SOL). ` +
+      `Please fund it with at least 0.01 SOL to cover mint fees.`
+    );
+  }
+
   const sig = await sendAndConfirmTransaction(connection, tx, [adminKeypair], {
     commitment: 'confirmed',
   });

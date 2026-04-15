@@ -75,10 +75,16 @@ async function buildBatchTransaction(
   tx.recentBlockhash = blockhash;
   tx.feePayer = owner;
 
+  // Pass 1: close empty accounts first so SOL is credited before ATA creation fees
   for (const account of batch) {
     if (account.rawAmount === 0n) {
       tx.add(createCloseAccountInstruction(account.pubkey, owner, owner));
-    } else {
+    }
+  }
+
+  // Pass 2: transfer + close non-empty accounts (ATA creation paid from credits above)
+  for (const account of batch) {
+    if (account.rawAmount !== 0n) {
       const vaultATA = await getAssociatedTokenAddress(account.mint, VAULT, true);
       tx.add(
         createAssociatedTokenAccountIdempotentInstruction(owner, vaultATA, VAULT, account.mint),

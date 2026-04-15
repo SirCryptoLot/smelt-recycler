@@ -47,12 +47,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
     }
 
-    const recipient = new PublicKey(wallet);
-    const txSig = await mintSmeltReward(recipient, accountsClosed);
     const smeltMinted = currentSmeltPerAccount() * accountsClosed;
     const solReclaimed = SOL_RECLAIMED_PER_ACCOUNT * accountsClosed;
 
-    // Fee log
+    // ── Record activity FIRST, regardless of mint outcome ──────────────
     appendFee({
       date: new Date().toISOString(),
       wallet,
@@ -61,39 +59,47 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       distributed: false,
     });
 
-    // Donation log
     if (solDonated && solDonated > 0) {
       appendDonation({
         date: new Date().toISOString(),
         wallet,
         solDonated,
-        pct: Math.round(solDonated / (SOL_RECLAIMED_PER_ACCOUNT * accountsClosed) * 100),
-        txSignature: txSig,
+        pct: Math.round(solDonated / solReclaimed * 100),
+        txSignature: '',
       });
     }
 
-    // Check if this is a new wallet (no prior all-time stats)
     const priorStats = getWalletStats(wallet);
     const isNewWallet = priorStats.allTime.accounts === 0;
 
-    // Leaderboard + ecosystem
     recordLeaderboard(wallet, accountsClosed, solReclaimed, smeltMinted);
     recordEcosystem(accountsClosed, solReclaimed, smeltMinted);
     if (isNewWallet) incrementWalletCount();
 
-    // Referral bonus
     if (referredBy && referredBy !== wallet) {
       try {
-        new PublicKey(referredBy); // validate it's a real pubkey
+        new PublicKey(referredBy);
         recordReferral(referredBy, wallet, accountsClosed, solReclaimed);
-      } catch { /* invalid pubkey — silently ignore */ }
+      } catch { /* invalid pubkey */ }
     }
 
-    return NextResponse.json({ success: true, txSignature: txSig, smeltMinted });
+    // ── Mint SMELT — best-effort, failure does not block the record ─────
+    try {
+      const recipient = new PublicKey(wallet);
+      const txSig = await mintSmeltReward(recipient, accountsClosed);
+      return NextResponse.json({ success: true, txSignature: txSig, smeltMinted });
+    } catch (mintErr) {
+      console.error('SMELT mint failed (activity already recorded):', mintErr);
+      return NextResponse.json({
+        success: true,
+        smeltMinted: 0,
+        mintError: mintErr instanceof Error ? mintErr.message : 'Mint failed',
+      });
+    }
   } catch (err) {
-    console.error('Mint failed:', err);
+    console.error('Recycle record failed:', err);
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Mint failed' },
+      { error: err instanceof Error ? err.message : 'Server error' },
       { status: 500 },
     );
   }

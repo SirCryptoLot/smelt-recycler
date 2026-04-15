@@ -124,15 +124,19 @@ export default function Home() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ wallet: publicKey.toBase58(), accountsClosed: result.succeeded, referredBy, solDonated: result.solDonated > 0 ? result.solDonated : undefined }),
           });
-          if (res.ok) {
-            refreshSmelt();
+          const body = await res.json().catch(() => ({})) as { error?: string; mintError?: string };
+          if (!res.ok) {
+            console.error('Recycle record failed:', body.error);
+            setError(`Server error: ${body.error ?? 'unknown'}`);
           } else {
-            const body = await res.json().catch(() => ({})) as { error?: string };
-            console.error('SMELT mint failed:', body.error);
-            setError(`SOL reclaimed ✓ but SMELT reward failed: ${body.error ?? 'server error'}`);
+            refreshSmelt();
+            if (body.mintError) {
+              console.warn('SMELT mint failed (activity recorded):', body.mintError);
+              setError(`SOL reclaimed ✓ · Stats updated ✓ · SMELT reward pending (${body.mintError.includes('insufficient') ? 'admin wallet needs SOL' : 'mint failed'})`);
+            }
           }
         } catch {
-          console.error('SMELT mint request failed');
+          console.error('Recycle POST failed');
         }
       }
       setStatus('success');

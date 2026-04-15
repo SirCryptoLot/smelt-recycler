@@ -1,14 +1,14 @@
 // app/layout.tsx
 import type { Metadata, Viewport } from 'next';
-import { Inter } from 'next/font/google';
+import { Rubik } from 'next/font/google';
 import './globals.css';
 import { Providers } from './providers';
-
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 import { AppShell } from '@/components/AppShell';
 import { SmeltProvider } from '@/lib/smelt-context';
 import { Suspense } from 'react';
 import { ReferralDetector } from '@/components/ReferralDetector';
+
+const rubik = Rubik({ subsets: ['latin'], weight: ['400', '500', '600', '700', '800'], variable: '--font-rubik' });
 
 export const metadata: Metadata = {
   title: '♻ Recycler',
@@ -24,8 +24,8 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={inter.variable}>
-      <body className={inter.className}>
+    <html lang="en" className={rubik.variable}>
+      <body className={rubik.className}>
         <Providers>
           <SmeltProvider>
             <Suspense fallback={null}>

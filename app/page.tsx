@@ -163,21 +163,21 @@ export default function Home() {
 
       {/* Stats strip */}
       {status === 'results' && (
-        <div className="grid grid-cols-3 gap-2 px-4 py-3 border-b border-gray-100 flex-shrink-0">
-          <div className="rounded-xl border border-green-200 bg-green-50 px-3 py-2.5">
-            <div className="text-[9px] font-semibold tracking-widest text-green-600/60 uppercase mb-0.5">SOL to reclaim</div>
-            <div className="text-gray-900 font-bold text-lg tracking-tight">{sol.toFixed(4)}</div>
-            <div className="text-gray-400 text-[10px] mt-0.5">{selected.length}/{accounts.length} selected</div>
+        <div className="grid grid-cols-3 border-b border-gray-100 flex-shrink-0">
+          <div className="px-3 sm:px-5 py-3.5 border-r border-gray-100">
+            <div className="text-[9px] font-bold tracking-widest text-gray-400 uppercase mb-1">SOL to reclaim</div>
+            <div className="text-gray-900 font-extrabold text-xl sm:text-2xl tracking-tight tabular-nums leading-none">{sol.toFixed(4)}</div>
+            <div className="text-gray-400 text-[11px] mt-1">{selected.length}/{accounts.length} accts</div>
           </div>
-          <div className="rounded-xl border border-gray-200 bg-white px-3 py-2.5">
-            <div className="text-[9px] font-semibold tracking-widest text-gray-400 uppercase mb-0.5">SMELT reward</div>
-            <div className="text-green-600 font-bold text-lg">+{smeltReward.toLocaleString()}</div>
-            {totalUsd > 0 && <div className="text-gray-400 text-[10px] mt-0.5">dust ${totalUsd.toFixed(2)}</div>}
+          <div className="px-3 sm:px-5 py-3.5 border-r border-gray-100">
+            <div className="text-[9px] font-bold tracking-widest text-gray-400 uppercase mb-1">SMELT reward</div>
+            <div className="text-green-600 font-extrabold text-xl sm:text-2xl leading-none tabular-nums">+{smeltReward.toLocaleString()}</div>
+            {totalUsd > 0 && <div className="text-gray-400 text-[11px] mt-1">${totalUsd.toFixed(2)} dust</div>}
           </div>
-          <div className="rounded-xl border border-blue-100 bg-blue-50 px-3 py-2.5">
-            <div className="text-[9px] font-semibold tracking-widest text-blue-500/70 uppercase mb-0.5">Chain freed</div>
-            <div className="text-blue-700 font-bold text-lg">{fmtBytes(selected.length * BYTES_PER_ACCOUNT)}</div>
-            <div className="text-blue-400 text-[10px] mt-0.5">{selected.length} × 165 B</div>
+          <div className="px-3 sm:px-5 py-3.5">
+            <div className="text-[9px] font-bold tracking-widest text-gray-400 uppercase mb-1">Chain freed</div>
+            <div className="text-gray-900 font-extrabold text-xl sm:text-2xl leading-none tabular-nums">{fmtBytes(selected.length * BYTES_PER_ACCOUNT)}</div>
+            <div className="text-gray-400 text-[11px] mt-1">{selected.length} × 165 B</div>
           </div>
         </div>
       )}
@@ -186,40 +186,45 @@ export default function Home() {
       {status === 'disconnected' && (
         <div className="flex-1 overflow-y-auto">
           {/* Hero */}
-          <div className="flex flex-col items-center text-center px-6 pt-12 pb-10 sm:pt-16 sm:pb-14">
-            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-green-600 flex items-center justify-center text-4xl sm:text-5xl mb-6 shadow-lg shadow-green-200">♻</div>
-            <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight leading-tight max-w-sm sm:max-w-lg">
-              Help keep Solana<br className="hidden sm:block" /> lean and fast
+          <div className="flex flex-col items-center text-center px-6 pt-14 pb-10 sm:pt-20 sm:pb-16">
+            <div className="inline-flex items-center gap-2 bg-green-50 border border-green-200 rounded-full px-4 py-1.5 mb-7">
+              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse flex-shrink-0" />
+              <span className="text-green-700 text-xs font-semibold tracking-wide">Live on Solana mainnet</span>
+            </div>
+            <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-900 tracking-tight leading-[1.08] max-w-xs sm:max-w-lg">
+              Reclaim SOL.<br />Clean the chain.
             </h1>
-            <p className="text-gray-500 text-base sm:text-lg mt-4 max-w-md leading-relaxed">
-              Thousands of abandoned token accounts sit on-chain, locking up SOL rent and bloating validator state. Close yours — reclaim your SOL, earn SMELT, and donate the junk.
+            <p className="text-gray-500 text-base sm:text-lg mt-5 max-w-sm leading-relaxed">
+              Close empty token accounts, get your locked SOL back, and earn SMELT rewards for every account recycled.
             </p>
 
             {/* Live impact counter */}
             {totalAccountsClosed > 0 && (
-              <div className="mt-8 flex items-center gap-6 bg-green-50 border border-green-100 rounded-2xl px-6 py-4">
-                <div className="text-center">
-                  <div className="text-2xl font-extrabold text-green-700 tabular-nums">{totalAccountsClosed.toLocaleString()}</div>
-                  <div className="text-xs text-green-600/70 font-medium mt-0.5">accounts recycled</div>
+              <div className="mt-8 flex items-stretch bg-white border border-green-100 rounded-2xl overflow-hidden shadow-sm shadow-green-100/50">
+                <div className="px-6 py-4 text-center">
+                  <div className="text-2xl sm:text-3xl font-extrabold text-gray-900 tabular-nums">{totalAccountsClosed.toLocaleString()}</div>
+                  <div className="text-xs text-gray-400 font-medium mt-1">accounts recycled</div>
                 </div>
-                <div className="w-px h-10 bg-green-200" />
-                <div className="text-center">
-                  <div className="text-2xl font-extrabold text-green-700 tabular-nums">{fmtBytes(totalAccountsClosed * BYTES_PER_ACCOUNT)}</div>
-                  <div className="text-xs text-green-600/70 font-medium mt-0.5">freed from chain state</div>
+                <div className="w-px bg-green-100 my-3" />
+                <div className="px-6 py-4 text-center">
+                  <div className="text-2xl sm:text-3xl font-extrabold text-green-600 tabular-nums">{fmtBytes(totalAccountsClosed * BYTES_PER_ACCOUNT)}</div>
+                  <div className="text-xs text-gray-400 font-medium mt-1">freed from chain</div>
                 </div>
               </div>
             )}
 
             {mounted && (
-              <WalletMultiButton className="!mt-8 !bg-green-600 !hover:bg-green-500 !text-white !font-bold !text-base !rounded-xl !px-8 !py-3 !h-auto" />
+              <div className="mt-8 w-full max-w-xs">
+                <WalletMultiButton className="!w-full !justify-center !text-base !font-bold !rounded-full !py-4 !h-auto !text-white !bg-green-600" />
+              </div>
             )}
-            <p className="text-gray-400 text-sm mt-3">No fees on connection · non-custodial · open source</p>
+            <p className="text-gray-400 text-[13px] mt-3">Non-custodial · No fees on connect · Open source</p>
           </div>
 
           {/* How it works */}
-          <div className="border-t border-gray-100 px-6 py-10 sm:py-12 max-w-2xl mx-auto w-full">
-            <div className="text-xs font-semibold tracking-widest text-gray-400 uppercase text-center mb-8">How it works</div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <div className="border-t border-gray-100 px-6 py-10 sm:py-14 max-w-2xl mx-auto w-full">
+            <div className="text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-8 text-center">How it works</div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-6">
               {[
                 {
                   step: '01',
@@ -229,7 +234,7 @@ export default function Home() {
                 {
                   step: '02',
                   title: 'Recycle',
-                  body: 'Select the accounts to close. Tokens are donated to the platform. The ~0.002 SOL rent locked per account comes back to you.',
+                  body: 'Select the accounts to close. Tokens go to the platform vault. The ~0.002 SOL rent locked per account comes back to you.',
                 },
                 {
                   step: '03',
@@ -237,9 +242,9 @@ export default function Home() {
                   body: 'You receive SMELT tokens as a reward for each recycled account — a share of the ecosystem you help clean.',
                 },
               ].map(({ step, title, body }) => (
-                <div key={step} className="flex flex-col gap-2">
-                  <div className="text-[11px] font-bold tracking-widest text-green-600/70 uppercase">{step}</div>
-                  <div className="text-gray-900 font-bold text-lg">{title}</div>
+                <div key={step} className="flex flex-col gap-2.5">
+                  <div className="text-[10px] font-bold tracking-widest text-green-600/60 uppercase">{step}</div>
+                  <div className="text-gray-900 font-bold text-xl leading-tight">{title}</div>
                   <div className="text-gray-500 text-sm leading-relaxed">{body}</div>
                 </div>
               ))}
@@ -247,11 +252,11 @@ export default function Home() {
           </div>
 
           {/* Why it matters */}
-          <div className="bg-green-50 border-y border-green-100 px-6 py-8 sm:py-10">
+          <div className="bg-white border-y border-gray-100 px-6 py-8 sm:py-10">
             <div className="max-w-2xl mx-auto">
-              <div className="text-xs font-semibold tracking-widest text-green-600/70 uppercase mb-4">Why it matters</div>
-              <p className="text-gray-700 text-base sm:text-lg leading-relaxed">
-                Every open token account occupies a slot in Solana&rsquo;s global state. Validators must load all accounts on every block. The more unused accounts exist, the heavier the chain becomes for everyone — slower finality, higher hardware costs, more centralisation pressure.
+              <div className="text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-4">Why it matters</div>
+              <p className="text-gray-800 text-base sm:text-lg font-medium leading-relaxed">
+                Every open token account occupies a slot in Solana&rsquo;s global state. Validators must load all accounts on every block — the more unused accounts exist, the heavier the chain becomes for everyone.
               </p>
               <p className="text-gray-500 text-sm mt-3 leading-relaxed">
                 Recycler is a public good. You get your rent back. The chain gets a little lighter.
@@ -259,7 +264,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="h-12" />
+          <div className="h-16" />
         </div>
       )}
 
@@ -277,22 +282,22 @@ export default function Home() {
       {/* Results */}
       {status === 'results' && (
         <div className="flex flex-col flex-1 overflow-hidden">
-          <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-gray-100 flex-shrink-0">
+          <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 border-b border-gray-100 flex-shrink-0">
             <div className="flex items-center gap-2">
-              <span className="text-gray-400 text-xs font-semibold tracking-widest uppercase">
+              <span className="text-gray-900 text-sm font-bold">
                 {accounts.length} trash account{accounts.length !== 1 ? 's' : ''}
               </span>
               <button
                 onClick={scan}
                 title="Refresh"
-                className="text-gray-300 hover:text-green-600 transition-colors"
+                className="text-gray-300 hover:text-green-600 transition-colors ml-0.5"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
               </button>
             </div>
-            <button onClick={toggleAll} className="text-gray-400 text-xs hover:text-green-600 transition-colors">
+            <button onClick={toggleAll} className="text-green-600 text-sm font-semibold hover:text-green-700 transition-colors">
               {allSelected ? 'Deselect all' : 'Select all'}
             </button>
           </div>
@@ -313,27 +318,27 @@ export default function Home() {
                 <div
                   key={key}
                   onClick={() => toggleSelect(key)}
-                  className={`flex items-center gap-3 rounded-xl border px-4 py-3.5 cursor-pointer select-none transition-all ${
+                  className={`flex items-center gap-3 rounded-2xl border px-4 py-4 cursor-pointer select-none transition-all ${
                     isSelected
-                      ? 'border-green-200 bg-green-50 hover:bg-green-50/70'
-                      : 'border-gray-100 bg-white opacity-50 hover:opacity-70'
+                      ? 'border-green-200 bg-white shadow-sm shadow-green-100/50'
+                      : 'border-gray-100 bg-white/50 opacity-40 hover:opacity-60'
                   }`}
                 >
-                  <div className={`w-9 h-9 rounded-xl ${color} flex items-center justify-center text-white font-bold text-xs flex-shrink-0`}>{initials}</div>
+                  <div className={`w-10 h-10 rounded-xl ${color} flex items-center justify-center text-white font-bold text-sm flex-shrink-0`}>{initials}</div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 min-w-0">
-                      <span className="text-gray-900 text-sm font-semibold truncate">{name}</span>
+                      <span className="text-gray-900 font-semibold truncate">{name}</span>
                       {meta?.symbol && <span className="text-gray-400 text-xs flex-shrink-0 font-mono">{meta.symbol}</span>}
                     </div>
-                    <div className="text-gray-300 text-[11px] font-mono mt-0.5">{shortAddr(mintStr)}</div>
+                    <div className="text-gray-300 text-xs font-mono mt-0.5">{shortAddr(mintStr)}</div>
                   </div>
-                  <div className="text-right flex-shrink-0 mr-2">
+                  <div className="text-right flex-shrink-0 mr-1">
                     {account.balance === 0 ? (
-                      <div className="inline-flex items-center rounded-md border border-green-200 bg-green-50 px-2 py-0.5 text-[11px] font-semibold text-green-700 tracking-wide">EMPTY</div>
+                      <div className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-1 text-[11px] font-bold text-green-700 tracking-wide">EMPTY</div>
                     ) : (
                       <>
-                        <div className="text-gray-700 text-sm font-semibold tabular-nums">{account.usdValue > 0.0001 ? `$${account.usdValue.toFixed(4)}` : '<$0.01'}</div>
-                        <div className="text-gray-400 text-[11px] mt-0.5 tabular-nums">{account.balance.toLocaleString()} tkn</div>
+                        <div className="text-gray-800 font-bold tabular-nums">{account.usdValue > 0.0001 ? `$${account.usdValue.toFixed(4)}` : '<$0.01'}</div>
+                        <div className="text-gray-400 text-xs mt-0.5 tabular-nums">{account.balance.toLocaleString()} tkn</div>
                       </>
                     )}
                   </div>
@@ -342,39 +347,39 @@ export default function Home() {
               );
             })}
           </div>
-          <div className="px-4 sm:px-6 py-4 border-t border-gray-100 flex-shrink-0 bg-white space-y-3">
+          <div className="px-4 sm:px-6 py-5 border-t border-gray-100 flex-shrink-0 bg-white space-y-4">
             {/* Donation toggle */}
-            <div>
-              <label className="flex items-center gap-2 cursor-pointer select-none">
+            <div className="bg-[#f0faf4] border border-green-100 rounded-2xl px-4 py-3">
+              <label className="flex items-center gap-3 cursor-pointer select-none">
                 <input
                   type="checkbox"
                   checked={donationEnabled}
                   onChange={(e) => setDonationEnabled(e.target.checked)}
                   className="accent-green-600 w-4 h-4"
                 />
-                <span className="text-sm text-gray-600">Donate to the Solana ecosystem</span>
+                <span className="text-sm font-medium text-gray-700">Donate reclaimed SOL to ecosystem</span>
               </label>
               {donationEnabled && (
-                <div className="mt-2 pl-6 space-y-1.5">
+                <div className="mt-3 space-y-2">
                   <div className="flex gap-2">
                     {([25, 50, 100] as const).map((pct) => (
                       <button
                         key={pct}
                         onClick={() => setDonationPct(pct)}
-                        className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors ${
+                        className={`flex-1 py-1.5 rounded-xl text-xs font-bold transition-colors ${
                           donationPct === pct
                             ? 'bg-green-600 text-white'
-                            : 'border border-gray-200 text-gray-500 hover:border-green-300 hover:text-green-600'
+                            : 'border border-green-200 text-green-700 hover:bg-green-50'
                         }`}
                       >
                         {pct}%
                       </button>
                     ))}
                   </div>
-                  <div className="text-xs text-gray-400">
-                    You keep {(sol * (1 - donationPct / 100)).toFixed(4)} SOL
+                  <div className="text-xs text-gray-500 text-center">
+                    Keep <span className="font-semibold text-gray-700">{(sol * (1 - donationPct / 100)).toFixed(4)} SOL</span>
                     {' · '}
-                    Donate {(sol * donationPct / 100).toFixed(4)} SOL
+                    Donate <span className="font-semibold text-green-700">{(sol * donationPct / 100).toFixed(4)} SOL</span>
                   </div>
                 </div>
               )}
@@ -383,13 +388,14 @@ export default function Home() {
             <button
               onClick={recycle}
               disabled={!signAllTransactions || selected.length === 0}
-              className="w-full bg-green-600 hover:bg-green-500 active:scale-[0.99] disabled:opacity-25 disabled:cursor-not-allowed text-white font-semibold py-3.5 rounded-xl transition-all text-sm"
+              className="w-full bg-green-600 hover:bg-green-500 active:scale-[0.98] disabled:opacity-25 disabled:cursor-not-allowed text-white font-bold py-4 rounded-full transition-all text-base shadow-lg shadow-green-200"
             >
               ♻ Recycle {selected.length} account{selected.length !== 1 ? 's' : ''}
-              {' · '}
-              {donationEnabled
-                ? `keep ${(sol * (1 - donationPct / 100)).toFixed(4)} SOL`
-                : `reclaim ${sol.toFixed(4)} SOL`}
+              <span className="font-normal opacity-80 ml-1">
+                · {donationEnabled
+                  ? `keep ${(sol * (1 - donationPct / 100)).toFixed(4)} SOL`
+                  : `get ${sol.toFixed(4)} SOL`}
+              </span>
             </button>
           </div>
         </div>
@@ -408,29 +414,30 @@ export default function Home() {
 
       {/* Success */}
       {status === 'success' && recycleResult && (
-        <div className="flex-1 flex flex-col items-center justify-center gap-6">
-          <div className="w-16 h-16 rounded-2xl bg-green-50 border border-green-200 flex items-center justify-center text-3xl">✅</div>
+        <div className="flex-1 flex flex-col items-center justify-center gap-6 px-6">
+          <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center text-4xl">♻</div>
           <div className="text-center">
-            <div className="text-gray-900 font-bold text-2xl tracking-tight">~{recycleResult.solReclaimed.toFixed(4)} SOL</div>
-            <div className="text-gray-400 text-sm mt-1.5">reclaimed from {recycleResult.succeeded} account{recycleResult.succeeded !== 1 ? 's' : ''}</div>
-            {recycleResult.failed > 0 && <div className="text-amber-500 text-sm mt-1">{recycleResult.failed} failed</div>}
+            <div className="text-gray-900 font-extrabold text-4xl tracking-tight tabular-nums">{recycleResult.solReclaimed.toFixed(4)}</div>
+            <div className="text-gray-400 text-base mt-1">SOL reclaimed from {recycleResult.succeeded} account{recycleResult.succeeded !== 1 ? 's' : ''}</div>
+            {recycleResult.failed > 0 && <div className="text-amber-500 text-sm mt-2">{recycleResult.failed} account{recycleResult.failed !== 1 ? 's' : ''} failed</div>}
             {(recycleResult.solDonated ?? 0) > 0 && (
-              <div className="text-green-600 text-sm mt-1">
-                + {recycleResult.solDonated.toFixed(4)} SOL donated to ecosystem 🌍
+              <div className="inline-flex items-center gap-1.5 bg-green-50 border border-green-100 rounded-full px-4 py-1.5 mt-3">
+                <span className="text-green-600 text-sm font-semibold">{recycleResult.solDonated.toFixed(4)} SOL donated to ecosystem</span>
               </div>
             )}
           </div>
-          <button onClick={scan} className="border border-gray-200 text-gray-400 text-sm rounded-xl px-5 py-2.5 hover:border-gray-300 hover:text-gray-600 transition-all">Scan again</button>
+          {error && <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-3 text-red-600 text-sm max-w-xs text-center">{error}</div>}
+          <button onClick={scan} className="w-full max-w-xs bg-white border border-gray-200 text-gray-700 font-semibold text-base rounded-full py-3.5 hover:border-gray-300 hover:bg-gray-50 transition-all">Scan again</button>
         </div>
       )}
 
       {/* Empty */}
       {status === 'empty' && (
-        <div className="flex-1 flex flex-col items-center justify-center gap-5">
-          <div className="w-16 h-16 rounded-2xl bg-green-50 border border-green-200 flex items-center justify-center text-3xl">✅</div>
+        <div className="flex-1 flex flex-col items-center justify-center gap-5 px-6">
+          <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center text-4xl">✅</div>
           <div className="text-center">
-            <div className="text-gray-900 font-semibold text-lg">Nothing to recycle</div>
-            <div className="text-gray-400 text-sm mt-1">Your wallet is clean.</div>
+            <div className="text-gray-900 font-extrabold text-2xl tracking-tight">Wallet is clean</div>
+            <div className="text-gray-400 text-base mt-2">No dust accounts found. Nice work.</div>
           </div>
         </div>
       )}

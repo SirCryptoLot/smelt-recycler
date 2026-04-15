@@ -79,59 +79,71 @@ export default function DashboardPage() {
 
   if (!connected || !publicKey) {
     return (
-      <main className="flex-1 flex flex-col items-center justify-center gap-5 p-6">
-        <div className="text-gray-900 font-semibold">Connect your wallet to view your dashboard</div>
-        <WalletMultiButton className="!bg-green-600 !text-white !font-semibold !text-sm !rounded-xl !px-6 !py-2.5" />
+      <main className="flex-1 flex flex-col items-center justify-center gap-6 p-6 text-center">
+        <div className="text-gray-900 font-bold text-xl">Connect your wallet</div>
+        <div className="text-gray-400 text-sm max-w-xs">Connect to see your SMELT balance, recycling history, and referral earnings.</div>
+        <WalletMultiButton className="!bg-green-600 !text-white !font-bold !rounded-full !px-8 !py-3 !h-auto !text-base" />
       </main>
     );
   }
 
   return (
     <main className="flex-1 overflow-y-auto">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-8">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-10">
 
         <div>
-          <h1 className="text-xl font-bold text-gray-900">Dashboard</h1>
-          <div className="text-gray-400 text-xs mt-1 font-mono">{shortAddr(publicKey.toBase58())}</div>
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight">Dashboard</h1>
+          <div className="text-gray-400 text-sm mt-1 font-mono">{shortAddr(publicKey.toBase58())}</div>
         </div>
 
         {/* Portfolio */}
         <section>
-          <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Portfolio</h2>
+          <h2 className="text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-4">Portfolio</h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              { label: 'SMELT Balance', value: smeltUi.toLocaleString(), sub: 'total holdings', color: 'text-green-600' },
-              { label: 'Staked', value: stakedUi.toLocaleString(), sub: '1.5× weight active', color: 'text-gray-900', badge: stakedUi > 0 },
-              { label: 'Distribution weight', value: weight.toLocaleString(undefined, { maximumFractionDigits: 0 }), sub: `${unstakedUi.toFixed(0)} × 1 + ${stakedUi.toFixed(0)} × 1.5`, color: 'text-indigo-500' },
-              { label: 'SOL reclaimed', value: `${(data?.activity.allTimeSolReclaimed ?? 0).toFixed(4)} SOL`, sub: 'all-time from recycling', color: 'text-gray-900' },
-            ].map(({ label, value, sub, color, badge }) => (
-              <div key={label} className="rounded-2xl bg-white border border-gray-200 p-4">
-                <div className="text-xs text-gray-400 mb-1">{label}</div>
-                <div className={`text-lg font-bold ${color} flex items-center gap-1.5`}>
-                  {value}
-                  {badge && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-green-50 text-green-700 font-medium">1.5×</span>}
-                </div>
-                <div className="text-[10px] text-gray-400 mt-0.5">{sub}</div>
+            <div className="rounded-2xl bg-white border border-gray-100 p-5">
+              <div className="text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-2">SMELT</div>
+              <div className="text-green-600 font-extrabold text-2xl tabular-nums leading-none">{smeltUi.toLocaleString()}</div>
+              <div className="text-[11px] text-gray-400 mt-1.5">total holdings</div>
+            </div>
+            <div className="rounded-2xl bg-white border border-gray-100 p-5">
+              <div className="text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-2">Staked</div>
+              <div className="flex items-center gap-1.5 leading-none">
+                <span className="text-gray-900 font-extrabold text-2xl tabular-nums">{stakedUi.toLocaleString()}</span>
+                {stakedUi > 0 && <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-bold">1.5×</span>}
               </div>
-            ))}
+              <div className="text-[11px] text-gray-400 mt-1.5">weight active</div>
+            </div>
+            <div className="rounded-2xl bg-white border border-gray-100 p-5">
+              <div className="text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-2">Dist. Weight</div>
+              <div className="text-gray-900 font-extrabold text-2xl tabular-nums leading-none">{weight.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
+              <div className="text-[11px] text-gray-400 mt-1.5">{unstakedUi.toFixed(0)} + {stakedUi.toFixed(0)}×1.5</div>
+            </div>
+            <div className="rounded-2xl bg-white border border-gray-100 p-5">
+              <div className="text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-2">SOL reclaimed</div>
+              <div className="text-gray-900 font-extrabold text-2xl tabular-nums leading-none">{(data?.activity.allTimeSolReclaimed ?? 0).toFixed(4)}</div>
+              <div className="text-[11px] text-gray-400 mt-1.5">all-time</div>
+            </div>
           </div>
         </section>
 
         {/* Activity */}
         <section>
-          <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Activity</h2>
+          <h2 className="text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-4">Activity</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {[
-              { label: 'Accounts closed (all-time)', value: (data?.activity.allTimeAccounts ?? 0).toLocaleString() },
-              { label: 'SOL reclaimed (all-time)', value: `${(data?.activity.allTimeSolReclaimed ?? 0).toFixed(4)} SOL` },
-              { label: 'SMELT earned recycling', value: (data?.activity.allTimeSmeltEarned ?? 0).toLocaleString() },
-              { label: 'Accounts this week', value: (data?.activity.weeklyAccounts ?? 0).toLocaleString() },
-              { label: 'Weekly rank', value: data?.activity.weeklyRank ? `#${data.activity.weeklyRank}` : '—' },
-              { label: 'Referrals', value: (data?.referral.count ?? 0).toLocaleString() },
-            ].map(({ label, value }) => (
-              <div key={label} className="rounded-2xl bg-white border border-gray-200 px-4 py-3">
-                <div className="text-xs text-gray-400 mb-1">{label}</div>
-                <div className="text-gray-900 font-semibold">{value}</div>
+              { label: 'Accounts closed', value: (data?.activity.allTimeAccounts ?? 0).toLocaleString(), sub: 'all-time' },
+              { label: 'SOL reclaimed', value: `${(data?.activity.allTimeSolReclaimed ?? 0).toFixed(4)}`, unit: 'SOL', sub: 'all-time' },
+              { label: 'SMELT earned', value: (data?.activity.allTimeSmeltEarned ?? 0).toLocaleString(), sub: 'from recycling' },
+              { label: 'This week', value: (data?.activity.weeklyAccounts ?? 0).toLocaleString(), sub: 'accounts' },
+              { label: 'Weekly rank', value: data?.activity.weeklyRank ? `#${data.activity.weeklyRank}` : '—', sub: 'leaderboard position' },
+              { label: 'Referrals', value: (data?.referral.count ?? 0).toLocaleString(), sub: 'wallets referred' },
+            ].map(({ label, value, unit, sub }) => (
+              <div key={label} className="rounded-2xl bg-white border border-gray-100 px-4 py-4">
+                <div className="text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-2">{label}</div>
+                <div className="text-gray-900 font-extrabold text-xl tabular-nums leading-none">
+                  {value}{unit && <span className="text-sm font-medium ml-1">{unit}</span>}
+                </div>
+                <div className="text-[11px] text-gray-400 mt-1.5">{sub}</div>
               </div>
             ))}
           </div>
@@ -139,8 +151,8 @@ export default function DashboardPage() {
 
         {/* Referrals */}
         <section>
-          <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Referrals</h2>
-          <div className="rounded-2xl bg-white border border-gray-200 p-5 space-y-4">
+          <h2 className="text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-4">Referrals</h2>
+          <div className="rounded-2xl bg-white border border-gray-100 p-5 space-y-4">
             <div>
               <div className="text-xs text-gray-400 mb-2">Your referral link</div>
               <div className="flex gap-2">
@@ -193,8 +205,8 @@ export default function DashboardPage() {
 
         {/* Rewards / Distributions */}
         <section>
-          <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Rewards</h2>
-          <div className="rounded-2xl bg-white border border-gray-200 p-5 space-y-4">
+          <h2 className="text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-4">Rewards</h2>
+          <div className="rounded-2xl bg-white border border-gray-100 p-5 space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <div className="text-xs text-gray-400 mb-1">Next distribution</div>

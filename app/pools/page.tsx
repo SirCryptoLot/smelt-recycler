@@ -90,18 +90,21 @@ export default function PoolsPage() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-8">
 
         {/* Header */}
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h1 className="text-xl font-bold text-gray-900">Pools</h1>
+        <div className="flex flex-wrap items-end justify-between gap-2">
+          <div>
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight">Pools</h1>
+            <p className="text-gray-400 text-sm mt-1">Vault contents, fee revenue &amp; distribution stats</p>
+          </div>
           <div className="flex items-center gap-3">
             {lastUpdated && (
               <span className="text-xs text-gray-400 hidden sm:inline">
-                Updated {lastUpdated.toLocaleTimeString()}
+                {lastUpdated.toLocaleTimeString()}
               </span>
             )}
             <button
               onClick={() => refresh()}
               disabled={refreshing}
-              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:text-gray-700 hover:border-gray-300 disabled:opacity-40 transition-all"
+              className="flex items-center gap-1.5 text-sm px-4 py-2 rounded-full border border-gray-200 text-gray-500 hover:text-gray-700 hover:border-gray-300 disabled:opacity-40 transition-all font-medium"
             >
               <span className={refreshing ? 'animate-spin inline-block' : ''}>↻</span>
               {refreshing ? 'Refreshing…' : 'Refresh'}
@@ -111,7 +114,7 @@ export default function PoolsPage() {
 
         {/* Vault Contents */}
         <section>
-          <h2 className="text-base font-semibold text-gray-900 mb-4">Vault Contents</h2>
+          <h2 className="text-lg font-bold text-gray-900 mb-4">Vault Contents</h2>
           {tokens.length === 0 ? (
             <div className="rounded-2xl bg-white border border-gray-200 p-6 text-gray-400 text-sm">
               Vault is empty — no tokens accumulated yet.
@@ -156,26 +159,26 @@ export default function PoolsPage() {
 
         {/* Fee Revenue */}
         <section>
-          <h2 className="text-base font-semibold text-gray-900 mb-4">Fee Revenue</h2>
+          <h2 className="text-lg font-bold text-gray-900 mb-4">Fee Revenue</h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="rounded-2xl bg-white border border-gray-200 p-5">
-              <div className="text-xs text-gray-400 mb-1">Accounts Closed</div>
-              <div className="text-gray-900 font-medium">{totalAccountsClosed.toLocaleString()}</div>
+            <div className="rounded-2xl bg-white border border-gray-100 p-5">
+              <div className="text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-2">Accounts Closed</div>
+              <div className="text-gray-900 font-extrabold text-2xl tabular-nums">{totalAccountsClosed.toLocaleString()}</div>
             </div>
-            <div className="rounded-2xl bg-white border border-gray-200 p-5">
-              <div className="text-xs text-gray-400 mb-1">Total Fees Collected</div>
-              <div className="text-green-600 font-medium">{totalFeesCollected.toFixed(6)} SOL</div>
+            <div className="rounded-2xl bg-white border border-gray-100 p-5">
+              <div className="text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-2">Fees Collected</div>
+              <div className="text-green-600 font-extrabold text-2xl tabular-nums">{totalFeesCollected.toFixed(4)}<span className="text-base font-medium ml-1">SOL</span></div>
             </div>
-            <div className="rounded-2xl bg-white border border-gray-200 p-5">
-              <div className="text-xs text-gray-400 mb-1">Pending Distribution</div>
-              <div className="text-gray-900 font-medium">{undistributedFeeSol.toFixed(6)} SOL</div>
+            <div className="rounded-2xl bg-white border border-gray-100 p-5">
+              <div className="text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-2">Pending Distribution</div>
+              <div className="text-gray-900 font-extrabold text-2xl tabular-nums">{undistributedFeeSol.toFixed(4)}<span className="text-base font-medium ml-1">SOL</span></div>
             </div>
           </div>
         </section>
 
         {/* Liquidation History */}
         <section>
-          <h2 className="text-base font-semibold text-gray-900 mb-4">Recent Liquidations</h2>
+          <h2 className="text-lg font-bold text-gray-900 mb-4">Recent Liquidations</h2>
           {recentLiquidations.length === 0 ? (
             <div className="rounded-2xl bg-white border border-gray-200 p-6 text-gray-400 text-sm">
               No liquidations yet.
@@ -208,21 +211,21 @@ export default function PoolsPage() {
 
         {/* Distribution Stats */}
         <section>
-          <h2 className="text-base font-semibold text-gray-900 mb-4">Distribution Stats</h2>
+          <h2 className="text-lg font-bold text-gray-900 mb-4">Distribution Stats</h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="rounded-2xl bg-white border border-gray-200 p-5">
-              <div className="text-xs text-gray-400 mb-1">Next Distribution</div>
-              <div className="text-gray-900 font-medium">
+            <div className="rounded-2xl bg-white border border-gray-100 p-5">
+              <div className="text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-2">Next Distribution</div>
+              <div className="text-gray-900 font-bold text-lg">
                 {nextDistDate ? formatDate(nextDistDate) : 'Not scheduled'}
               </div>
             </div>
-            <div className="rounded-2xl bg-white border border-gray-200 p-5">
-              <div className="text-xs text-gray-400 mb-1">Your Est. Share</div>
-              <div className="text-gray-400 font-medium">—</div>
+            <div className="rounded-2xl bg-white border border-gray-100 p-5">
+              <div className="text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-2">Your Est. Share</div>
+              <div className="text-gray-400 font-bold text-lg">—</div>
             </div>
-            <div className="rounded-2xl bg-white border border-gray-200 p-5">
-              <div className="text-xs text-gray-400 mb-1">Total SOL Distributed</div>
-              <div className="text-gray-900 font-medium">{totalSolDistributed.toFixed(4)} SOL</div>
+            <div className="rounded-2xl bg-white border border-gray-100 p-5">
+              <div className="text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-2">Total Distributed</div>
+              <div className="text-gray-900 font-extrabold text-2xl tabular-nums">{totalSolDistributed.toFixed(4)}<span className="text-base font-medium ml-1">SOL</span></div>
             </div>
           </div>
         </section>
@@ -230,19 +233,19 @@ export default function PoolsPage() {
         {/* Your Stats */}
         {publicKey && (
           <section>
-            <h2 className="text-base font-semibold text-gray-900 mb-4">Your Stats</h2>
+            <h2 className="text-lg font-bold text-gray-900 mb-4">Your Stats</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="rounded-2xl bg-white border border-gray-200 p-5">
-                <div className="text-xs text-gray-400 mb-1">SMELT Balance</div>
-                <div className="text-gray-900 font-medium">{smeltBalanceUi.toLocaleString()} SMELT</div>
+              <div className="rounded-2xl bg-white border border-gray-100 p-5">
+                <div className="text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-2">SMELT Balance</div>
+                <div className="text-gray-900 font-extrabold text-2xl tabular-nums">{smeltBalanceUi.toLocaleString()}<span className="text-base font-medium ml-1">SMELT</span></div>
               </div>
-              <div className="rounded-2xl bg-white border border-gray-200 p-5">
-                <div className="text-xs text-gray-400 mb-1">Staked</div>
+              <div className="rounded-2xl bg-white border border-gray-100 p-5">
+                <div className="text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-2">Staked</div>
                 <div className="flex items-center gap-2">
-                  <span className="text-gray-900 font-medium">{smeltStakedUi.toLocaleString()} SMELT</span>
+                  <span className="text-gray-900 font-extrabold text-2xl tabular-nums">{smeltStakedUi.toLocaleString()}<span className="text-base font-medium ml-1">SMELT</span></span>
                   {smeltStakedUi > 0 && (
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-green-50 text-green-700 font-medium">
-                      1.5× active
+                    <span className="text-xs px-2.5 py-1 rounded-full bg-green-100 text-green-700 font-bold">
+                      1.5×
                     </span>
                   )}
                 </div>

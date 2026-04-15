@@ -3,27 +3,29 @@
 @tailwind utilities;
 
 body {
-  background: #f9fafb;
+  background: #f0faf4;
   color: #111827;
   overflow-x: hidden;
-  font-size: 16px;
+  font-size: 17px;
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* ── Wallet Adapter: light theme overrides ── */
 
-/* Nav trigger button */
 .wallet-adapter-button {
   background-color: #16a34a !important;
   color: #ffffff !important;
   font-weight: 700 !important;
-  font-size: 0.875rem !important;
+  font-size: 0.9rem !important;
   border-radius: 9999px !important;
-  height: 2.25rem !important;
-  padding: 0 1rem !important;
+  height: 2.5rem !important;
+  padding: 0 1.25rem !important;
   line-height: 1 !important;
   border: none !important;
-  font-family: inherit !important;
+  font-family: var(--font-rubik), inherit !important;
+  letter-spacing: -0.01em !important;
 }
 .wallet-adapter-button:not([disabled]):hover {
   background-color: #15803d !important;
@@ -32,32 +34,33 @@ body {
   opacity: 0.4 !important;
   cursor: not-allowed !important;
 }
-/* Hide wallet icon on the nav trigger (cleaner pill button) */
 .wallet-adapter-button-start-icon {
   display: none !important;
 }
 
-/* Modal overlay */
+/* Modal */
 .wallet-adapter-modal-overlay {
-  background: rgba(0, 0, 0, 0.5) !important;
+  background: rgba(0, 0, 0, 0.45) !important;
+  backdrop-filter: blur(4px) !important;
 }
-/* Modal panel */
 .wallet-adapter-modal-wrapper {
   background: #ffffff !important;
-  border: 1px solid #e5e7eb !important;
-  border-radius: 1.25rem !important;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15) !important;
+  border: 1px solid #d1fae5 !important;
+  border-radius: 1.5rem !important;
+  box-shadow: 0 32px 64px -12px rgba(22, 163, 74, 0.12) !important;
 }
 .wallet-adapter-modal-title {
   color: #111827 !important;
-  font-weight: 700 !important;
+  font-weight: 800 !important;
+  font-size: 1.2rem !important;
+  letter-spacing: -0.02em !important;
 }
 .wallet-adapter-modal-wrapper p {
   color: #6b7280 !important;
 }
-/* Close button */
 .wallet-adapter-modal-button-close {
   background: #f3f4f6 !important;
+  border-radius: 9999px !important;
 }
 .wallet-adapter-modal-button-close:hover {
   background: #e5e7eb !important;
@@ -65,30 +68,28 @@ body {
 .wallet-adapter-modal-button-close svg {
   fill: #6b7280 !important;
 }
-/* Wallet list items inside modal */
 .wallet-adapter-modal-list .wallet-adapter-button {
   background: #f9fafb !important;
   border: 1px solid #e5e7eb !important;
-  border-radius: 0.75rem !important;
+  border-radius: 1rem !important;
   color: #111827 !important;
-  font-weight: 500 !important;
-  height: 3.25rem !important;
-  padding: 0 1rem !important;
+  font-weight: 600 !important;
+  height: 3.5rem !important;
+  padding: 0 1.25rem !important;
+  font-size: 1rem !important;
 }
 .wallet-adapter-modal-list .wallet-adapter-button:hover {
-  background: #f3f4f6 !important;
-  border-color: #d1d5db !important;
+  background: #f0fdf4 !important;
+  border-color: #86efac !important;
 }
-/* Show wallet icons inside modal list */
 .wallet-adapter-modal-list .wallet-adapter-button .wallet-adapter-button-start-icon {
   display: flex !important;
 }
 .wallet-adapter-modal-list .wallet-adapter-button .wallet-adapter-button-start-icon img {
-  width: 1.5rem !important;
-  height: 1.5rem !important;
-  border-radius: 0.25rem !important;
+  width: 1.75rem !important;
+  height: 1.75rem !important;
+  border-radius: 0.375rem !important;
 }
-/* "More wallets" toggle */
 .wallet-adapter-modal-list-more {
   color: #6b7280 !important;
 }
@@ -100,9 +101,9 @@ body {
 }
 
 @keyframes slide-up {
-  from { transform: translateY(100%); }
-  to   { transform: translateY(0); }
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
 }
 .animate-slide-up {
-  animation: slide-up 0.25s ease;
+  animation: slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }

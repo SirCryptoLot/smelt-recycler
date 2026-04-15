@@ -75,26 +75,33 @@ export default function CommunityPage() {
 
   return (
     <main className="flex-1 overflow-y-auto">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-8">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-10">
+
+        {/* Page heading */}
+        <div>
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight">Community</h1>
+          <p className="text-gray-400 text-sm mt-1">Ecosystem health &amp; leaderboard</p>
+        </div>
 
         {/* Ecosystem Health */}
         <section>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold text-gray-900">🌍 Ecosystem Health</h2>
-            <span className="text-xs text-gray-400">All-time · Solana-wide</span>
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-lg font-bold text-gray-900">Ecosystem Health</h2>
+            <span className="text-xs text-gray-400">All-time · Solana mainnet</span>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
             {[
-              { label: 'Wallets cleaned', value: (eco?.totalWallets ?? 0).toLocaleString(), color: 'text-green-600' },
-              { label: 'Accounts closed', value: (eco?.totalAccountsClosed ?? 0).toLocaleString(), color: 'text-gray-900' },
-              { label: 'SOL unlocked', value: `${(eco?.totalSolReclaimed ?? 0).toFixed(2)} SOL`, color: 'text-indigo-500', sub: 'returned to users' },
-              { label: 'SMELT minted', value: (eco?.totalSmeltMinted ?? 0).toLocaleString(), color: 'text-gray-900', sub: 'earned by recyclers' },
-              { label: 'SOL donated', value: `${totalSolDonated.toFixed(4)} SOL`, color: 'text-green-600', sub: 'given back to ecosystem' },
-            ].map(({ label, value, color, sub }) => (
-              <div key={label} className="rounded-2xl bg-white border border-gray-200 p-4">
-                <div className="text-xs text-gray-400 mb-1">{label}</div>
-                <div className={`text-xl font-bold ${color}`}>{value}</div>
-                {sub && <div className="text-[10px] text-gray-400 mt-0.5">{sub}</div>}
+              { label: 'Wallets cleaned', value: (eco?.totalWallets ?? 0).toLocaleString(), accent: false },
+              { label: 'Accounts closed', value: (eco?.totalAccountsClosed ?? 0).toLocaleString(), accent: false },
+              { label: 'SOL unlocked', value: (eco?.totalSolReclaimed ?? 0).toFixed(2), unit: 'SOL', accent: false },
+              { label: 'SMELT minted', value: (eco?.totalSmeltMinted ?? 0).toLocaleString(), accent: true },
+              { label: 'SOL donated', value: totalSolDonated.toFixed(4), unit: 'SOL', accent: true },
+            ].map(({ label, value, unit, accent }) => (
+              <div key={label} className="rounded-2xl bg-white border border-gray-100 px-4 py-4">
+                <div className="text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-2">{label}</div>
+                <div className={`font-extrabold text-xl tabular-nums leading-tight ${accent ? 'text-green-600' : 'text-gray-900'}`}>
+                  {value}{unit && <span className="text-sm font-medium ml-0.5">{unit}</span>}
+                </div>
               </div>
             ))}
           </div>
@@ -102,8 +109,8 @@ export default function CommunityPage() {
 
         {/* Leaderboard */}
         <section>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold text-gray-900">🏆 Leaderboard</h2>
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-lg font-bold text-gray-900">Leaderboard</h2>
             {tab === 'weekly' && lb?.weekly.since && (
               <span className="text-xs text-gray-400">
                 Since {new Date(lb.weekly.since).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
@@ -111,12 +118,12 @@ export default function CommunityPage() {
             )}
           </div>
 
-          <div className="flex bg-gray-100 rounded-xl p-1 gap-1 mb-4 w-fit">
+          <div className="flex bg-gray-100 rounded-xl p-1 gap-1 mb-5 w-fit">
             {(['weekly', 'allTime'] as Tab[]).map((t) => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
-                className={`px-4 py-1.5 text-xs font-semibold rounded-lg transition-colors ${tab === t ? 'bg-white text-green-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                className={`px-4 py-1.5 text-sm font-semibold rounded-lg transition-colors ${tab === t ? 'bg-white text-green-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
               >
                 {t === 'weekly' ? 'This week' : 'All-time'}
               </button>

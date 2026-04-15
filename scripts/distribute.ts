@@ -54,6 +54,12 @@ function loadAdminKeypair(): Keypair {
   return Keypair.fromSecretKey(Uint8Array.from(raw));
 }
 
+function loadVaultKeypair(): Keypair {
+  const raw = JSON.parse(process.env.VAULT_KEYPAIR ?? '[]') as number[];
+  if (raw.length === 0) throw new Error('VAULT_KEYPAIR env var not set');
+  return Keypair.fromSecretKey(Uint8Array.from(raw));
+}
+
 interface FeeEntry {
   date: string;
   wallet: string;
@@ -130,7 +136,8 @@ async function main(): Promise<void> {
   console.log('=== SMELT Distributor ===\n');
 
   const connection = new Connection(MAINNET_RPC, 'confirmed');
-  const adminKeypair = loadAdminKeypair();
+  const adminKeypair = loadAdminKeypair(); // only used for staking IDL fetch
+  const vaultKeypair = loadVaultKeypair(); // SOL lives here — signs distribution txs
 
   // 1. Sum undistributed SOL from liquidations + platform fees
   const liquidations = loadLiquidations();
@@ -200,13 +207,13 @@ async function main(): Promise<void> {
     const tx = new Transaction();
     for (const { address, lamports } of batch) {
       tx.add(SystemProgram.transfer({
-        fromPubkey: adminKeypair.publicKey,
+        fromPubkey: vaultKeypair.publicKey, // vault holds the SOL
         toPubkey: address,
         lamports,
       }));
     }
     try {
-      const sig = await sendAndConfirmTransaction(connection, tx, [adminKeypair], {
+      const sig = await sendAndConfirmTransaction(connection, tx, [vaultKeypair], {
         commitment: 'confirmed',
       });
       txSignatures.push(sig);

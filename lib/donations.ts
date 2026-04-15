@@ -9,6 +9,7 @@ export interface DonationEntry {
   solDonated: number;
   pct: number;
   txSignature: string;
+  distributed?: boolean;
 }
 
 const DONATIONS_PATH = path.join(DATA_DIR, 'donations.json');

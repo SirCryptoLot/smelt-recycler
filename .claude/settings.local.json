@@ -54,7 +54,8 @@
       "Bash(do:*)",
       "mcp__plugin_playwright_playwright__browser_resize",
       "Bash(git push:*)",
-      "Skill(commit-commands:commit-push-pr)"
+      "Skill(commit-commands:commit-push-pr)",
+      "Bash(C:\\\\Users\\\\Donaldas\\\\.claude\\\\plugins\\\\cache\\\\claude-plugins-official\\\\superpowers\\\\5.0.7\\\\skills\\\\brainstorming\\\\scripts\\\\start-server.sh:*)"
     ]
   }
 }

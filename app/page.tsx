@@ -437,11 +437,27 @@ export default function Home() {
 
       {/* Empty */}
       {status === 'empty' && (
-        <div className="flex-1 flex flex-col items-center justify-center gap-5 px-6">
-          <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center text-4xl">✅</div>
+        <div className="flex-1 flex flex-col items-center justify-center gap-6 px-6 py-10">
+          <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center text-3xl">✅</div>
           <div className="text-center">
             <div className="text-gray-900 font-extrabold text-2xl tracking-tight">Wallet is clean</div>
-            <div className="text-gray-400 text-base mt-2">No dust accounts found. Nice work.</div>
+            <div className="text-gray-400 text-sm mt-1.5">No dust accounts found. Nice work.</div>
+          </div>
+          <div className="w-full max-w-xs flex flex-col gap-3">
+            <a href="/stake" className="flex items-center justify-between bg-green-600 hover:bg-green-500 active:scale-[0.99] transition-all text-white rounded-2xl px-5 py-4 group">
+              <div>
+                <div className="font-bold text-sm">Stake your SMELT</div>
+                <div className="text-green-200 text-xs mt-0.5">Earn SOL rewards every epoch</div>
+              </div>
+              <span className="text-white/60 group-hover:translate-x-0.5 transition-transform text-lg">→</span>
+            </a>
+            <a href="/swap" className="flex items-center justify-between bg-white border border-gray-100 shadow-sm hover:border-gray-200 active:scale-[0.99] transition-all rounded-2xl px-5 py-4 group">
+              <div>
+                <div className="font-bold text-sm text-gray-800">Buy more SMELT</div>
+                <div className="text-gray-400 text-xs mt-0.5">Stack while your wallet stays clean</div>
+              </div>
+              <span className="text-gray-300 group-hover:translate-x-0.5 transition-transform text-lg">→</span>
+            </a>
           </div>
         </div>
       )}

@@ -118,13 +118,22 @@ export default function Home() {
       setRecycleResult(result);
       if (result.succeeded > 0) {
         const referredBy = typeof window !== 'undefined' ? localStorage.getItem('referredBy') ?? undefined : undefined;
-        fetch('/api/recycle', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ wallet: publicKey.toBase58(), accountsClosed: result.succeeded, referredBy, solDonated: result.solDonated > 0 ? result.solDonated : undefined }),
-        })
-          .then(() => refreshSmelt())
-          .catch(() => {});
+        try {
+          const res = await fetch('/api/recycle', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ wallet: publicKey.toBase58(), accountsClosed: result.succeeded, referredBy, solDonated: result.solDonated > 0 ? result.solDonated : undefined }),
+          });
+          if (res.ok) {
+            refreshSmelt();
+          } else {
+            const body = await res.json().catch(() => ({})) as { error?: string };
+            console.error('SMELT mint failed:', body.error);
+            setError(`SOL reclaimed ✓ but SMELT reward failed: ${body.error ?? 'server error'}`);
+          }
+        } catch {
+          console.error('SMELT mint request failed');
+        }
       }
       setStatus('success');
     } catch (err) {

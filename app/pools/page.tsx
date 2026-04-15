@@ -18,7 +18,7 @@ function formatDate(iso: string): string {
 }
 
 export default function PoolsPage() {
-  const { publicKey, signTransaction } = useWallet();
+  const { publicKey } = useWallet();
   const { connection } = useConnection();
 
   const [data, setData] = useState<PoolsData | null>(null);
@@ -52,13 +52,12 @@ export default function PoolsPage() {
   }, [refresh]);
 
   useEffect(() => {
-    if (!publicKey || !signTransaction) return;
-    const wallet = { publicKey, signTransaction };
+    if (!publicKey) return;
     fetchSmeltBalance(connection, publicKey).then(setSmeltBalance).catch(console.error);
-    fetchStakeInfo(connection, publicKey, wallet as never)
-      .then((info) => setSmeltStaked(info?.amountStaked ?? 0n))
+    fetchStakeInfo(publicKey)
+      .then((info) => setSmeltStaked(info?.smeltStaked ?? 0n))
       .catch(console.error);
-  }, [publicKey, signTransaction, connection]);
+  }, [publicKey, connection]);
 
   if (loading) {
     return (

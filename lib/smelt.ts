@@ -5,16 +5,20 @@ import {
   Transaction,
 } from '@solana/web3.js';
 import {
+  createTransferCheckedInstruction,
   getAssociatedTokenAddress,
   TOKEN_PROGRAM_ID,
   ASSOCIATED_TOKEN_PROGRAM_ID,
 } from '@solana/spl-token';
-import { Program, AnchorProvider, BN } from '@coral-xyz/anchor';
-import { SMELT_MINT, STAKING_PROGRAM_ID } from './constants';
+import { SMELT_MINT, STAKING_POOL_ATA } from './constants';
 
 export interface StakeInfo {
-  amountStaked: bigint;   // raw, 9 decimals
-  bump: number;
+  smeltStaked: bigint;
+  stakedUi: number;
+  sharePct: number;
+  depositedAt: string | null;
+  cooldownStartedAt: string | null;
+  epochStart: string;
 }
 
 /**
@@ -41,32 +45,27 @@ export async function fetchSmeltBalance(
 }
 
 /**
- * Fetch the user's StakeAccount PDA data.
- * Returns null if the account doesn't exist (user has never staked).
+ * Fetch pool stake info for a wallet from the API.
  */
-export async function fetchStakeInfo(
-  connection: Connection,
-  owner: PublicKey,
-  wallet: { publicKey: PublicKey; signTransaction: (tx: Transaction) => Promise<Transaction> },
-): Promise<StakeInfo | null> {
+export async function fetchStakeInfo(wallet: PublicKey): Promise<StakeInfo | null> {
   try {
-    const provider = new AnchorProvider(connection, wallet as never, { commitment: 'confirmed' });
-    const idl = await Program.fetchIdl(STAKING_PROGRAM_ID, provider);
-    if (!idl) return null;
-    const program = new Program(idl as never, provider);
-
-    const [stakeAccountPda] = PublicKey.findProgramAddressSync(
-      [Buffer.from('stake'), owner.toBuffer()],
-      STAKING_PROGRAM_ID,
-    );
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const account = await (program.account as any)['stakeAccount'].fetchNullable(stakeAccountPda);
-    if (!account) return null;
-    const data = account as { amountStaked: BN; bump: number };
+    const res = await fetch(`/api/stake?wallet=${wallet.toBase58()}`);
+    if (!res.ok) return null;
+    const data = await res.json() as {
+      staked: string;
+      stakedUi: number;
+      sharePct: number;
+      depositedAt: string | null;
+      cooldownStartedAt: string | null;
+      epochStart: string;
+    };
     return {
-      amountStaked: BigInt(data.amountStaked.toString()),
-      bump: data.bump,
+      smeltStaked: BigInt(data.staked),
+      stakedUi: data.stakedUi,
+      sharePct: data.sharePct,
+      depositedAt: data.depositedAt,
+      cooldownStartedAt: data.cooldownStartedAt,
+      epochStart: data.epochStart,
     };
   } catch {
     return null;
@@ -74,50 +73,34 @@ export async function fetchStakeInfo(
 }
 
 /**
- * Build a `stake` instruction transaction.
- * Caller must sign and send.
+ * Build a transaction that transfers SMELT from owner to the staking pool ATA.
+ * User signs and sends this; then calls POST /api/stake with the tx signature.
  */
 export async function buildStakeTransaction(
   connection: Connection,
   owner: PublicKey,
   amountRaw: bigint,
-  wallet: { publicKey: PublicKey; signTransaction: (tx: Transaction) => Promise<Transaction> },
 ): Promise<Transaction> {
-  const provider = new AnchorProvider(connection, wallet as never, { commitment: 'confirmed' });
-  const idl = await Program.fetchIdl(STAKING_PROGRAM_ID, provider);
-  if (!idl) throw new Error('Could not load staking program IDL');
-  const program = new Program(idl as never, provider);
+  const ownerATA = await getAssociatedTokenAddress(
+    SMELT_MINT,
+    owner,
+    false,
+    TOKEN_PROGRAM_ID,
+    ASSOCIATED_TOKEN_PROGRAM_ID,
+  );
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const tx = await (program.methods as any)
-    .stake(new BN(amountRaw.toString()))
-    .transaction();
-
-  const { blockhash } = await connection.getLatestBlockhash();
-  tx.recentBlockhash = blockhash;
-  tx.feePayer = owner;
-  return tx;
-}
-
-/**
- * Build an `unstake` instruction transaction.
- * Caller must sign and send.
- */
-export async function buildUnstakeTransaction(
-  connection: Connection,
-  owner: PublicKey,
-  amountRaw: bigint,
-  wallet: { publicKey: PublicKey; signTransaction: (tx: Transaction) => Promise<Transaction> },
-): Promise<Transaction> {
-  const provider = new AnchorProvider(connection, wallet as never, { commitment: 'confirmed' });
-  const idl = await Program.fetchIdl(STAKING_PROGRAM_ID, provider);
-  if (!idl) throw new Error('Could not load staking program IDL');
-  const program = new Program(idl as never, provider);
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const tx = await (program.methods as any)
-    .unstake(new BN(amountRaw.toString()))
-    .transaction();
+  const tx = new Transaction().add(
+    createTransferCheckedInstruction(
+      ownerATA,
+      SMELT_MINT,
+      STAKING_POOL_ATA,
+      owner,
+      amountRaw,
+      9,
+      [],
+      TOKEN_PROGRAM_ID,
+    )
+  );
 
   const { blockhash } = await connection.getLatestBlockhash();
   tx.recentBlockhash = blockhash;

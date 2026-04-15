@@ -3,7 +3,6 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { useConnection } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { useSmelt } from '@/lib/smelt-context';
 import { fetchStakeInfo } from '@/lib/smelt';
@@ -33,7 +32,6 @@ function formatDate(iso: string) { return new Date(iso).toLocaleDateString('en-U
 
 export default function DashboardPage() {
   const { publicKey, connected } = useWallet();
-  const { connection } = useConnection();
   const { smeltBalance } = useSmelt();
   const [data, setData] = useState<DashboardData | null>(null);
   const [smeltStaked, setSmeltStaked] = useState(0n);
@@ -46,10 +44,10 @@ export default function DashboardPage() {
     if (!publicKey) return;
     const res = await fetch(`/api/dashboard?wallet=${publicKey.toBase58()}`, { cache: 'no-store' });
     if (res.ok) setData(await res.json() as DashboardData);
-    fetchStakeInfo(connection, publicKey, { publicKey, signTransaction: undefined } as never)
-      .then((info) => setSmeltStaked(info?.amountStaked ?? 0n))
+    fetchStakeInfo(publicKey)
+      .then((info) => setSmeltStaked(info?.smeltStaked ?? 0n))
       .catch(() => {});
-  }, [publicKey, connection]);
+  }, [publicKey]);
 
   useEffect(() => { if (connected && publicKey) load(); }, [connected, publicKey, load]);
 

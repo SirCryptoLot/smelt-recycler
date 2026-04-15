@@ -1,7 +1,7 @@
 // app/api/admin/cron/route.ts
 // Called every 2 days by an external cron (cron-job.org / Railway).
 // 1. Liquidates ALL vault tokens → SOL via Jupiter (no USD threshold).
-// 2. Distributes accumulated SOL (liquidations + fees + donations) to SMELT holders.
+// 2. Distributes accumulated SOL (liquidations + fees + donations) to pool stakers.
 // Uses VAULT_KEYPAIR for both operations — the SOL lives in the vault wallet.
 import { NextRequest, NextResponse } from 'next/server';
 import * as fs from 'fs';
@@ -16,11 +16,11 @@ import {
   LAMPORTS_PER_SOL,
 } from '@solana/web3.js';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { Program, AnchorProvider, Wallet } from '@coral-xyz/anchor';
 import { swapToSol } from '../../../../lib/jupiter';
-import { VAULT_PUBKEY, SMELT_MINT, STAKING_PROGRAM_ID, STAKING_BOOST } from '../../../../lib/constants';
+import { VAULT_PUBKEY } from '../../../../lib/constants';
 import { MAINNET_RPC } from '../../../../lib/solana';
 import { DATA_DIR } from '../../../../lib/paths';
+import { loadPool, getEpochEligibleStakes, savePool } from '../../../../lib/staking-pool';
 
 export const dynamic = 'force-dynamic';
 
@@ -48,23 +48,11 @@ interface DistributionEntry {
   txSignatures: string[];
 }
 
-interface StakeAccountData {
-  owner: PublicKey;
-  amountStaked: { toString(): string };
-  bump: number;
-}
-
 // ── Keypair loaders ───────────────────────────────────────────────────────────
 
 function loadVaultKeypair(): Keypair {
   const raw = JSON.parse(process.env.VAULT_KEYPAIR ?? '[]') as number[];
   if (raw.length === 0) throw new Error('VAULT_KEYPAIR env var not set');
-  return Keypair.fromSecretKey(Uint8Array.from(raw));
-}
-
-function loadAdminKeypair(): Keypair {
-  const raw = JSON.parse(process.env.ADMIN_KEYPAIR ?? '[]') as number[];
-  if (raw.length === 0) throw new Error('ADMIN_KEYPAIR env var not set');
   return Keypair.fromSecretKey(Uint8Array.from(raw));
 }
 
@@ -98,46 +86,6 @@ async function fetchVaultTokens(
     .filter((a) => a.rawAmount > 0);
 }
 
-// ── SMELT holder snapshot ─────────────────────────────────────────────────────
-
-async function fetchSmeltHolders(connection: Connection): Promise<Record<string, bigint>> {
-  const accounts = await connection.getParsedProgramAccounts(TOKEN_PROGRAM_ID, {
-    filters: [
-      { dataSize: 165 },
-      { memcmp: { offset: 0, bytes: SMELT_MINT.toBase58() } },
-    ],
-  });
-  const holders: Record<string, bigint> = {};
-  for (const acct of accounts) {
-    const info = (acct.account.data as { parsed: { info: { owner: string; tokenAmount: { amount: string } } } }).parsed.info;
-    const amount = BigInt(info.tokenAmount.amount);
-    if (amount > 0n) holders[info.owner] = (holders[info.owner] ?? 0n) + amount;
-  }
-  return holders;
-}
-
-// ── Staked amounts ────────────────────────────────────────────────────────────
-
-async function fetchStakedAmounts(
-  connection: Connection,
-  adminKeypair: Keypair,
-): Promise<Record<string, bigint>> {
-  try {
-    const provider = new AnchorProvider(connection, new Wallet(adminKeypair), { commitment: 'confirmed' });
-    const idl = await Program.fetchIdl(STAKING_PROGRAM_ID, provider);
-    if (!idl) return {};
-    const program = new Program(idl as never, provider);
-    const stakeAccounts = await (program.account as any)['stakeAccount'].all() as Array<{ account: StakeAccountData }>;
-    const result: Record<string, bigint> = {};
-    for (const { account } of stakeAccounts) {
-      result[account.owner.toBase58()] = BigInt(account.amountStaked.toString());
-    }
-    return result;
-  } catch {
-    return {}; // staking program not yet deployed — treat all as 1x weight
-  }
-}
-
 // ── Main handler ──────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
@@ -153,7 +101,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
     const connection = new Connection(MAINNET_RPC, 'confirmed');
     const vaultKeypair = loadVaultKeypair();
-    const adminKeypair = loadAdminKeypair(); // only used for staking IDL fetch
 
     log.push(`[${ts()}] Cron started. Vault: ${VAULT_PUBKEY.toBase58()}`);
 
@@ -198,41 +145,38 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ ok: true, log, liquidated: tokens.length, distributed: 0 });
     }
 
-    // ── Phase 3: Fetch SMELT holders + staking weights ────────────────────────
+    // ── Phase 3: Load eligible pool stakers ──────────────────────────────────
 
-    log.push(`[${ts()}] Phase 3: SMELT holders + weights`);
-    const holders = await fetchSmeltHolders(connection);
-    const staked = await fetchStakedAmounts(connection, adminKeypair);
-    log.push(`  ${Object.keys(holders).length} SMELT holder(s)`);
+    log.push(`[${ts()}] Phase 3: pool stakers`);
+    const poolState = loadPool();
+    const eligibleStakes = getEpochEligibleStakes(poolState);
+    log.push(`  ${eligibleStakes.length} eligible staker(s) (staked before ${poolState.epochStart})`);
 
-    const weights: Record<string, number> = {};
-    let totalWeight = 0;
-    for (const [owner, balance] of Object.entries(holders)) {
-      const stakedAmount = staked[owner] ?? 0n;
-      const w = Number(balance) + Number(stakedAmount) * STAKING_BOOST;
-      weights[owner] = w;
-      totalWeight += w;
-    }
-
-    if (totalWeight === 0) {
-      log.push('  No weighted holders — cannot distribute.');
+    if (eligibleStakes.length === 0) {
+      log.push('  No eligible stakers — skipping distribution.');
+      poolState.epochStart = new Date().toISOString();
+      savePool(poolState);
       return NextResponse.json({ ok: true, log, liquidated: tokens.length, distributed: 0 });
     }
 
-    // ── Phase 4: Distribute proportionally FROM vault keypair ─────────────────
+    const totalStaked = eligibleStakes.reduce((s, e) => s + e.smeltRaw, 0n);
+    if (totalStaked === 0n) {
+      log.push('  Total staked is 0 — skipping.');
+      return NextResponse.json({ ok: true, log, liquidated: tokens.length, distributed: 0 });
+    }
+
+    // ── Phase 4: Distribute proportionally to stakers ────────────────────────
 
     log.push(`[${ts()}] Phase 4: distribution`);
 
-    // Solana rent-exempt minimum for a system account (~0.00089 SOL)
     const RENT_EXEMPT_MIN = await connection.getMinimumBalanceForRentExemption(0);
-
     const totalLamports = Math.floor(distributableSol * LAMPORTS_PER_SOL);
+
     const recipients: Array<{ address: PublicKey; lamports: number }> = [];
-    for (const [owner, weight] of Object.entries(weights)) {
-      const share = Math.floor((weight / totalWeight) * totalLamports);
-      // Only include if share meets rent-exempt minimum (new wallets require it)
+    for (const { wallet, smeltRaw } of eligibleStakes) {
+      const share = Number(smeltRaw * BigInt(totalLamports) / totalStaked);
       if (share >= RENT_EXEMPT_MIN) {
-        recipients.push({ address: new PublicKey(owner), lamports: share });
+        recipients.push({ address: new PublicKey(wallet), lamports: share });
       }
     }
 
@@ -275,6 +219,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       txSignatures,
     });
     saveJson(DISTRIBUTIONS_PATH, distributions);
+
+    // Advance epoch start so current stakers become eligible next cycle
+    poolState.epochStart = new Date().toISOString();
+    savePool(poolState);
 
     log.push(`[${ts()}] Done. ${txSignatures.length} distribution tx(s) sent.`);
 

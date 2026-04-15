@@ -53,7 +53,8 @@ export async function GET(): Promise<NextResponse> {
 
     return NextResponse.json({
       totalSmeltStaked: state.totalSmeltStaked,
-      totalSmeltStakedUi: Number(BigInt(state.totalSmeltStaked)) / 1e9,
+      totalSmeltStakedUi: Number(BigInt(state.totalSmeltStaked) / 1_000_000_000n)
+        + Number(BigInt(state.totalSmeltStaked) % 1_000_000_000n) / 1e9,
       stakerCount: Object.keys(state.stakes).length,
       epochStart: state.epochStart,
       nextDistributionAt,

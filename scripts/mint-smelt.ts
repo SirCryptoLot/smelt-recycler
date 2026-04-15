@@ -45,18 +45,9 @@ export async function mintSmeltReward(
     ASSOCIATED_TOKEN_PROGRAM_ID,
   );
 
+  // The recipient's ATA is created client-side during the recycle transaction
+  // (user pays the rent). Admin only pays the tiny mint tx fee here.
   const tx = new Transaction();
-
-  tx.add(
-    createAssociatedTokenAccountIdempotentInstruction(
-      adminKeypair.publicKey,
-      recipientATA,
-      recipient,
-      SMELT_MINT,
-      TOKEN_PROGRAM_ID,
-      ASSOCIATED_TOKEN_PROGRAM_ID,
-    )
-  );
 
   tx.add(
     createMintToInstruction(

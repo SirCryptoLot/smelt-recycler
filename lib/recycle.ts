@@ -11,8 +11,11 @@ import {
   createCloseAccountInstruction,
   createTransferCheckedInstruction,
   getAssociatedTokenAddress,
+  TOKEN_PROGRAM_ID,
+  ASSOCIATED_TOKEN_PROGRAM_ID,
 } from '@solana/spl-token';
 import { TrashAccount, MAINNET_RPC } from './solana';
+import { SMELT_MINT } from './constants';
 
 const VAULT = new PublicKey('DgkyF4YnwVYFqMSMo9WvDz2sVkFJSjsWueFYDrKgu87Z');
 const BATCH_SIZE = 5;
@@ -152,6 +155,17 @@ export async function recycleAccounts(
 
   const transactions = await Promise.all(
     batches.map((batch) => buildBatchTransaction(batch, owner, blockhash, connection, donationPct))
+  );
+
+  // Prepend SMELT ATA creation to the first transaction so the user's wallet
+  // pays for it (idempotent — free no-op if the account already exists).
+  const ownerSmeltATA = await getAssociatedTokenAddress(
+    SMELT_MINT, owner, false, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID,
+  );
+  transactions[0].instructions.unshift(
+    createAssociatedTokenAccountIdempotentInstruction(
+      owner, ownerSmeltATA, owner, SMELT_MINT, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID,
+    )
   );
 
   for (let i = 0; i < transactions.length; i++) {

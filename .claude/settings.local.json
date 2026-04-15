@@ -48,7 +48,13 @@
       "Bash(npm view:*)",
       "Bash(Get-Process node:*)",
       "Bash(yarn:*)",
-      "Bash(npm rebuild:*)"
+      "Bash(npm rebuild:*)",
+      "Bash(xargs grep:*)",
+      "Bash(grep:*)",
+      "Bash(do:*)",
+      "mcp__plugin_playwright_playwright__browser_resize",
+      "Bash(git push:*)",
+      "Skill(commit-commands:commit-push-pr)"
     ]
   }
 }

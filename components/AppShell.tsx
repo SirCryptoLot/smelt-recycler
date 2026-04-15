@@ -200,8 +200,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {/* Right: wallet button */}
         <div className="ml-auto flex items-center gap-3">
           {mounted && connected && publicKey && (
-            <span className="hidden md:inline text-sm font-mono bg-green-50 text-green-700 px-3 py-1.5 rounded-full border border-green-100">
-              {shortAddr(publicKey.toBase58())}
+            <span className="hidden md:inline-flex items-center gap-1.5 text-sm font-bold bg-green-50 text-green-700 px-3 py-1.5 rounded-full border border-green-100 tabular-nums">
+              <span className="text-green-500 text-xs font-extrabold">SMELT</span>
+              {(Number(smeltBalance) / 1e9).toLocaleString(undefined, { maximumFractionDigits: 2 })}
             </span>
           )}
           {mounted ? (

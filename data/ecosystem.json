@@ -1,7 +1,7 @@
 {
-  "totalWallets": 1,
-  "totalAccountsClosed": 1,
-  "totalSolReclaimed": 0.0019,
-  "totalSmeltMinted": 250,
-  "lastUpdated": "2026-04-13T21:14:49.106Z"
+  "totalWallets": 5,
+  "totalAccountsClosed": 5,
+  "totalSolReclaimed": 0.0095,
+  "totalSmeltMinted": 1250,
+  "lastUpdated": "2026-04-14T14:38:15.808Z"
 }

@@ -1,17 +1,9 @@
 // app/swap/page.tsx
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { useWallet } from '@solana/wallet-adapter-react';
-import { VersionedTransaction } from '@solana/web3.js';
-import { getTrashAccounts, solToReclaim, TrashAccount, connection } from '@/lib/solana';
-import { recycleAccounts } from '@/lib/recycle';
-import { getSmeltQuote, getSmeltPrice, buildSwapTransaction, executeSwap, JupiterQuote } from '@/lib/jupiter-swap';
-import { useSmelt } from '@/lib/smelt-context';
+import { useEffect, useRef, useState } from 'react';
+import { getSmeltPrice } from '@/lib/jupiter-swap';
 import { SMELT_MINT } from '@/lib/constants';
-
-type Mode = 'dust' | 'buy';
-type DustStatus = 'idle' | 'scanning' | 'ready' | 'step1' | 'step2' | 'done' | 'error';
 
 declare global {
   interface Window {
@@ -22,21 +14,11 @@ declare global {
 }
 
 export default function SwapPage() {
-  const { publicKey, connected, signAllTransactions, signTransaction } = useWallet();
-  const { refreshSmelt } = useSmelt();
-
-  const [mode, setMode] = useState<Mode>('dust');
-  const [dustStatus, setDustStatus] = useState<DustStatus>('idle');
-  const [accounts, setAccounts] = useState<TrashAccount[]>([]);
-  const [quote, setQuote] = useState<JupiterQuote | null>(null);
   const [smeltPrice, setSmeltPrice] = useState<number | null>(null);
   const [nav, setNav] = useState<number | null>(null);
-  const [error, setError] = useState('');
-  const [txSig, setTxSig] = useState('');
-  const jupiterRef = useRef<HTMLDivElement>(null);
   const [jupiterLoaded, setJupiterLoaded] = useState(false);
+  const jupiterRef = useRef<HTMLDivElement>(null);
 
-  // Fetch SMELT market price + pending SOL for Buy mode header
   useEffect(() => {
     getSmeltPrice().then(setSmeltPrice).catch(() => {});
     fetch('/api/stats', { cache: 'no-store' })
@@ -49,9 +31,8 @@ export default function SwapPage() {
       .catch(() => {});
   }, []);
 
-  // Load Jupiter Terminal for Buy mode
   useEffect(() => {
-    if (mode !== 'buy' || jupiterLoaded) return;
+    if (jupiterLoaded) return;
     const script = document.createElement('script');
     script.src = 'https://terminal.jup.ag/main-v3.js';
     script.setAttribute('data-preload', '');
@@ -71,232 +52,38 @@ export default function SwapPage() {
       }
     };
     document.head.appendChild(script);
-  }, [mode, jupiterLoaded]);
-
-  // Scan dust accounts
-  const scan = useCallback(async () => {
-    if (!publicKey) return;
-    setDustStatus('scanning');
-    setError('');
-    try {
-      const result = await getTrashAccounts(publicKey);
-      setAccounts(result);
-      if (result.length > 0) {
-        const lamports = Math.floor(solToReclaim(result.length) * 1e9);
-        const q = await getSmeltQuote(lamports);
-        setQuote(q);
-      }
-      setDustStatus('ready');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Scan failed');
-      setDustStatus('error');
-    }
-  }, [publicKey]);
-
-  useEffect(() => {
-    if (connected && publicKey && mode === 'dust') scan();
-  }, [connected, publicKey, mode, scan]);
-
-  // Refresh quote every 10s
-  useEffect(() => {
-    if (dustStatus !== 'ready' || accounts.length === 0) return;
-    const id = setInterval(async () => {
-      const lamports = Math.floor(solToReclaim(accounts.length) * 1e9);
-      const q = await getSmeltQuote(lamports);
-      if (q) setQuote(q);
-    }, 10_000);
-    return () => clearInterval(id);
-  }, [dustStatus, accounts]);
-
-  const convertToSmelt = useCallback(async () => {
-    if (!publicKey || !signAllTransactions || !signTransaction || accounts.length === 0) return;
-
-    setDustStatus('step1');
-    setError('');
-    try {
-      // Step 1: recycle accounts → get SOL
-      const result = await recycleAccounts(accounts, publicKey, signAllTransactions, connection);
-      if (result.succeeded === 0) throw new Error('No accounts were closed');
-
-      // Notify backend (for SMELT minting + leaderboard)
-      const referredBy = typeof window !== 'undefined' ? localStorage.getItem('referredBy') ?? undefined : undefined;
-      await fetch('/api/recycle', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ wallet: publicKey.toBase58(), accountsClosed: result.succeeded, referredBy }),
-      }).catch(() => {});
-
-      setDustStatus('step2');
-
-      // Step 2: swap reclaimed SOL → SMELT
-      const lamports = Math.floor(result.solReclaimed * 1e9);
-      const freshQuote = await getSmeltQuote(lamports);
-      if (!freshQuote) throw new Error('Could not get swap quote — your SOL was kept in wallet');
-
-      const swapTx = await buildSwapTransaction(freshQuote, publicKey.toBase58());
-      const sig = await executeSwap(swapTx, signTransaction as (tx: VersionedTransaction) => Promise<VersionedTransaction>);
-      setTxSig(sig);
-      setDustStatus('done');
-      refreshSmelt();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Transaction failed');
-      setDustStatus('error');
-    }
-  }, [publicKey, signAllTransactions, signTransaction, accounts, refreshSmelt]);
-
-  const estimatedSmelt = quote ? Math.floor(Number(quote.outAmount) / 1e9) : 0;
-  const sol = solToReclaim(accounts.length);
+  }, [jupiterLoaded]);
 
   return (
     <main className="flex-1 overflow-y-auto">
-      <div className="max-w-lg mx-auto px-4 sm:px-6 py-8 space-y-6">
+      <div className="max-w-lg mx-auto px-4 sm:px-6 py-8 space-y-4">
 
-        {/* Mode toggle */}
-        <div className="flex bg-gray-100 rounded-xl p-1 gap-1">
-          <button
-            onClick={() => setMode('dust')}
-            className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-colors ${mode === 'dust' ? 'bg-white text-green-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-          >
-            ♻ Dust → SMELT
-          </button>
-          <button
-            onClick={() => setMode('buy')}
-            className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-colors ${mode === 'buy' ? 'bg-white text-green-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-          >
-            ⇄ Buy SMELT
-          </button>
+        <div>
+          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Buy SMELT</h1>
+          <p className="text-gray-400 text-sm mt-1">Swap any token for SMELT via Jupiter.</p>
         </div>
 
-        {/* ── DUST MODE ── */}
-        {mode === 'dust' && (
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 space-y-5">
+        {(smeltPrice !== null || nav !== null) && (
+          <div className="rounded-2xl border border-gray-100 bg-white shadow-sm px-5 py-4 grid grid-cols-2 gap-4">
             <div>
-              <h2 className="text-gray-900 font-semibold text-base mb-1">Convert dust directly to SMELT</h2>
-              <p className="text-gray-400 text-xs">Close your dust accounts, reclaim SOL, and swap it to SMELT — in two steps.</p>
+              <div className="text-[10px] text-gray-400 uppercase tracking-widest mb-1">Market price</div>
+              <div className="text-gray-900 font-bold tabular-nums">{smeltPrice?.toFixed(8) ?? '—'} SOL</div>
             </div>
-
-            {!connected && (
-              <div className="text-gray-400 text-sm">Connect your wallet to scan for dust accounts.</div>
-            )}
-
-            {connected && dustStatus === 'scanning' && (
-              <div className="flex items-center gap-3 text-gray-500 text-sm">
-                <div className="w-4 h-4 border-2 border-gray-200 border-t-green-600 rounded-full animate-spin flex-shrink-0" />
-                Scanning wallet…
-              </div>
-            )}
-
-            {connected && dustStatus === 'ready' && accounts.length === 0 && (
-              <div className="text-gray-400 text-sm">No dust accounts found.</div>
-            )}
-
-            {connected && (dustStatus === 'ready' || dustStatus === 'step1' || dustStatus === 'step2') && accounts.length > 0 && (
-              <>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="rounded-xl bg-white border border-gray-100 px-3 py-2.5">
-                    <div className="text-[10px] text-gray-400 uppercase tracking-widest mb-0.5">Accounts</div>
-                    <div className="text-gray-900 font-bold">{accounts.length}</div>
-                  </div>
-                  <div className="rounded-xl bg-white border border-gray-100 px-3 py-2.5">
-                    <div className="text-[10px] text-gray-400 uppercase tracking-widest mb-0.5">SOL to reclaim</div>
-                    <div className="text-gray-900 font-bold">{sol.toFixed(4)}</div>
-                  </div>
-                  <div className="rounded-xl bg-green-50 border border-green-200 px-3 py-2.5 col-span-2">
-                    <div className="text-[10px] text-green-600/70 uppercase tracking-widest mb-0.5">Est. SMELT received</div>
-                    <div className="text-green-600 font-bold text-lg">
-                      {quote ? `~${estimatedSmelt.toLocaleString()} SMELT` : '—'}
-                    </div>
-                    {quote && <div className="text-gray-400 text-[10px] mt-0.5">via Jupiter · updates every 10s</div>}
-                  </div>
-                </div>
-
-                {/* Step progress */}
-                <div className="space-y-2">
-                  {(() => {
-                    const s = dustStatus as DustStatus;
-                    return [
-                      { label: 'Step 1: Close accounts + reclaim SOL', active: s === 'step1', done: s === 'step2' || s === 'done' },
-                      { label: 'Step 2: Swap SOL → SMELT via Jupiter', active: s === 'step2', done: s === 'done' },
-                    ];
-                  })().map(({ label, active, done }) => (
-                    <div key={label} className="flex items-center gap-2 text-xs">
-                      {done
-                        ? <span className="text-green-600 font-bold">✓</span>
-                        : active
-                          ? <div className="w-3 h-3 border border-green-200 border-t-green-600 rounded-full animate-spin flex-shrink-0" />
-                          : <span className="text-gray-300">·</span>}
-                      <span className={done ? 'text-green-600' : active ? 'text-gray-900' : 'text-gray-400'}>{label}</span>
-                    </div>
-                  ))}
-                </div>
-
-                <button
-                  onClick={convertToSmelt}
-                  disabled={!quote || dustStatus === 'step1' || dustStatus === 'step2'}
-                  className="w-full bg-green-600 hover:bg-green-500 active:scale-[0.99] disabled:opacity-30 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-all text-sm"
-                >
-                  {dustStatus === 'step1' ? 'Closing accounts…' : dustStatus === 'step2' ? 'Swapping to SMELT…' : 'Convert to SMELT'}
-                </button>
-              </>
-            )}
-
-            {dustStatus === 'done' && (
-              <div className="text-center space-y-3">
-                <div className="text-4xl">✅</div>
-                <div className="text-green-600 font-bold">SMELT received!</div>
-                {txSig && (
-                  <a
-                    href={`https://solscan.io/tx/${txSig}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs text-gray-400 hover:text-gray-600 underline"
-                  >
-                    View on Solscan
-                  </a>
-                )}
-                <button onClick={scan} className="text-xs text-gray-400 hover:text-gray-600 underline block mx-auto">
-                  Scan again
-                </button>
-              </div>
-            )}
-
-            {dustStatus === 'error' && (
-              <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-red-600 text-sm">
-                {error}
-                <button onClick={scan} className="block mt-2 text-xs underline text-red-400 hover:text-red-600">Try again</button>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ── BUY MODE ── */}
-        {mode === 'buy' && (
-          <div className="space-y-4">
-            {/* Price comparison */}
-            {(smeltPrice !== null || nav !== null) && (
-              <div className="rounded-2xl border border-gray-200 bg-white px-5 py-4 grid grid-cols-2 gap-4">
-                <div>
-                  <div className="text-[10px] text-gray-400 uppercase tracking-widest mb-1">Market price</div>
-                  <div className="text-gray-900 font-bold">{smeltPrice?.toFixed(8) ?? '—'} SOL</div>
-                </div>
-                <div>
-                  <div className="text-[10px] text-gray-400 uppercase tracking-widest mb-1">Pending pool</div>
-                  <div className="text-indigo-500 font-bold">{nav?.toFixed(4) ?? '—'} SOL</div>
-                </div>
-              </div>
-            )}
-
-            {/* Jupiter Terminal */}
-            <div className="rounded-2xl border border-gray-200 overflow-hidden min-h-[420px]">
-              <div id="jupiter-terminal" ref={jupiterRef} className="w-full min-h-[420px]" />
-              {!jupiterLoaded && (
-                <div className="flex items-center justify-center h-40 text-gray-400 text-sm">
-                  Loading Jupiter…
-                </div>
-              )}
+            <div>
+              <div className="text-[10px] text-gray-400 uppercase tracking-widest mb-1">Pending pool</div>
+              <div className="text-indigo-500 font-bold tabular-nums">{nav?.toFixed(4) ?? '—'} SOL</div>
             </div>
           </div>
         )}
+
+        <div className="rounded-2xl border border-gray-100 overflow-hidden min-h-[420px] bg-white shadow-sm">
+          <div id="jupiter-terminal" ref={jupiterRef} className="w-full min-h-[420px]" />
+          {!jupiterLoaded && (
+            <div className="flex items-center justify-center h-40 text-gray-400 text-sm">
+              Loading Jupiter…
+            </div>
+          )}
+        </div>
 
       </div>
     </main>

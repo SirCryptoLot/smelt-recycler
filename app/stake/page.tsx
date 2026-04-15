@@ -337,7 +337,7 @@ export default function StakePage() {
             </div>
             <div className="mt-3 text-sm text-gray-600">
               Next distribution in{' '}
-              <span className="font-bold text-green-600">{fmtCountdown(msRemaining)}</span>
+              <span className="font-bold text-green-600 inline-block tabular-nums" style={{ minWidth: '9ch' }}>{fmtCountdown(msRemaining)}</span>
               {' · '}~<span className="font-bold text-gray-900">{poolData.distributableSol.toFixed(4)} SOL</span> to distribute
             </div>
           </div>

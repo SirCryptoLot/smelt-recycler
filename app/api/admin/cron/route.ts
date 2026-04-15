@@ -253,7 +253,18 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     log.push(`[${ts()}] Phase 4: distribution`);
 
-    const totalLamports = Math.floor(totalSol * LAMPORTS_PER_SOL);
+    // Reserve 0.01 SOL in vault for rent exemption + future tx fees
+    const VAULT_RESERVE_SOL = 0.01;
+    const vaultBalance = await connection.getBalance(vaultKeypair.publicKey) / LAMPORTS_PER_SOL;
+    const distributableSol = Math.max(0, Math.min(totalSol, vaultBalance - VAULT_RESERVE_SOL));
+    log.push(`  Vault balance: ${vaultBalance.toFixed(6)} SOL, reserve: ${VAULT_RESERVE_SOL} SOL, distributable: ${distributableSol.toFixed(6)} SOL`);
+
+    if (distributableSol < 0.001) {
+      log.push('  Not enough SOL above reserve to distribute — vault needs funding.');
+      return NextResponse.json({ ok: true, log, liquidated: tokens.length, distributed: 0 });
+    }
+
+    const totalLamports = Math.floor(distributableSol * LAMPORTS_PER_SOL);
     const recipients: Array<{ address: PublicKey; lamports: number }> = [];
     for (const [owner, weight] of Object.entries(weights)) {
       const share = Math.floor((weight / totalWeight) * totalLamports);

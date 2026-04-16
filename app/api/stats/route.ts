@@ -53,6 +53,7 @@ export async function GET(): Promise<NextResponse> {
   const undistributedLiquidationSol = liquidations
     .filter((l) => !l.distributed)
     .reduce((s, l) => s + l.solReceived, 0);
+  const totalLiqSolReceived = liquidations.reduce((s, l) => s + l.solReceived, 0);
 
   const undistributedFeeSol = fees
     .filter((f) => !f.distributed)
@@ -72,6 +73,7 @@ export async function GET(): Promise<NextResponse> {
     liquidations: {
       recent: liquidations.slice(-5).reverse(),
       undistributedSol: undistributedLiquidationSol,
+      totalSolReceived: totalLiqSolReceived,
     },
     fees: {
       undistributedSol: undistributedFeeSol,

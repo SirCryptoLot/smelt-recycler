@@ -87,11 +87,11 @@ export default function CommunityPage() {
         })
       );
       tx.feePayer = publicKey;
-      const { blockhash } = await connection.getLatestBlockhash();
+      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
       tx.recentBlockhash = blockhash;
       const signed = await signTransaction(tx);
       const sig = await connection.sendRawTransaction(signed.serialize());
-      await connection.confirmTransaction(sig, 'confirmed');
+      await connection.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight }, 'confirmed');
       await fetch('/api/donate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

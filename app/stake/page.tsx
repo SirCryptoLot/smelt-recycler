@@ -135,6 +135,7 @@ export default function StakePage() {
   const [msg, setMsg] = useState('');
   const [poolError, setPoolError] = useState('');
   const [now, setNow] = useState(Date.now());
+  const [topStakers, setTopStakers] = useState<Array<{ wallet: string; stakedUi: number; sharePct: number }>>([]);
 
   // Tick every second for countdown
   useEffect(() => {
@@ -173,6 +174,13 @@ export default function StakePage() {
     const id = setInterval(() => { void refreshPool(); }, 30_000);
     return () => clearInterval(id);
   }, [refreshPool]);
+
+  useEffect(() => {
+    fetch('/api/stakers', { cache: 'no-store' })
+      .then(r => r.ok ? r.json() : [])
+      .then(setTopStakers)
+      .catch(() => {});
+  }, []);
 
   // Load stake data when wallet connects
   useEffect(() => {
@@ -476,6 +484,27 @@ export default function StakePage() {
                   </div>
                 );
               })
+            )}
+          </div>
+
+          {/* Top stakers */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mt-3">
+            <div className="text-[9px] font-bold tracking-widest text-gray-400 uppercase mb-3">Top stakers</div>
+            {topStakers.length === 0 ? (
+              <div className="text-sm text-gray-400 py-2">No stakers yet.</div>
+            ) : (
+              topStakers.map((s, i) => (
+                <div key={s.wallet} className="flex items-center justify-between py-2.5 [&+&]:border-t border-gray-100">
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-bold text-gray-300 w-4 tabular-nums">{i + 1}</span>
+                    <span className="text-sm font-mono text-gray-600">{`${s.wallet.slice(0, 6)}…${s.wallet.slice(-4)}`}</span>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-sm font-bold text-gray-900 tabular-nums">{fmtSmelt(s.stakedUi)}</div>
+                    <div className="text-[11px] text-gray-400">{s.sharePct.toFixed(2)}% share</div>
+                  </div>
+                </div>
+              ))
             )}
           </div>
 

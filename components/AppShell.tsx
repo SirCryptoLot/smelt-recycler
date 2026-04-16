@@ -13,7 +13,7 @@ const NAV_ITEMS = [
   { href: '/', label: 'Recycle', icon: '♻' },
   { href: '/swap', label: 'Swap', icon: '⇄' },
   { href: '/community', label: 'Community', icon: '🌍' },
-  { href: '/pools', label: 'Pools', icon: '🏊' },
+  { href: '/treasury', label: 'Treasury', icon: '🏦' },
   { href: '/stake', label: 'Stake', icon: '🔒' },
   { href: '/how-it-works', label: 'How it works', icon: '📖' },
 ];

@@ -1,4 +1,41 @@
 // app/how-it-works/page.tsx
+'use client';
+
+import { useState } from 'react';
+
+function AddressRow({ label, address }: { label: string; address: string }) {
+  const [copied, setCopied] = useState(false);
+  const copy = () => {
+    navigator.clipboard.writeText(address);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+  return (
+    <div className="rounded-xl bg-white border border-gray-200 px-4 py-3 flex items-center justify-between gap-3">
+      <div>
+        <div className="text-xs font-semibold text-gray-500 mb-0.5">{label}</div>
+        <div className="text-sm font-mono text-gray-700">{address.slice(0, 6)}…{address.slice(-4)}</div>
+      </div>
+      <div className="flex items-center gap-2 flex-shrink-0">
+        <button
+          onClick={copy}
+          className="text-xs text-gray-400 hover:text-gray-700 px-2 py-1 rounded-lg hover:bg-gray-100 transition-colors"
+        >
+          {copied ? '✓ Copied' : 'Copy'}
+        </button>
+        <a
+          href={`https://solscan.io/account/${address}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs text-green-600 hover:text-green-700 px-2 py-1 rounded-lg hover:bg-green-50 transition-colors"
+        >
+          Solscan ↗
+        </a>
+      </div>
+    </div>
+  );
+}
+
 export default function HowItWorksPage() {
   return (
     <main className="flex-1 overflow-y-auto">
@@ -107,6 +144,22 @@ export default function HowItWorksPage() {
             <li><strong className="text-gray-700">Pending</strong> — total SOL sitting ready to distribute at the next epoch</li>
             <li><strong className="text-gray-700">History</strong> — every past distribution, liquidation, and donation on record</li>
           </ul>
+        </section>
+
+        {/* Key Addresses */}
+        <section className="space-y-3">
+          <h2 className="text-lg font-semibold text-gray-900">Key addresses</h2>
+          <p className="text-gray-500 text-sm leading-relaxed">
+            All platform addresses are public and verifiable on-chain. Click any address to copy it, or open in Solscan.
+          </p>
+          {([
+            ['SMELT Mint',     'SME88JJYc8NrRvLVwWUgqk3kLuhuUwqu2JKDFeHdXb8'],
+            ['Platform Vault', 'DgkyF4YnwVYFqMSMo9WvDz2sVkFJSjsWueFYDrKgu87Z'],
+            ['Staking Pool',   '9TTxxr5tYAdq6HDWMUNRz1xgppBNmrAVzKyarEfhPdok'],
+            ['Admin',          '5gGqU2dsfxjjJqpihoPBa7oGRm3bZTFPKaG11hWv8HK5'],
+          ] as [string, string][]).map(([label, addr]) => (
+            <AddressRow key={addr} label={label} address={addr} />
+          ))}
         </section>
 
         {/* FAQ */}

@@ -26,14 +26,19 @@ export default function PoolsPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [smeltBalance, setSmeltBalance] = useState(0n);
-  const [smeltStaked, setSmeltStaked] = useState(0n);
+  const [sharePct, setSharePct] = useState(0);
+  const [nextDistFromPool, setNextDistFromPool] = useState<string | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const refresh = useCallback(async (silent = false) => {
     if (!silent) setRefreshing(true);
     try {
-      const d = await fetchPoolsData();
+      const [d, poolRes] = await Promise.all([
+        fetchPoolsData(),
+        fetch('/api/pool', { cache: 'no-store' }).then(r => r.ok ? r.json() : null).catch(() => null),
+      ]);
       setData(d);
+      if (poolRes?.nextDistributionAt) setNextDistFromPool(poolRes.nextDistributionAt);
       setLastUpdated(new Date());
     } catch (err) {
       console.error(err);
@@ -55,7 +60,7 @@ export default function PoolsPage() {
     if (!publicKey) return;
     fetchSmeltBalance(connection, publicKey).then(setSmeltBalance).catch(console.error);
     fetchStakeInfo(publicKey)
-      .then((info) => setSmeltStaked(info?.smeltStaked ?? 0n))
+      .then((info) => setSharePct(info?.sharePct ?? 0))
       .catch(console.error);
   }, [publicKey, connection]);
 
@@ -82,7 +87,8 @@ export default function PoolsPage() {
   const nextDistDate = data?.distributions.nextDistributionDate ?? null;
 
   const smeltBalanceUi = Number(smeltBalance) / 1e9;
-  const smeltStakedUi = Number(smeltStaked) / 1e9;
+  const estShare = sharePct > 0 ? (sharePct / 100) * undistributedSol : 0;
+  const nextDist = nextDistFromPool ?? nextDistDate;
 
   return (
     <main className="flex-1 overflow-y-auto">
@@ -242,12 +248,14 @@ export default function PoolsPage() {
             <div className="rounded-2xl bg-white border border-gray-100 p-5">
               <div className="text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-2">Next Distribution</div>
               <div className="text-gray-900 font-bold text-lg">
-                {nextDistDate ? formatDate(nextDistDate) : 'Not scheduled'}
+                {nextDist ? formatDate(nextDist) : 'Not scheduled'}
               </div>
             </div>
             <div className="rounded-2xl bg-white border border-gray-100 p-5">
               <div className="text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-2">Your Est. Share</div>
-              <div className="text-gray-400 font-bold text-lg">—</div>
+              <div className={`font-bold text-lg ${estShare > 0 ? 'text-green-600' : 'text-gray-400'}`}>
+                {estShare > 0 ? `~${estShare.toFixed(4)} SOL` : publicKey ? '—' : 'Connect wallet'}
+              </div>
             </div>
             <div className="rounded-2xl bg-white border border-gray-100 p-5">
               <div className="text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-2">Total Distributed</div>
@@ -266,14 +274,9 @@ export default function PoolsPage() {
                 <div className="text-gray-900 font-extrabold text-2xl tabular-nums">{smeltBalanceUi.toLocaleString()}<span className="text-base font-medium ml-1">SMELT</span></div>
               </div>
               <div className="rounded-2xl bg-white border border-gray-100 p-5">
-                <div className="text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-2">Staked</div>
-                <div className="flex items-center gap-2">
-                  <span className="text-gray-900 font-extrabold text-2xl tabular-nums">{smeltStakedUi.toLocaleString()}<span className="text-base font-medium ml-1">SMELT</span></span>
-                  {smeltStakedUi > 0 && (
-                    <span className="text-xs px-2.5 py-1 rounded-full bg-green-100 text-green-700 font-bold">
-                      1.5×
-                    </span>
-                  )}
+                <div className="text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-2">Pool Share</div>
+                <div className="text-gray-900 font-extrabold text-2xl tabular-nums">
+                  {sharePct > 0 ? `${sharePct.toFixed(3)}%` : '—'}
                 </div>
               </div>
             </div>

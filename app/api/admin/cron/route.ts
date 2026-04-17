@@ -21,6 +21,7 @@ import { VAULT_PUBKEY } from '../../../../lib/constants';
 import { MAINNET_RPC } from '../../../../lib/solana';
 import { DATA_DIR } from '../../../../lib/paths';
 import { loadPool, getEpochEligibleStakes, savePool } from '../../../../lib/staking-pool';
+import { getLeaderboard, resetWeeklyLeaderboard } from '../../../../lib/leaderboard';
 
 export const dynamic = 'force-dynamic';
 
@@ -103,6 +104,20 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const vaultKeypair = loadVaultKeypair();
 
     log.push(`[${ts()}] Cron started. Vault: ${VAULT_PUBKEY.toBase58()}`);
+
+    // ── Phase 0: Weekly leaderboard reset ────────────────────────────────────
+
+    const leaderboard = getLeaderboard();
+    const weekMs = 7 * 24 * 60 * 60 * 1000;
+    const lastReset = new Date(leaderboard.weekly.since).getTime();
+    if (Date.now() - lastReset >= weekMs) {
+      resetWeeklyLeaderboard();
+      log.push(`[${ts()}] Weekly leaderboard reset.`);
+    } else {
+      const msUntilReset = weekMs - (Date.now() - lastReset);
+      const hoursLeft = Math.ceil(msUntilReset / 3_600_000);
+      log.push(`[${ts()}] Weekly leaderboard: ${hoursLeft}h until next reset.`);
+    }
 
     // ── Phase 1: Liquidate ALL vault tokens ──────────────────────────────────
 

@@ -62,7 +62,7 @@ export default function AdminPage() {
   const refresh = useCallback(async (silent = false) => {
     if (!silent) setRefreshing(true);
     try {
-      const res = await fetch(`/api/admin/stats?secret=${encodeURIComponent(token)}`, { cache: 'no-store' });
+      const res = await fetch('/api/admin/stats', { cache: 'no-store', headers: { 'x-admin-secret': token } });
       if (res.status === 401) { setAuthorized(false); return; }
       if (!res.ok) return;
       setData(await res.json() as AdminStats);
@@ -92,8 +92,8 @@ export default function AdminPage() {
     try {
       const res = await fetch('/api/admin/run', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, secret: token }),
+        headers: { 'Content-Type': 'application/json', 'x-admin-secret': token },
+        body: JSON.stringify({ action }),
       });
       const json = await res.json() as { success: boolean; output: string; error: string | null };
       setActionOutput(json.output || json.error || 'Done (no output).');

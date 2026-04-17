@@ -2,12 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { exec } from 'child_process';
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
-  const body = await req.json() as { action: string; secret: string };
-
-  if (!process.env.ADMIN_SECRET || body.secret !== process.env.ADMIN_SECRET) {
+  const secret = req.headers.get('x-admin-secret');
+  if (!process.env.ADMIN_SECRET || secret !== process.env.ADMIN_SECRET) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const body = await req.json() as { action: string };
   if (body.action !== 'liquidate' && body.action !== 'distribute') {
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
   }

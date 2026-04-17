@@ -4,13 +4,12 @@ import { NextResponse } from 'next/server';
 import * as fs from 'fs';
 import * as path from 'path';
 import { Connection, LAMPORTS_PER_SOL } from '@solana/web3.js';
-import { VAULT_PUBKEY } from '../../../lib/constants';
+import { VAULT_PUBKEY, DISTRIBUTION_EPOCH_MS } from '../../../lib/constants';
 import { MAINNET_RPC } from '../../../lib/solana';
 import { loadPool } from '../../../lib/staking-pool';
 import { DATA_DIR } from '../../../lib/paths';
 
 const DISTRIBUTIONS_PATH = path.join(DATA_DIR, 'distributions.json');
-const EPOCH_DURATION_MS = 48 * 60 * 60 * 1000;
 const VAULT_RESERVE_SOL = 0.01;
 
 interface DistributionEntry {
@@ -44,7 +43,7 @@ export async function GET(): Promise<NextResponse> {
 
     const distributableSol = Math.max(0, vaultSolBalance - VAULT_RESERVE_SOL);
     const epochStartMs = new Date(state.epochStart).getTime();
-    const nextDistributionAt = new Date(epochStartMs + EPOCH_DURATION_MS).toISOString();
+    const nextDistributionAt = new Date(epochStartMs + DISTRIBUTION_EPOCH_MS).toISOString();
 
     const last10 = [...distributions]
       .reverse()

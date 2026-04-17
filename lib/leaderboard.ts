@@ -67,6 +67,12 @@ export function getWalletStats(wallet: string): { weekly: LeaderboardEntry; allT
   };
 }
 
+export function resetWeeklyLeaderboard(): void {
+  const data = load();
+  data.weekly = { since: new Date().toISOString(), entries: {} };
+  save(data);
+}
+
 export function getWeeklyRank(wallet: string): number {
   const data = load();
   // Sort by accounts closed (primary ranking metric)

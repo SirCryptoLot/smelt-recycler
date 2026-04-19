@@ -36,10 +36,12 @@ function sleep(ms: number): Promise<void> {
 }
 
 // Simulate a transaction without requiring signatures.
-// Returns the last relevant log line if simulation fails, null if it passes (or if pre-sim itself errors).
+// Returns an error string if simulation fails, null if it passes.
 async function preSimulate(tx: Transaction): Promise<string | null> {
   try {
-    const messageBase64 = Buffer.from(tx.serializeMessage()).toString('base64');
+    // Must serialize the full transaction (with zeroed signature slots), not just the message.
+    // simulateTransaction rejects raw message bytes.
+    const txBase64 = tx.serialize({ requireAllSignatures: false, verifySignatures: false }).toString('base64');
     const res = await fetch(MAINNET_RPC, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -47,24 +49,26 @@ async function preSimulate(tx: Transaction): Promise<string | null> {
         jsonrpc: '2.0',
         id: 1,
         method: 'simulateTransaction',
-        params: [messageBase64, { encoding: 'base64', sigVerify: false, commitment: 'confirmed' }],
+        params: [txBase64, { encoding: 'base64', sigVerify: false, commitment: 'confirmed' }],
       }),
     });
     if (!res.ok) return null;
     const json = await res.json() as {
+      error?: { message?: string };
       result?: { value?: { err?: unknown; logs?: string[] } };
     };
+    // RPC-level error (e.g. transaction too large)
+    if (json.error) return json.error.message ?? 'RPC error';
     const val = json.result?.value;
     if (!val?.err) return null;
     const logs = val.logs ?? [];
-    // Find the most informative log line — prefer Program log: / Error lines from the end
     const detail =
       [...logs].reverse().find((l) => l.includes('Error') || l.startsWith('Program log:')) ??
       logs.at(-1) ??
       JSON.stringify(val.err);
     return detail;
   } catch {
-    return null; // pre-sim failure is non-blocking — let wallet try
+    return null; // non-blocking — let wallet try
   }
 }
 

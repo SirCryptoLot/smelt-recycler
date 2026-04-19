@@ -15,6 +15,7 @@ export interface TrashAccount {
   pricePerToken: number;  // 0 if unlisted
   rawAmount: bigint;      // exact token amount for transferChecked
   decimals: number;       // mint decimals for transferChecked
+  tokenProgram: PublicKey; // TOKEN_PROGRAM_ID or TOKEN_2022_PROGRAM_ID
 }
 
 interface ParsedTokenInfo {
@@ -103,7 +104,10 @@ export async function getTrashAccounts(walletAddress: PublicKey): Promise<TrashA
     connection.getParsedTokenAccountsByOwner(walletAddress, { programId: TOKEN_PROGRAM_ID }),
     connection.getParsedTokenAccountsByOwner(walletAddress, { programId: TOKEN_2022_PROGRAM_ID }),
   ]);
-  const accounts = [...legacyAccounts, ...t22Accounts];
+  const accounts = [
+    ...legacyAccounts.map((a) => ({ ...a, tokenProgram: TOKEN_PROGRAM_ID })),
+    ...t22Accounts.map((a) => ({ ...a, tokenProgram: TOKEN_2022_PROGRAM_ID })),
+  ];
 
   const smeltStr = SMELT_MINT.toBase58();
 
@@ -137,6 +141,7 @@ export async function getTrashAccounts(walletAddress: PublicKey): Promise<TrashA
         pricePerToken,
         rawAmount: BigInt(info.tokenAmount.amount ?? '0'),
         decimals: info.tokenAmount.decimals,
+        tokenProgram: a.tokenProgram,
       };
     })
     // Include empty accounts (usdValue=0) and dust accounts (usdValue<$0.10)

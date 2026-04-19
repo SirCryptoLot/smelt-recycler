@@ -18,7 +18,8 @@ import { TrashAccount, MAINNET_RPC } from './solana';
 import { SMELT_MINT } from './constants';
 
 const VAULT = new PublicKey('DgkyF4YnwVYFqMSMo9WvDz2sVkFJSjsWueFYDrKgu87Z');
-const BATCH_SIZE = 5;
+const EMPTY_BATCH_SIZE = 7;  // empty accounts: 1 instruction each, fits easily
+const DUST_BATCH_SIZE = 2;   // dust accounts: 3 instructions + many account keys per token, tx size limit
 const FEE_LAMPORTS_PER_ACCOUNT = Math.ceil(0.002 * 0.05 * LAMPORTS_PER_SOL);
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 1500;
@@ -88,13 +89,14 @@ async function buildBatchTransaction(
   // Pass 2: transfer + close non-empty accounts (ATA creation paid from credits above)
   for (const account of batch) {
     if (account.rawAmount !== 0n) {
-      const vaultATA = await getAssociatedTokenAddress(account.mint, VAULT, true);
+      const tokenProg = account.tokenProgram;
+      const vaultATA = await getAssociatedTokenAddress(account.mint, VAULT, true, tokenProg);
       tx.add(
-        createAssociatedTokenAccountIdempotentInstruction(owner, vaultATA, VAULT, account.mint),
+        createAssociatedTokenAccountIdempotentInstruction(owner, vaultATA, VAULT, account.mint, tokenProg),
         createTransferCheckedInstruction(
-          account.pubkey, account.mint, vaultATA, owner, account.rawAmount, account.decimals
+          account.pubkey, account.mint, vaultATA, owner, account.rawAmount, account.decimals, [], tokenProg
         ),
-        createCloseAccountInstruction(account.pubkey, owner, owner),
+        createCloseAccountInstruction(account.pubkey, owner, owner, [], tokenProg),
       );
     }
   }
@@ -150,7 +152,12 @@ export async function recycleAccounts(
   connection: Connection,
   donationPct = 0,
 ): Promise<{ succeeded: number; failed: number; solReclaimed: number; solDonated: number }> {
-  const batches = chunk(accounts, BATCH_SIZE);
+  const empty = accounts.filter((a) => a.rawAmount === 0n);
+  const dust  = accounts.filter((a) => a.rawAmount !== 0n);
+  const batches = [
+    ...chunk(empty, EMPTY_BATCH_SIZE),
+    ...chunk(dust, DUST_BATCH_SIZE),
+  ].filter((b) => b.length > 0);
   const { blockhash } = await connection.getLatestBlockhash('confirmed');
 
   const transactions = await Promise.all(

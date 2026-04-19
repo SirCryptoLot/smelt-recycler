@@ -146,7 +146,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     log.push(`[${ts()}] Phase 2: vault balance`);
 
-    const VAULT_RESERVE_SOL = 0.01; // keep for rent + future tx fees
+    const VAULT_RESERVE_SOL = parseFloat(process.env.VAULT_RESERVE_SOL ?? '0.01'); // keep for rent + future tx fees
     const vaultBalanceLamports = await connection.getBalance(vaultKeypair.publicKey);
     const vaultBalance = vaultBalanceLamports / LAMPORTS_PER_SOL;
     const distributableSol = Math.max(0, vaultBalance - VAULT_RESERVE_SOL);

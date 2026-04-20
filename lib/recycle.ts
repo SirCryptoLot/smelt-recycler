@@ -62,10 +62,9 @@ async function preSimulate(tx: Transaction): Promise<string | null> {
     const val = json.result?.value;
     if (!val?.err) return null;
     const logs = val.logs ?? [];
-    const detail =
-      [...logs].reverse().find((l) => l.includes('Error') || l.startsWith('Program log:')) ??
-      logs.at(-1) ??
-      JSON.stringify(val.err);
+    const detail = logs.length > 0
+      ? logs.join('\n')
+      : JSON.stringify(val.err);
     return detail;
   } catch {
     return null; // non-blocking — let wallet try
@@ -86,7 +85,7 @@ async function buildBatchTransaction(
   // Pass 1: close empty accounts first so SOL is credited before ATA creation fees
   for (const account of batch) {
     if (account.rawAmount === 0n) {
-      tx.add(createCloseAccountInstruction(account.pubkey, owner, owner));
+      tx.add(createCloseAccountInstruction(account.pubkey, owner, owner, [], account.tokenProgram));
     }
   }
 

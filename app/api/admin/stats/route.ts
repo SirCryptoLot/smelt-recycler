@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import * as fs from 'fs';
 import * as path from 'path';
 import { Connection } from '@solana/web3.js';
-import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID } from '@solana/spl-token';
 import {
   VAULT_PUBKEY,
   SMELT_MINT,
@@ -77,10 +77,11 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   let vaultTokens: Array<{ mint: string; uiAmount: number; usdValue: number; pctOfThreshold: number }> = [];
   let vaultTotalUsd = 0;
   try {
-    const accounts = await connection.getParsedTokenAccountsByOwner(VAULT_PUBKEY, {
-      programId: TOKEN_PROGRAM_ID,
-    });
-    const tokens = accounts.value
+    const [legacy, t22] = await Promise.all([
+      connection.getParsedTokenAccountsByOwner(VAULT_PUBKEY, { programId: TOKEN_PROGRAM_ID }),
+      connection.getParsedTokenAccountsByOwner(VAULT_PUBKEY, { programId: TOKEN_2022_PROGRAM_ID }),
+    ]);
+    const tokens = [...legacy.value, ...t22.value]
       .map((a) => {
         const info = a.account.data.parsed.info as {
           mint: string; tokenAmount: { uiAmount: number | null };

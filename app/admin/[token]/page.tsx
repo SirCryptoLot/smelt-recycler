@@ -237,9 +237,9 @@ export default function AdminPage() {
               <div className="rounded-2xl bg-white/5 border border-white/10 p-5">
                 <div className="text-sm font-semibold text-zinc-200 mb-1">⚡ Liquidate</div>
                 <div className="text-xs text-zinc-500 mb-3">
-                  Swap vault tokens → SOL when any token exceeds $1 USD value.
-                  {d.vault.tokens.some((t) => t.usdValue >= 1) && (
-                    <span className="text-emerald-400 font-semibold"> A token is ready!</span>
+                  Swap all vault tokens with non-zero balance to SOL via Jupiter.
+                  {d.vault.tokens.some((t) => t.uiAmount > 0) && (
+                    <span className="text-emerald-400 font-semibold"> {d.vault.tokens.filter(t => t.uiAmount > 0).length} token(s) ready.</span>
                   )}
                 </div>
                 <button
@@ -284,7 +284,7 @@ export default function AdminPage() {
                       <th className="text-left px-4 py-3">Token</th>
                       <th className="text-right px-4 py-3">Balance</th>
                       <th className="text-right px-4 py-3">USD Value</th>
-                      <th className="px-4 py-3 w-44">Progress to $1</th>
+                      <th className="px-4 py-3 w-20">Status</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -298,16 +298,11 @@ export default function AdminPage() {
                             <span className="ml-2 text-xs px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400">READY</span>
                           )}
                         </td>
-                        <td className="px-4 py-3">
-                          <div className="h-2 rounded-full bg-white/10 overflow-hidden">
-                            <div
-                              className="h-full rounded-full bg-emerald-500 transition-all"
-                              style={{ width: `${t.pctOfThreshold}%` }}
-                            />
-                          </div>
-                          <span className="text-xs text-zinc-500 mt-1 block text-right">
-                            {t.pctOfThreshold.toFixed(0)}%
-                          </span>
+                        <td className="px-4 py-3 text-center">
+                          {t.uiAmount > 0
+                            ? <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-semibold">READY</span>
+                            : <span className="text-zinc-600">—</span>
+                          }
                         </td>
                       </tr>
                     ))}
@@ -327,8 +322,8 @@ export default function AdminPage() {
               <div className="rounded-2xl bg-white/5 border border-white/10 p-5 space-y-3">
                 <div className="text-sm font-semibold text-zinc-200">⚡ Liquidation</div>
                 <div className="text-xs text-zinc-400 leading-relaxed">
-                  Scans the Vault for tokens with USD value over $10. For each one, swaps the full
-                  balance to SOL via Jupiter and logs the result to <code className="text-zinc-300">data/liquidations.json</code>.
+                  Swaps all non-zero vault token balances to SOL via Jupiter (no minimum threshold).
+                  Results saved to <code className="text-zinc-300">data/liquidations.json</code>.
                 </div>
                 <button
                   onClick={() => runAction('liquidate')}

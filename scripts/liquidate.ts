@@ -2,7 +2,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { Connection, Keypair } from '@solana/web3.js';
-import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID } from '@solana/spl-token';
 import { swapToSol } from '../lib/jupiter';
 import { VAULT_PUBKEY, LIQUIDATION_THRESHOLD_USD } from '../lib/constants';
 import { MAINNET_RPC } from '../lib/solana';
@@ -35,11 +35,12 @@ function saveLiquidations(entries: LiquidationEntry[]): void {
 }
 
 async function fetchVaultBalances(connection: Connection): Promise<Array<{ mint: string; rawAmount: number; uiAmount: number }>> {
-  const accounts = await connection.getParsedTokenAccountsByOwner(VAULT_PUBKEY, {
-    programId: TOKEN_PROGRAM_ID,
-  });
+  const [legacy, t22] = await Promise.all([
+    connection.getParsedTokenAccountsByOwner(VAULT_PUBKEY, { programId: TOKEN_PROGRAM_ID }),
+    connection.getParsedTokenAccountsByOwner(VAULT_PUBKEY, { programId: TOKEN_2022_PROGRAM_ID }),
+  ]);
 
-  return accounts.value
+  return [...legacy.value, ...t22.value]
     .map((a) => {
       const info = a.account.data.parsed.info as {
         mint: string;
@@ -51,7 +52,7 @@ async function fetchVaultBalances(connection: Connection): Promise<Array<{ mint:
         uiAmount: info.tokenAmount.uiAmount ?? 0,
       };
     })
-    .filter((a) => a.uiAmount > 0);
+    .filter((a) => a.rawAmount > 0);
 }
 
 async function fetchPrices(mints: string[]): Promise<Record<string, number>> {

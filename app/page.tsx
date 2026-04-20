@@ -167,21 +167,25 @@ export default function Home() {
 
       {/* Stats strip */}
       {status === 'results' && (
-        <div className="grid grid-cols-3 border-b border-gray-100 flex-shrink-0">
-          <div className="px-2.5 sm:px-5 py-3 border-r border-gray-100">
-            <div className="text-[8px] sm:text-[9px] font-bold tracking-widest text-gray-400 uppercase mb-1">SOL</div>
-            <div className="text-gray-900 font-extrabold text-lg sm:text-2xl tracking-tight tabular-nums leading-none">{sol.toFixed(4)}</div>
-            <div className="text-gray-400 text-[10px] mt-1">{selected.length}/{accounts.length}</div>
+        <div className="flex items-stretch border-b border-gray-100 flex-shrink-0 bg-white">
+          <div className="flex-1 px-3 sm:px-5 py-2.5">
+            <div className="text-[9px] font-bold tracking-widest text-gray-400 uppercase mb-0.5">Reclaim</div>
+            <div className="text-gray-900 font-extrabold text-base sm:text-xl tracking-tight tabular-nums leading-none">{sol.toFixed(4)} <span className="text-xs font-semibold text-gray-400">SOL</span></div>
+            <div className="text-gray-400 text-[10px] mt-0.5">{selected.length} of {accounts.length} selected</div>
           </div>
-          <div className="px-2.5 sm:px-5 py-3 border-r border-gray-100">
-            <div className="text-[8px] sm:text-[9px] font-bold tracking-widest text-gray-400 uppercase mb-1">SMELT</div>
-            <div className="text-green-600 font-extrabold text-lg sm:text-2xl leading-none tabular-nums">+{smeltReward.toLocaleString()}</div>
-            {totalUsd > 0 && <div className="text-gray-400 text-[10px] mt-1">${totalUsd.toFixed(2)}</div>}
+          <div className="w-px bg-gray-100 my-2" />
+          <div className="flex-1 px-3 sm:px-5 py-2.5">
+            <div className="text-[9px] font-bold tracking-widest text-gray-400 uppercase mb-0.5">Earn</div>
+            <div className="text-green-600 font-extrabold text-base sm:text-xl leading-none tabular-nums">+{smeltReward.toLocaleString()} <span className="text-xs font-semibold text-green-400">SMELT</span></div>
+            {totalUsd > 0
+              ? <div className="text-gray-400 text-[10px] mt-0.5">${totalUsd.toFixed(2)} dust value</div>
+              : <div className="text-gray-400 text-[10px] mt-0.5">reward tokens</div>}
           </div>
-          <div className="px-2.5 sm:px-5 py-3">
-            <div className="text-[8px] sm:text-[9px] font-bold tracking-widest text-gray-400 uppercase mb-1">Freed</div>
-            <div className="text-gray-900 font-extrabold text-lg sm:text-2xl leading-none tabular-nums">{fmtBytes(selected.length * BYTES_PER_ACCOUNT)}</div>
-            <div className="text-gray-400 text-[10px] mt-1">{selected.length} × 165B</div>
+          <div className="w-px bg-gray-100 my-2" />
+          <div className="flex-1 px-3 sm:px-5 py-2.5">
+            <div className="text-[9px] font-bold tracking-widest text-gray-400 uppercase mb-0.5">Free</div>
+            <div className="text-gray-900 font-extrabold text-base sm:text-xl leading-none tabular-nums">{fmtBytes(selected.length * BYTES_PER_ACCOUNT)}</div>
+            <div className="text-gray-400 text-[10px] mt-0.5">on-chain state</div>
           </div>
         </div>
       )}
@@ -308,7 +312,7 @@ export default function Home() {
           {error && (
             <div className="mx-6 mt-4 flex-shrink-0 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-600 text-sm">{error}</div>
           )}
-          <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 space-y-2">
+          <div className="flex-1 overflow-y-auto px-3 sm:px-5 py-2.5 space-y-1.5">
             {accounts.map((account) => {
               const key = account.pubkey.toBase58();
               const mintStr = account.mint.toBase58();
@@ -322,27 +326,27 @@ export default function Home() {
                 <div
                   key={key}
                   onClick={() => toggleSelect(key)}
-                  className={`flex items-center gap-3 rounded-2xl border px-4 py-4 cursor-pointer select-none transition-all ${
+                  className={`flex items-center gap-2.5 rounded-xl border px-3 py-2.5 cursor-pointer select-none transition-all ${
                     isSelected
-                      ? 'border-green-200 bg-white shadow-sm shadow-green-100/50'
+                      ? 'border-green-200 bg-white shadow-sm shadow-green-100/40'
                       : 'border-gray-100 bg-white/50 opacity-40 hover:opacity-60'
                   }`}
                 >
-                  <div className={`w-10 h-10 rounded-xl ${color} flex items-center justify-center text-white font-bold text-sm flex-shrink-0`}>{initials}</div>
+                  <div className={`w-8 h-8 rounded-lg ${color} flex items-center justify-center text-white font-bold text-xs flex-shrink-0`}>{initials}</div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5 min-w-0">
-                      <span className="text-gray-900 font-semibold truncate">{name}</span>
-                      {meta?.symbol && <span className="text-gray-400 text-xs flex-shrink-0 font-mono">{meta.symbol}</span>}
+                    <div className="flex items-baseline gap-1.5 min-w-0">
+                      <span className="text-gray-900 font-semibold text-sm truncate leading-tight">{name}</span>
+                      {meta?.symbol && <span className="text-gray-400 text-[11px] flex-shrink-0 font-mono">{meta.symbol}</span>}
                     </div>
-                    <div className="text-gray-300 text-xs font-mono mt-0.5">{shortAddr(mintStr)}</div>
+                    <div className="text-gray-300 text-[10px] font-mono leading-tight">{shortAddr(mintStr)}</div>
                   </div>
-                  <div className="text-right flex-shrink-0 mr-1">
+                  <div className="text-right flex-shrink-0">
                     {account.balance === 0 ? (
-                      <div className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-1 text-[11px] font-bold text-green-700 tracking-wide">EMPTY</div>
+                      <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold text-green-700 tracking-wide">EMPTY</span>
                     ) : (
                       <>
-                        <div className="text-gray-800 font-bold tabular-nums">{account.usdValue > 0.0001 ? `$${account.usdValue.toFixed(4)}` : '<$0.01'}</div>
-                        <div className="text-gray-400 text-xs mt-0.5 tabular-nums">{account.balance.toLocaleString()} tkn</div>
+                        <div className="text-gray-800 font-bold text-sm tabular-nums">{account.usdValue > 0.0001 ? `$${account.usdValue.toFixed(4)}` : '<$0.01'}</div>
+                        <div className="text-gray-400 text-[10px] tabular-nums">{account.balance.toLocaleString()} tkn</div>
                       </>
                     )}
                   </div>
@@ -418,20 +422,31 @@ export default function Home() {
 
       {/* Success */}
       {status === 'success' && recycleResult && (
-        <div className="flex-1 flex flex-col items-center justify-center gap-6 px-6">
+        <div className="flex-1 flex flex-col items-center justify-center gap-5 px-6">
           <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center text-4xl">♻</div>
           <div className="text-center">
             <div className="text-gray-900 font-extrabold text-4xl tracking-tight tabular-nums">{recycleResult.solReclaimed.toFixed(4)}</div>
             <div className="text-gray-400 text-base mt-1">SOL reclaimed from {recycleResult.succeeded} account{recycleResult.succeeded !== 1 ? 's' : ''}</div>
             {recycleResult.failed > 0 && <div className="text-amber-500 text-sm mt-2">{recycleResult.failed} account{recycleResult.failed !== 1 ? 's' : ''} failed</div>}
             {(recycleResult.solDonated ?? 0) > 0 && (
-              <div className="inline-flex items-center gap-1.5 bg-green-50 border border-green-100 rounded-full px-4 py-1.5 mt-3">
+              <div className="inline-flex items-center gap-1.5 bg-green-50 border border-green-100 rounded-full px-4 py-1.5 mt-2">
                 <span className="text-green-600 text-sm font-semibold">{recycleResult.solDonated.toFixed(4)} SOL donated to ecosystem</span>
               </div>
             )}
           </div>
           {error && <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-3 text-red-600 text-sm max-w-xs text-center">{error}</div>}
-          <button onClick={scan} className="w-full max-w-xs bg-white border border-gray-200 text-gray-700 font-semibold text-base rounded-full py-3.5 hover:border-gray-300 hover:bg-gray-50 transition-all">Scan again</button>
+          <div className="w-full max-w-xs flex flex-col gap-2.5">
+            <a
+              href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`Just recycled ${recycleResult.succeeded} dust account${recycleResult.succeeded !== 1 ? 's' : ''} on Solana and reclaimed ${recycleResult.solReclaimed.toFixed(4)} SOL ♻️\n\nClean your wallet → earn SMELT rewards\nhttps://smelt-recycler-production.up.railway.app`)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full flex items-center justify-center gap-2 bg-black hover:bg-gray-900 active:scale-[0.98] text-white font-semibold text-sm rounded-full py-3.5 transition-all"
+            >
+              <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current flex-shrink-0" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.748l7.73-8.835L1.254 2.25H8.08l4.26 5.632 5.904-5.632zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+              Share on X
+            </a>
+            <button onClick={scan} className="w-full bg-white border border-gray-200 text-gray-700 font-semibold text-sm rounded-full py-3.5 hover:border-gray-300 hover:bg-gray-50 transition-all">Scan again</button>
+          </div>
         </div>
       )}
 

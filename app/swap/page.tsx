@@ -1,53 +1,68 @@
 // app/swap/page.tsx
 'use client';
 
-import Script from 'next/script';
 import { useEffect, useState } from 'react';
 import { getSmeltPrice } from '@/lib/jupiter-swap';
 import { SMELT_MINT } from '@/lib/constants';
 
-declare global {
-  interface Window {
-    Jupiter?: { init: (config: Record<string, unknown>) => void };
-  }
-}
-
 const MINT         = SMELT_MINT.toBase58();
-const SOL_MINT     = 'So11111111111111111111111111111111111111112';
 const RAYDIUM_POOL = '2maqTUbPGA8eUodVi8gcqAG3rUP1V2uqKa5a5PB87X32';
 
-const LINKS = [
-  { label: 'Swap on Raydium', sub: 'Direct pool',      href: `https://raydium.io/swap/?inputMint=sol&outputMint=${MINT}`,                    primary: true },
-  { label: 'Add Liquidity',   sub: 'Earn LP fees',     href: `https://raydium.io/liquidity/increase/?mode=add&pool_id=${RAYDIUM_POOL}` },
-  { label: 'DexScreener',    sub: 'Charts & volume',   href: `https://dexscreener.com/solana/${MINT}` },
-  { label: 'Birdeye',        sub: 'Analytics',         href: `https://birdeye.so/token/${MINT}?chain=solana` },
-  { label: 'Jupiter',        sub: 'Aggregator swap',   href: `https://jup.ag/swap/SOL-${MINT}` },
-  { label: 'Solscan',        sub: 'Token explorer',    href: `https://solscan.io/token/${MINT}` },
-];
+// ── Platform logo (favicon with letter fallback) ──────────────────────────────
 
-function initJupiter() {
-  if (typeof window === 'undefined' || !window.Jupiter) return;
-  window.Jupiter.init({
-    displayMode: 'integrated',
-    integratedTargetId: 'jupiter-terminal',
-    endpoint: 'https://api.mainnet-beta.solana.com',
-    strictTokenList: false,
-    defaultExplorer: 'Solscan',
-    formProps: {
-      initialInputMint: SOL_MINT,
-      initialOutputMint: MINT,
-      fixedOutputMint: true,
-    },
-  });
+function PlatformLogo({ src, letter, bg }: { src: string; letter: string; bg: string }) {
+  const [err, setErr] = useState(false);
+  return (
+    <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-sm flex-shrink-0 overflow-hidden ${bg}`}>
+      {!err ? (
+        <img src={src} alt={letter} className="w-full h-full object-cover" onError={() => setErr(true)} />
+      ) : (
+        <span>{letter}</span>
+      )}
+    </div>
+  );
 }
 
-function ExternalIcon() {
+function ExternalArrow() {
   return (
-    <svg className="w-3.5 h-3.5 flex-shrink-0 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <svg className="w-4 h-4 opacity-50 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
     </svg>
   );
 }
+
+// ── Swap venues ───────────────────────────────────────────────────────────────
+
+const VENUES = [
+  {
+    name: 'Jupiter',
+    sub: 'Best-price aggregator',
+    logo: 'https://jup.ag/favicon.ico',
+    letter: 'J',
+    bg: 'bg-[#6c48c5]',
+    href: `https://jup.ag/swap/SOL-${MINT}`,
+    primary: true,
+    tag: 'Recommended',
+  },
+  {
+    name: 'Raydium',
+    sub: 'Direct CPMM pool',
+    logo: 'https://raydium.io/favicon.ico',
+    letter: 'R',
+    bg: 'bg-[#3d5afe]',
+    href: `https://raydium.io/swap/?inputMint=sol&outputMint=${MINT}`,
+    primary: false,
+  },
+];
+
+const ANALYTICS = [
+  { name: 'DexScreener',  sub: 'Charts & trades',   logo: 'https://dexscreener.com/favicon.ico',  letter: 'D', bg: 'bg-gray-900', href: `https://dexscreener.com/solana/${MINT}` },
+  { name: 'Birdeye',      sub: 'Token analytics',    logo: 'https://birdeye.so/favicon.ico',        letter: 'B', bg: 'bg-[#1e60c8]', href: `https://birdeye.so/token/${MINT}?chain=solana` },
+  { name: 'Solscan',      sub: 'Token explorer',     logo: 'https://solscan.io/favicon.ico',        letter: 'S', bg: 'bg-[#1a6fef]', href: `https://solscan.io/token/${MINT}` },
+  { name: 'Add Liquidity', sub: 'Earn LP fees',       logo: 'https://raydium.io/favicon.ico',       letter: 'LP', bg: 'bg-[#3d5afe]', href: `https://raydium.io/liquidity/increase/?mode=add&pool_id=${RAYDIUM_POOL}` },
+];
+
+// ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function SwapPage() {
   const [smeltPrice, setSmeltPrice] = useState<number | null>(null);
@@ -55,8 +70,6 @@ export default function SwapPage() {
 
   useEffect(() => {
     getSmeltPrice().then(setSmeltPrice).catch(() => {});
-
-    // Token supply via Solana JSON-RPC (no extra deps)
     fetch('https://api.mainnet-beta.solana.com', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -65,9 +78,6 @@ export default function SwapPage() {
       .then(r => r.json() as Promise<{ result?: { value?: { uiAmount?: number } } }>)
       .then(d => { if (d?.result?.value?.uiAmount) setSupply(d.result.value.uiAmount); })
       .catch(() => {});
-
-    // Handle return navigation — script already loaded, onLoad won't re-fire
-    if (window.Jupiter) initJupiter();
   }, []);
 
   const marketCap = smeltPrice != null && supply != null ? smeltPrice * supply : null;
@@ -84,68 +94,110 @@ export default function SwapPage() {
 
         {/* Market data strip */}
         <div className="rounded-2xl border border-gray-100 bg-white shadow-sm px-5 py-4 flex items-center gap-5 flex-wrap">
-          <div>
-            <div className="text-[10px] text-gray-400 uppercase tracking-widest mb-0.5">Price</div>
-            <div className="text-gray-900 font-bold tabular-nums text-sm">
-              {smeltPrice != null ? `$${smeltPrice.toFixed(8)}` : '—'}
+          {[
+            { label: 'Price',       value: smeltPrice != null ? `$${smeltPrice.toFixed(8)}` : '—' },
+            { label: 'Circulating', value: supply != null ? supply.toLocaleString(undefined, { maximumFractionDigits: 0 }) + ' SMELT' : '—' },
+            { label: 'Mkt Cap',     value: marketCap != null ? `$${marketCap.toLocaleString(undefined, { maximumFractionDigits: 0 })}` : '—' },
+          ].map(({ label, value }, i) => (
+            <div key={label} className="flex items-center gap-4">
+              {i > 0 && <div className="w-px h-7 bg-gray-100 hidden sm:block" />}
+              <div>
+                <div className="text-[10px] text-gray-400 uppercase tracking-widest mb-0.5">{label}</div>
+                <div className="text-gray-900 font-bold tabular-nums text-sm">{value}</div>
+              </div>
             </div>
-          </div>
-          <div className="w-px h-8 bg-gray-100 hidden sm:block" />
-          <div>
-            <div className="text-[10px] text-gray-400 uppercase tracking-widest mb-0.5">Circulating</div>
-            <div className="text-gray-900 font-bold tabular-nums text-sm">
-              {supply != null ? supply.toLocaleString(undefined, { maximumFractionDigits: 0 }) : '—'}
-            </div>
-          </div>
-          <div className="w-px h-8 bg-gray-100 hidden sm:block" />
-          <div>
-            <div className="text-[10px] text-gray-400 uppercase tracking-widest mb-0.5">Mkt Cap</div>
-            <div className="text-gray-900 font-bold tabular-nums text-sm">
-              {marketCap != null ? `$${marketCap.toLocaleString(undefined, { maximumFractionDigits: 2 })}` : '—'}
-            </div>
-          </div>
+          ))}
           <div className="ml-auto">
-            <a
-              href={`https://solscan.io/token/${MINT}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-mono text-xs text-gray-400 hover:text-green-600 transition-colors"
-            >
+            <a href={`https://solscan.io/token/${MINT}`} target="_blank" rel="noopener noreferrer"
+              className="font-mono text-xs text-gray-300 hover:text-green-600 transition-colors">
               {MINT.slice(0, 8)}…
             </a>
           </div>
         </div>
 
-        {/* Jupiter Terminal */}
-        <div className="rounded-2xl overflow-hidden border border-gray-100 shadow-sm bg-white">
-          <div id="jupiter-terminal" style={{ minHeight: 450 }} />
-        </div>
-        <Script
-          src="https://terminal.jup.ag/main-v3.js"
-          strategy="afterInteractive"
-          onLoad={initJupiter}
-        />
-
-        {/* External links */}
-        <div className="grid grid-cols-2 gap-3">
-          {LINKS.map(({ label, sub, href, primary }) => (
+        {/* Swap venues */}
+        <div className="space-y-2.5">
+          <div className="text-[10px] font-bold tracking-widest text-gray-400 uppercase">Where to swap</div>
+          {VENUES.map(({ name, sub, logo, letter, bg, href, primary, tag }) => (
             <a
-              key={href}
+              key={name}
               href={href}
               target="_blank"
               rel="noopener noreferrer"
-              className={`flex items-center justify-between rounded-2xl px-4 py-4 transition-all active:scale-[0.98] group ${
+              className={`flex items-center gap-4 rounded-2xl px-4 py-4 transition-all active:scale-[0.99] group ${
                 primary
-                  ? 'bg-green-600 hover:bg-green-500 text-white shadow'
-                  : 'bg-white border border-gray-100 shadow-sm hover:border-green-200'
+                  ? 'bg-gray-950 hover:bg-gray-800 text-white shadow-lg'
+                  : 'bg-white border border-gray-100 shadow-sm hover:border-gray-200'
               }`}
             >
-              <div>
-                <div className={`font-semibold text-sm ${primary ? 'text-white' : 'text-gray-800'}`}>{label}</div>
-                <div className={`text-xs mt-0.5 ${primary ? 'text-green-200' : 'text-gray-400'}`}>{sub}</div>
+              <PlatformLogo src={logo} letter={letter} bg={bg} />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className={`font-bold text-sm ${primary ? 'text-white' : 'text-gray-900'}`}>{name}</span>
+                  {tag && (
+                    <span className="text-[10px] font-bold bg-green-500 text-white px-2 py-0.5 rounded-full tracking-wide">{tag}</span>
+                  )}
+                </div>
+                <div className={`text-xs mt-0.5 ${primary ? 'text-gray-400' : 'text-gray-400'}`}>{sub}</div>
               </div>
-              <ExternalIcon />
+              <div className={`flex items-center gap-1.5 font-semibold text-sm ${primary ? 'text-white' : 'text-gray-500 group-hover:text-gray-700'}`}>
+                SOL → SMELT
+                <ExternalArrow />
+              </div>
             </a>
+          ))}
+        </div>
+
+        {/* Analytics & tools grid */}
+        <div className="space-y-2.5">
+          <div className="text-[10px] font-bold tracking-widest text-gray-400 uppercase">Analytics & tools</div>
+          <div className="grid grid-cols-2 gap-2.5">
+            {ANALYTICS.map(({ name, sub, logo, letter, bg, href }) => (
+              <a
+                key={name}
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 rounded-xl border border-gray-100 bg-white shadow-sm hover:border-gray-200 px-3.5 py-3.5 transition-all active:scale-[0.98] group"
+              >
+                <PlatformLogo src={logo} letter={letter} bg={bg} />
+                <div className="flex-1 min-w-0">
+                  <div className="text-gray-900 font-semibold text-sm leading-tight">{name}</div>
+                  <div className="text-gray-400 text-[11px] mt-0.5">{sub}</div>
+                </div>
+                <ExternalArrow />
+              </a>
+            ))}
+          </div>
+        </div>
+
+        {/* Pool details */}
+        <div className="rounded-2xl border border-gray-100 bg-white px-5 py-4 space-y-0">
+          <div className="text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-3">Pool details</div>
+          <div className="flex items-center gap-3 mb-3">
+            <PlatformLogo src="https://raydium.io/favicon.ico" letter="R" bg="bg-[#3d5afe]" />
+            <div>
+              <div className="text-gray-900 font-bold text-sm">Raydium CPMM</div>
+              <div className="text-gray-400 text-xs">SOL / SMELT · Solana Mainnet</div>
+            </div>
+            <a
+              href={`https://raydium.io/liquidity/increase/?mode=add&pool_id=${RAYDIUM_POOL}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ml-auto text-xs text-green-600 font-semibold hover:text-green-700 transition-colors whitespace-nowrap"
+            >
+              + Add LP
+            </a>
+          </div>
+          {([
+            ['Pool ID',  `${RAYDIUM_POOL.slice(0, 8)}…${RAYDIUM_POOL.slice(-6)}`,   true],
+            ['Decimals', '9',                                                          false],
+            ['Fee tier', '0.25%',                                                     false],
+          ] as [string, string, boolean][]).map(([k, v, mono]) => (
+            <div key={k} className="flex justify-between text-sm py-1.5 border-t border-gray-100 first:border-0">
+              <span className="text-gray-500">{k}</span>
+              <span className={`font-semibold text-gray-800 ${mono ? 'font-mono text-xs' : ''}`}>{v}</span>
+            </div>
           ))}
         </div>
 
@@ -160,23 +212,6 @@ export default function SwapPage() {
           </div>
           <span className="text-green-600 group-hover:translate-x-0.5 transition-transform text-lg">→</span>
         </a>
-
-        {/* Pool details */}
-        <div className="rounded-2xl border border-gray-100 bg-white/60 px-5 py-4 space-y-2.5 text-sm">
-          <div className="text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-3">Pool details</div>
-          {([
-            ['DEX',      'Raydium CPMM',                                             false],
-            ['Pair',     'SOL / SMELT',                                              false],
-            ['Pool ID',  `${RAYDIUM_POOL.slice(0, 8)}…${RAYDIUM_POOL.slice(-6)}`,   true],
-            ['Decimals', '9',                                                         false],
-            ['Network',  'Solana Mainnet',                                           false],
-          ] as [string, string, boolean][]).map(([k, v, mono]) => (
-            <div key={k} className="flex justify-between text-gray-600">
-              <span>{k}</span>
-              <span className={`font-semibold text-gray-800 ${mono ? 'font-mono text-xs' : ''}`}>{v}</span>
-            </div>
-          ))}
-        </div>
 
       </div>
     </main>

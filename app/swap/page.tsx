@@ -40,7 +40,7 @@ export default function SwapPage() {
         formProps: {
           initialInputMint: SOL_MINT,
           initialOutputMint: SMELT_MINT.toBase58(),
-          fixedOutputMint: true,
+          initialSlippageBps: 300,  // 3% default — new small pool has high slippage
         },
       });
     };

@@ -95,15 +95,15 @@ async function main(): Promise<void> {
   for (const balance of balances) {
     const price = prices[balance.mint] ?? 0;
     const usdValue = balance.uiAmount * price;
-    const flag = usdValue > LIQUIDATION_THRESHOLD_USD ? '→ SWAP' : '  skip';
+    const flag = balance.rawAmount > 0 ? '→ SWAP' : '  skip';
     console.log(`  ${flag}  ${balance.mint.slice(0, 8)}...  $${usdValue.toFixed(2)}`);
-    if (usdValue > LIQUIDATION_THRESHOLD_USD) {
+    if (balance.rawAmount > 0) {
       toSwap.push({ mint: balance.mint, rawAmount: balance.rawAmount, usdValue });
     }
   }
 
   if (toSwap.length === 0) {
-    console.log('\nNo tokens exceed the $10 threshold. Nothing to liquidate.');
+    console.log('\nNo tokens with non-zero balance. Nothing to liquidate.');
     return;
   }
 

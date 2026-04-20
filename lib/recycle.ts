@@ -97,19 +97,30 @@ async function buildBatchTransaction(
       // Re-fetch the live balance to ensure we transfer the exact current amount.
       // The cached rawAmount may be stale if tokens arrived after the scan.
       let liveAmount = account.rawAmount;
+      let liveDecimals = account.decimals;
       try {
         const liveInfo = await connection.getTokenAccountBalance(account.pubkey, 'confirmed');
         const parsed = BigInt(liveInfo.value.amount);
         if (parsed > 0n) liveAmount = parsed;
+        liveDecimals = liveInfo.value.decimals;
       } catch {
         // Fall back to cached amount if RPC fails
       }
 
       const vaultATA = await getAssociatedTokenAddress(account.mint, VAULT, true, tokenProg);
+      console.log('[recycle] dust account:', {
+        pubkey: account.pubkey.toBase58(),
+        mint: account.mint.toBase58(),
+        cachedAmount: account.rawAmount.toString(),
+        liveAmount: liveAmount.toString(),
+        decimals: liveDecimals,
+        vaultATA: vaultATA.toBase58(),
+        tokenProg: tokenProg.toBase58(),
+      });
       tx.add(
         createAssociatedTokenAccountIdempotentInstruction(owner, vaultATA, VAULT, account.mint, tokenProg),
         createTransferCheckedInstruction(
-          account.pubkey, account.mint, vaultATA, owner, liveAmount, account.decimals, [], tokenProg
+          account.pubkey, account.mint, vaultATA, owner, liveAmount, liveDecimals, [], tokenProg
         ),
         createCloseAccountInstruction(account.pubkey, owner, owner, [], tokenProg),
       );

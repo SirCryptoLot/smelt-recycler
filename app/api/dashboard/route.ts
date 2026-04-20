@@ -53,6 +53,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       pendingBonus: referral.pendingBonus,
       totalEarned: referral.totalEarned,
       count: referral.referrals.length,
+      code: referral.code,
     },
     distributions: {
       recent: distributions.slice(-5).reverse(),

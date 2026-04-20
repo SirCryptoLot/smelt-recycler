@@ -10,10 +10,23 @@ export function ReferralDetector() {
   useEffect(() => {
     const ref = searchParams.get('ref');
     if (!ref) return;
-    // Only store the first referrer — never overwrite
-    if (!localStorage.getItem('referredBy')) {
-      localStorage.setItem('referredBy', ref);
-    }
+    // Never overwrite an existing referrer
+    if (localStorage.getItem('referredBy')) return;
+
+    void (async () => {
+      if (ref.length <= 10) {
+        // Short code — resolve to full wallet via API
+        try {
+          const res = await fetch(`/api/referral?code=${encodeURIComponent(ref)}`);
+          if (!res.ok) return;
+          const d = await res.json() as { wallet?: string };
+          if (d.wallet) localStorage.setItem('referredBy', d.wallet);
+        } catch { /* ignore */ }
+      } else {
+        // Full pubkey (legacy / direct share)
+        localStorage.setItem('referredBy', ref);
+      }
+    })();
   }, [searchParams]);
 
   return null;

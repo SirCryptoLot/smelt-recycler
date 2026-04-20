@@ -20,6 +20,7 @@ import { MAINNET_RPC } from '../../../../lib/solana';
 import { DATA_DIR } from '../../../../lib/paths';
 import { loadPool, getEpochEligibleStakes, savePool } from '../../../../lib/staking-pool';
 import { getLeaderboard, resetWeeklyLeaderboard } from '../../../../lib/leaderboard';
+import { getPendingBonuses, clearPendingBonuses } from '../../../../lib/referrals';
 
 export const dynamic = 'force-dynamic';
 
@@ -230,7 +231,43 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       }
     }
 
-    // ── Phase 5: Record distribution ──────────────────────────────────────────
+    // ── Phase 5: Referral SOL payouts ─────────────────────────────────────────
+    const REFERRAL_MIN_SOL = 0.0001;
+    const pendingBonuses = getPendingBonuses();
+    const referralRecipients = Object.entries(pendingBonuses)
+      .filter(([, amount]) => amount >= REFERRAL_MIN_SOL)
+      .map(([wallet, amount]) => ({ address: new PublicKey(wallet), lamports: Math.floor(amount * LAMPORTS_PER_SOL) }));
+
+    if (referralRecipients.length > 0) {
+      log.push(`[${ts()}] Phase 5: referral payouts (${referralRecipients.length} referrer(s))`);
+      const vaultAfterDist = await connection.getBalance(vaultKeypair.publicKey);
+      const availableForReferrals = Math.max(0, vaultAfterDist - Math.floor(VAULT_RESERVE_SOL * LAMPORTS_PER_SOL));
+      const totalReferralLamports = referralRecipients.reduce((s, r) => s + r.lamports, 0);
+
+      if (availableForReferrals >= totalReferralLamports) {
+        const paidWallets: string[] = [];
+        for (let i = 0; i < referralRecipients.length; i += TRANSFERS_PER_TX) {
+          const batch = referralRecipients.slice(i, i + TRANSFERS_PER_TX);
+          const tx = new Transaction();
+          for (const { address, lamports } of batch) {
+            tx.add(SystemProgram.transfer({ fromPubkey: vaultKeypair.publicKey, toPubkey: address, lamports }));
+          }
+          try {
+            const sig = await sendAndConfirmTransaction(connection, tx, [vaultKeypair], { commitment: 'confirmed' });
+            batch.forEach(r => paidWallets.push(r.address.toBase58()));
+            log.push(`  ✓ Referral batch tx: ${sig.slice(0, 16)}…`);
+          } catch (err) {
+            log.push(`  ✗ Referral batch failed: ${err instanceof Error ? err.message : String(err)}`);
+          }
+        }
+        if (paidWallets.length > 0) clearPendingBonuses(paidWallets);
+        log.push(`  Paid ${paidWallets.length}/${referralRecipients.length} referrer(s).`);
+      } else {
+        log.push(`  Insufficient vault balance for referral payouts — deferring (need ${(totalReferralLamports / LAMPORTS_PER_SOL).toFixed(6)} SOL, available ${(availableForReferrals / LAMPORTS_PER_SOL).toFixed(6)}).`);
+      }
+    }
+
+    // ── Phase 6: Record distribution ──────────────────────────────────────────
     if (failedBatches > 0) {
       log.push(`[${ts()}] WARNING: ${failedBatches} batch(es) failed — epoch NOT advanced. Retry to complete distribution.`);
       return NextResponse.json({

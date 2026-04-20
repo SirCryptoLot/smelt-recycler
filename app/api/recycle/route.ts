@@ -76,26 +76,40 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     recordEcosystem(accountsClosed, solReclaimed, smeltMinted);
     if (isNewWallet) incrementWalletCount();
 
+    let referrerSmeltBonus = 0;
     if (referredBy && referredBy !== wallet) {
       try {
         new PublicKey(referredBy);
-        recordReferral(referredBy, wallet, accountsClosed, solReclaimed);
+        referrerSmeltBonus = recordReferral(referredBy, wallet, accountsClosed, solReclaimed, smeltMinted);
       } catch { /* invalid pubkey */ }
     }
 
-    // ── Mint SMELT — best-effort, failure does not block the record ─────
+    // ── Mint SMELT to recycler — best-effort ────────────────────────────
+    let txSig: string | undefined;
+    let mintError: string | undefined;
     try {
-      const recipient = new PublicKey(wallet);
-      const txSig = await mintSmeltReward(recipient, accountsClosed);
-      return NextResponse.json({ success: true, txSignature: txSig, smeltMinted });
+      txSig = await mintSmeltReward(new PublicKey(wallet), accountsClosed);
     } catch (mintErr) {
       console.error('SMELT mint failed (activity already recorded):', mintErr);
-      return NextResponse.json({
-        success: true,
-        smeltMinted: 0,
-        mintError: mintErr instanceof Error ? mintErr.message : 'Mint failed',
-      });
+      mintError = mintErr instanceof Error ? mintErr.message : 'Mint failed';
     }
+
+    // ── Mint SMELT bonus to referrer — best-effort ──────────────────────
+    if (referrerSmeltBonus > 0 && referredBy) {
+      try {
+        const referrerAccounts = Math.ceil(referrerSmeltBonus / currentSmeltPerAccount());
+        await mintSmeltReward(new PublicKey(referredBy), referrerAccounts);
+      } catch (e) {
+        console.error('Referrer SMELT bonus mint failed:', e);
+      }
+    }
+
+    return NextResponse.json({
+      success: true,
+      txSignature: txSig,
+      smeltMinted: txSig ? smeltMinted : 0,
+      ...(mintError ? { mintError } : {}),
+    });
   } catch (err) {
     console.error('Recycle record failed:', err);
     return NextResponse.json(

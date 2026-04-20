@@ -16,10 +16,11 @@ interface DashboardData {
     allTimeSmeltEarned: number;
   };
   referral: {
-    referrals: { referee: string; accountsClosed: number; bonusEarned: number; date: string }[];
+    referrals: { referee: string; accountsClosed: number; bonusEarned: number; smeltBonus: number; date: string }[];
     pendingBonus: number;
     totalEarned: number;
     count: number;
+    code: string;
   };
   distributions: {
     recent: { date: string; totalSol: number; recipientCount: number }[];
@@ -56,8 +57,9 @@ export default function DashboardPage() {
   const unstakedUi = smeltUi - stakedUi;
   const weight = unstakedUi * 1 + stakedUi * 1.5;
 
-  const referralLink = typeof window !== 'undefined' && publicKey
-    ? `${window.location.origin}/?ref=${publicKey.toBase58()}`
+  const refCode = data?.referral.code ?? '';
+  const referralLink = typeof window !== 'undefined' && refCode
+    ? `${window.location.origin}/?ref=${refCode}`
     : '';
 
   const copyLink = async () => {
@@ -69,7 +71,11 @@ export default function DashboardPage() {
 
   const shareLink = () => {
     if (navigator.share && referralLink) {
-      navigator.share({ title: '♻ Recycler', text: 'Reclaim your SOL from dust accounts and earn SMELT!', url: referralLink });
+      navigator.share({
+        title: '♻ Recycler — Reclaim your SOL',
+        text: `I just cleaned my Solana wallet and reclaimed SOL from ${data?.activity.allTimeAccounts ?? 0} dust accounts. Use my code ${refCode} to get started — close dead token accounts and earn SMELT rewards!`,
+        url: referralLink,
+      });
     }
   };
 
@@ -151,10 +157,21 @@ export default function DashboardPage() {
         <section>
           <h2 className="text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-4">Referrals</h2>
           <div className="rounded-2xl bg-white border border-gray-100 p-5 space-y-4">
-            <div className="space-y-2">
-              <div className="text-xs text-gray-400">Your referral link</div>
-              <div className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-xs text-gray-500 font-mono break-all leading-relaxed">
-                {referralLink}
+            {/* Code + link */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="flex-1">
+                  <div className="text-xs text-gray-400 mb-1.5">Your code</div>
+                  <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-2xl font-extrabold font-mono tracking-widest text-gray-900 text-center">
+                    {refCode || '…'}
+                  </div>
+                </div>
+                <div className="flex-[2]">
+                  <div className="text-xs text-gray-400 mb-1.5">Your referral link</div>
+                  <div className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-3 text-xs text-gray-400 font-mono break-all leading-relaxed">
+                    {referralLink || '…'}
+                  </div>
+                </div>
               </div>
               <div className="flex gap-2">
                 <button
@@ -166,17 +183,20 @@ export default function DashboardPage() {
                 {typeof navigator !== 'undefined' && 'share' in navigator && (
                   <button
                     onClick={shareLink}
-                    className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:text-gray-800 hover:border-gray-300 transition-all"
+                    className="flex-1 py-2.5 rounded-xl bg-green-600 hover:bg-green-700 text-sm font-semibold text-white transition-all"
                   >
                     Share
                   </button>
                 )}
               </div>
+              <div className="text-xs text-gray-400 bg-green-50 rounded-xl px-3 py-2.5 leading-relaxed">
+                Friends who join via your code earn SMELT as usual — you get <span className="font-semibold text-green-700">1% of their SOL reclaim + 20% SMELT bonus</span> on their first session.
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <div className="text-xs text-gray-400 mb-1">Pending bonus</div>
+                <div className="text-xs text-gray-400 mb-1">Pending SOL bonus</div>
                 <div className="text-green-600 font-semibold">{(data?.referral.pendingBonus ?? 0).toFixed(6)} SOL</div>
               </div>
               <div>
@@ -195,7 +215,10 @@ export default function DashboardPage() {
                         <div className="text-gray-700 font-mono text-xs">{shortAddr(r.referee)}</div>
                         <div className="text-gray-400 text-[11px] mt-0.5">{r.accountsClosed} accounts · {formatDate(r.date)}</div>
                       </div>
-                      <span className="text-green-600 font-semibold text-sm flex-shrink-0">+{r.bonusEarned.toFixed(4)} SOL</span>
+                      <div className="text-right flex-shrink-0">
+                        <div className="text-green-600 font-semibold text-sm">+{r.bonusEarned.toFixed(4)} SOL</div>
+                        {r.smeltBonus > 0 && <div className="text-gray-400 text-[11px]">+{r.smeltBonus.toLocaleString()} SMELT</div>}
+                      </div>
                     </div>
                   ))}
                 </div>

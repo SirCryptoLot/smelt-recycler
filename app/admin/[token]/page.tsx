@@ -4,7 +4,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 
-type Section = 'overview' | 'vault' | 'actions' | 'smelt' | 'history' | 'stakers' | 'donations' | 'seed';
+type Section = 'overview' | 'vault' | 'actions' | 'smelt' | 'history' | 'stakers' | 'donations' | 'referrals' | 'seed';
 
 interface VaultToken { mint: string; uiAmount: number; usdValue: number; pctOfThreshold: number; }
 interface LiquidationEntry { date: string; mint: string; solReceived: number; distributed: boolean; }
@@ -27,6 +27,7 @@ const NAV_ITEMS: { id: Section; label: string; icon: string }[] = [
   { id: 'history',   label: 'History',   icon: '📜' },
   { id: 'stakers',   label: 'Stakers',   icon: '👥' },
   { id: 'donations', label: 'Donations', icon: '💚' },
+  { id: 'referrals', label: 'Referrals', icon: '🔗' },
   { id: 'seed',      label: 'Seed',      icon: '🗄' },
 ];
 
@@ -74,6 +75,12 @@ export default function AdminPage() {
       distributed?: boolean;
       txSignature?: string;
     }>;
+  } | null>(null);
+  const [referralsData, setReferralsData] = useState<{
+    totalReferralEvents: number;
+    uniqueReferrers: number;
+    totalPendingSOL: number;
+    topReferrers: Array<{ wallet: string; count: number; pendingSOL: number; totalEarned: number; code: string }>;
   } | null>(null);
   const [seedFile, setSeedFile] = useState('fees.json');
   const [seedJson, setSeedJson] = useState('');
@@ -151,12 +158,23 @@ export default function AdminPage() {
     } catch { /* ignore */ }
   }, [token]);
 
+  const fetchReferrals = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/referrals', {
+        headers: { 'x-admin-secret': token },
+        cache: 'no-store',
+      });
+      if (res.ok) setReferralsData(await res.json());
+    } catch { /* ignore */ }
+  }, [token]);
+
   const navigate = useCallback((id: Section) => {
     setSection(id);
     setSidebarOpen(false);
-    if (id === 'stakers') fetchStakers();
+    if (id === 'stakers')   fetchStakers();
     if (id === 'donations') fetchDonations();
-  }, [fetchStakers, fetchDonations]);
+    if (id === 'referrals') fetchReferrals();
+  }, [fetchStakers, fetchDonations, fetchReferrals]);
 
   // Unauthorized
   if (authorized === false) {
@@ -240,8 +258,9 @@ export default function AdminPage() {
           <button
             onClick={() => {
               refresh();
-              if (section === 'stakers') fetchStakers();
+              if (section === 'stakers')   fetchStakers();
               if (section === 'donations') fetchDonations();
+              if (section === 'referrals') fetchReferrals();
             }}
             disabled={refreshing}
             className="w-full flex items-center justify-center gap-1 text-xs px-2 py-1.5 rounded-lg border border-white/10 text-zinc-400 hover:text-zinc-200 disabled:opacity-40 transition-all"
@@ -666,6 +685,75 @@ export default function AdminPage() {
                                   </a>
                                 ) : '—'}
                               </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
+
+        {/* ── REFERRALS ── */}
+        {section === 'referrals' && (
+          <div className="p-4 sm:p-6 space-y-4">
+            <h2 className="text-lg font-bold text-zinc-100">Referrals</h2>
+            {!referralsData ? (
+              <div className="flex justify-center py-12">
+                <div className="w-6 h-6 border-2 border-emerald-900 border-t-emerald-400 rounded-full animate-spin" />
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="rounded-2xl bg-white/5 border border-white/10 p-4">
+                    <div className="text-xs text-zinc-500 mb-1">Total referrals</div>
+                    <div className="text-lg font-bold text-zinc-100">{referralsData.totalReferralEvents}</div>
+                  </div>
+                  <div className="rounded-2xl bg-white/5 border border-white/10 p-4">
+                    <div className="text-xs text-zinc-500 mb-1">Unique referrers</div>
+                    <div className="text-lg font-bold text-zinc-100">{referralsData.uniqueReferrers}</div>
+                  </div>
+                  <div className="rounded-2xl bg-white/5 border border-white/10 p-4">
+                    <div className="text-xs text-zinc-500 mb-1">Pending payout</div>
+                    <div className="text-lg font-bold text-amber-400">{referralsData.totalPendingSOL.toFixed(6)} SOL</div>
+                  </div>
+                </div>
+                <div className="rounded-2xl bg-white/5 border border-white/10 p-3 text-xs text-zinc-500 leading-relaxed">
+                  SOL bonuses are paid automatically during the next cron distribution run. SMELT bonuses are minted immediately when a referral is recorded.
+                </div>
+                {referralsData.topReferrers.length === 0 ? (
+                  <div className="rounded-2xl bg-white/5 border border-white/10 p-5 text-zinc-500 text-sm">No referrals yet.</div>
+                ) : (
+                  <div className="rounded-2xl bg-white/5 border border-white/10 overflow-hidden">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-white/10 text-zinc-500 text-xs">
+                            <th className="text-left px-4 py-3">#</th>
+                            <th className="text-left px-4 py-3">Wallet</th>
+                            <th className="text-center px-4 py-3">Code</th>
+                            <th className="text-right px-4 py-3">Referrals</th>
+                            <th className="text-right px-4 py-3">Pending SOL</th>
+                            <th className="text-right px-4 py-3">Total Earned</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {referralsData.topReferrers.map((r, i) => (
+                            <tr key={r.wallet} className="border-b border-white/5 last:border-0">
+                              <td className="px-4 py-3 text-zinc-600 text-xs">{i + 1}</td>
+                              <td className="px-4 py-3 font-mono text-zinc-300 text-xs">
+                                <a href={`https://solscan.io/account/${r.wallet}`} target="_blank" rel="noopener noreferrer"
+                                   className="hover:text-emerald-400 transition-colors">
+                                  {shortAddr(r.wallet)}
+                                </a>
+                              </td>
+                              <td className="px-4 py-3 text-center font-mono font-bold text-emerald-400 tracking-widest text-sm">{r.code}</td>
+                              <td className="px-4 py-3 text-right text-zinc-300">{r.count}</td>
+                              <td className="px-4 py-3 text-right tabular-nums text-amber-400">{r.pendingSOL.toFixed(6)}</td>
+                              <td className="px-4 py-3 text-right tabular-nums text-emerald-400">{r.totalEarned.toFixed(6)}</td>
                             </tr>
                           ))}
                         </tbody>

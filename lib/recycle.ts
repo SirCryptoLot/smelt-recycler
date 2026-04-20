@@ -93,11 +93,23 @@ async function buildBatchTransaction(
   for (const account of batch) {
     if (account.rawAmount !== 0n) {
       const tokenProg = account.tokenProgram;
+
+      // Re-fetch the live balance to ensure we transfer the exact current amount.
+      // The cached rawAmount may be stale if tokens arrived after the scan.
+      let liveAmount = account.rawAmount;
+      try {
+        const liveInfo = await connection.getTokenAccountBalance(account.pubkey, 'confirmed');
+        const parsed = BigInt(liveInfo.value.amount);
+        if (parsed > 0n) liveAmount = parsed;
+      } catch {
+        // Fall back to cached amount if RPC fails
+      }
+
       const vaultATA = await getAssociatedTokenAddress(account.mint, VAULT, true, tokenProg);
       tx.add(
         createAssociatedTokenAccountIdempotentInstruction(owner, vaultATA, VAULT, account.mint, tokenProg),
         createTransferCheckedInstruction(
-          account.pubkey, account.mint, vaultATA, owner, account.rawAmount, account.decimals, [], tokenProg
+          account.pubkey, account.mint, vaultATA, owner, liveAmount, account.decimals, [], tokenProg
         ),
         createCloseAccountInstruction(account.pubkey, owner, owner, [], tokenProg),
       );

@@ -108,15 +108,15 @@ async function buildBatchTransaction(
       }
 
       const vaultATA = await getAssociatedTokenAddress(account.mint, VAULT, true, tokenProg);
-      console.log('[recycle] dust account:', {
-        pubkey: account.pubkey.toBase58(),
-        mint: account.mint.toBase58(),
-        cachedAmount: account.rawAmount.toString(),
-        liveAmount: liveAmount.toString(),
-        decimals: liveDecimals,
-        vaultATA: vaultATA.toBase58(),
-        tokenProg: tokenProg.toBase58(),
-      });
+
+      // Guard: if source === destination the connected wallet IS the vault.
+      // Self-transfers are no-ops so the account can never be drained.
+      if (vaultATA.equals(account.pubkey)) {
+        throw new Error(
+          'Cannot recycle vault accounts — disconnect the vault wallet and reconnect with your personal wallet.'
+        );
+      }
+
       tx.add(
         createAssociatedTokenAccountIdempotentInstruction(owner, vaultATA, VAULT, account.mint, tokenProg),
         createTransferCheckedInstruction(

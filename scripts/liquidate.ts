@@ -4,7 +4,7 @@ import * as path from 'path';
 import { Connection, Keypair } from '@solana/web3.js';
 import { TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID } from '@solana/spl-token';
 import { swapToSol } from '../lib/jupiter';
-import { VAULT_PUBKEY, LIQUIDATION_THRESHOLD_USD } from '../lib/constants';
+import { VAULT_PUBKEY, SMELT_MINT } from '../lib/constants';
 import { MAINNET_RPC } from '../lib/solana';
 import { DATA_DIR } from '../lib/paths';
 
@@ -52,19 +52,19 @@ async function fetchVaultBalances(connection: Connection): Promise<Array<{ mint:
         uiAmount: info.tokenAmount.uiAmount ?? 0,
       };
     })
-    .filter((a) => a.rawAmount > 0);
+    .filter((a) => a.rawAmount > 0 && a.mint !== SMELT_MINT.toBase58());
 }
 
 async function fetchPrices(mints: string[]): Promise<Record<string, number>> {
   if (mints.length === 0) return {};
-  const url = `https://price.jup.ag/v6/price?ids=${mints.join(',')}`;
+  const url = `https://api.jup.ag/price/v2?ids=${mints.join(',')}`;
   try {
     const res = await fetch(url);
     if (!res.ok) return {};
-    const json = await res.json() as { data: Record<string, { price: number }> };
+    const json = await res.json() as { data: Record<string, { price: string }> };
     const result: Record<string, number> = {};
-    for (const [mint, data] of Object.entries(json.data)) {
-      result[mint] = data.price;
+    for (const [mint, data] of Object.entries(json.data ?? {})) {
+      result[mint] = parseFloat(data.price) || 0;
     }
     return result;
   } catch {
@@ -126,7 +126,11 @@ async function main(): Promise<void> {
       entries.push(entry);
       saveLiquidations(entries);
     } catch (err) {
-      console.error(`  ✗ Swap failed: ${err instanceof Error ? err.message : String(err)}`);
+      const msg = err instanceof Error ? err.message : String(err);
+      const cause = (err instanceof Error && (err as NodeJS.ErrnoException).cause)
+        ? ` (cause: ${String((err as NodeJS.ErrnoException).cause)})`
+        : '';
+      console.error(`  ✗ Swap failed: ${msg}${cause}`);
     }
   }
 

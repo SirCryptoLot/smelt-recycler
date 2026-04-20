@@ -136,6 +136,7 @@ export default function StakePage() {
   const [poolError, setPoolError] = useState('');
   const [now, setNow] = useState(Date.now());
   const [topStakers, setTopStakers] = useState<Array<{ wallet: string; stakedUi: number; sharePct: number }>>([]);
+  const [showAllDist, setShowAllDist] = useState(false);
 
   // Tick every second for countdown
   useEffect(() => {
@@ -465,25 +466,32 @@ export default function StakePage() {
             {poolData.distributions.length === 0 ? (
               <div className="text-sm text-gray-400 py-2">No distributions yet.</div>
             ) : (
-              poolData.distributions.map((d, i) => {
-                const estimated = (sharePct / 100) * d.totalSol;
-                return (
-                  <div key={i} className="flex justify-between items-center py-2.5 [&+&]:border-t border-gray-100">
-                    <div>
-                      <div className="text-sm font-semibold text-gray-900">{fmtDateShort(d.date)}</div>
-                      <div className="text-[11px] text-gray-400">
-                        {d.totalSol.toFixed(4)} SOL · {d.recipientCount} stakers
+              <>
+                {(showAllDist ? poolData.distributions : poolData.distributions.slice(0, 3)).map((d, i) => {
+                  const estimated = (sharePct / 100) * d.totalSol;
+                  return (
+                    <div key={i} className="flex justify-between items-center py-2.5 [&+&]:border-t border-gray-100">
+                      <div>
+                        <div className="text-sm font-semibold text-gray-900">{fmtDateShort(d.date)}</div>
+                        <div className="text-[11px] text-gray-400">
+                          {d.totalSol.toFixed(4)} SOL · {d.recipientCount} stakers
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm font-bold text-green-600">
+                          {publicKey ? `+${estimated.toFixed(4)} SOL` : '—'}
+                        </div>
+                        <div className="text-[11px] text-gray-400">{publicKey ? 'est. earned' : 'connect wallet'}</div>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <div className="text-sm font-bold text-green-600">
-                        {publicKey ? `+${estimated.toFixed(4)} SOL` : '—'}
-                      </div>
-                      <div className="text-[11px] text-gray-400">{publicKey ? 'est. earned' : 'connect wallet'}</div>
-                    </div>
-                  </div>
-                );
-              })
+                  );
+                })}
+                {poolData.distributions.length > 3 && (
+                  <button onClick={() => setShowAllDist(v => !v)} className="w-full text-xs text-gray-400 hover:text-green-600 pt-2.5 text-center transition-colors">
+                    {showAllDist ? 'Show less' : `+${poolData.distributions.length - 3} more`}
+                  </button>
+                )}
+              </>
             )}
           </div>
 

@@ -139,7 +139,7 @@ export default function CommunityPage() {
               { label: 'Accounts closed', value: (eco?.totalAccountsClosed ?? 0).toLocaleString(), accent: false },
               { label: 'SOL unlocked', value: `${(eco?.totalSolReclaimed ?? 0).toFixed(2)} SOL`, accent: false },
               { label: 'SMELT minted', value: (eco?.totalSmeltMinted ?? 0).toLocaleString(), accent: true },
-              { label: 'SOL donated', value: `${totalSolDonated.toFixed(4)} SOL`, accent: true },
+              { label: 'SOL donated', value: totalSolDonated.toFixed(4), accent: true },
             ].map(({ label, value, accent }) => (
               <div key={label} className="rounded-2xl bg-white border border-gray-100 px-3 sm:px-4 py-4">
                 <div className="text-[9px] sm:text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-2">{label}</div>

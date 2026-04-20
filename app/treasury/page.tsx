@@ -91,6 +91,9 @@ export default function TreasuryPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [now, setNow] = useState(Date.now());
+  const [showAllDist, setShowAllDist] = useState(false);
+  const [showAllLiq, setShowAllLiq] = useState(false);
+  const [showAllDon, setShowAllDon] = useState(false);
 
   // Countdown tick
   useEffect(() => {
@@ -144,9 +147,14 @@ export default function TreasuryPage() {
   const nextDistMs    = poolData ? new Date(poolData.nextDistributionAt).getTime() : 0;
   const msRemaining   = Math.max(0, nextDistMs - now);
 
-  const distributions = poolData?.distributions ?? [];
-  const recentLiq     = stats?.liquidations.recent ?? [];
-  const recentDonations = [...(donations?.entries ?? [])].slice(0, 10);
+  const allDistributions  = poolData?.distributions ?? [];
+  const allLiq            = stats?.liquidations.recent ?? [];
+  const allDonations      = [...(donations?.entries ?? [])].reverse();
+
+  const distributions   = showAllDist ? allDistributions : allDistributions.slice(0, 3);
+  const recentLiq       = showAllLiq  ? allLiq           : allLiq.slice(0, 3);
+  const recentDonations = showAllDon  ? allDonations     : allDonations.slice(0, 3);
+  const recentTokens    = tokens.slice(0, 3);
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
@@ -214,15 +222,22 @@ export default function TreasuryPage() {
         {distributions.length === 0 ? (
           <div className="text-sm text-gray-400 py-2">No distributions yet.</div>
         ) : (
-          distributions.map((d, i) => (
-            <div key={i} className="flex justify-between items-center py-2.5 [&+&]:border-t border-gray-100">
-              <div>
-                <div className="text-sm font-semibold text-gray-900">{fmtDateShort(d.date)}</div>
-                <div className="text-[11px] text-gray-400">{d.recipientCount} recipients</div>
+          <>
+            {distributions.map((d, i) => (
+              <div key={i} className="flex justify-between items-center py-2.5 [&+&]:border-t border-gray-100">
+                <div>
+                  <div className="text-sm font-semibold text-gray-900">{fmtDateShort(d.date)}</div>
+                  <div className="text-[11px] text-gray-400">{d.recipientCount} recipients</div>
+                </div>
+                <div className="text-sm font-bold text-green-600 tabular-nums">{d.totalSol.toFixed(4)} SOL</div>
               </div>
-              <div className="text-sm font-bold text-green-600 tabular-nums">{d.totalSol.toFixed(4)} SOL</div>
-            </div>
-          ))
+            ))}
+            {allDistributions.length > 3 && (
+              <button onClick={() => setShowAllDist(v => !v)} className="w-full text-xs text-gray-400 hover:text-green-600 pt-2.5 text-center transition-colors">
+                {showAllDist ? 'Show less' : `+${allDistributions.length - 3} more`}
+              </button>
+            )}
+          </>
         )}
       </div>
 
@@ -232,15 +247,22 @@ export default function TreasuryPage() {
         {recentLiq.length === 0 ? (
           <div className="text-sm text-gray-400 py-2">No liquidations yet.</div>
         ) : (
-          recentLiq.map((liq, i) => (
-            <div key={i} className="flex justify-between items-center py-2.5 [&+&]:border-t border-gray-100">
-              <div>
-                <div className="text-sm font-semibold text-gray-900 font-mono">{shortAddr(liq.mint)}</div>
-                <div className="text-[11px] text-gray-400">{fmtDateShort(liq.date)}</div>
+          <>
+            {recentLiq.map((liq, i) => (
+              <div key={i} className="flex justify-between items-center py-2.5 [&+&]:border-t border-gray-100">
+                <div>
+                  <div className="text-sm font-semibold text-gray-900 font-mono">{shortAddr(liq.mint)}</div>
+                  <div className="text-[11px] text-gray-400">{fmtDateShort(liq.date)}</div>
+                </div>
+                <div className="text-sm font-bold text-gray-700 tabular-nums">{liq.solReceived.toFixed(4)} SOL</div>
               </div>
-              <div className="text-sm font-bold text-gray-700 tabular-nums">{liq.solReceived.toFixed(4)} SOL</div>
-            </div>
-          ))
+            ))}
+            {allLiq.length > 3 && (
+              <button onClick={() => setShowAllLiq(v => !v)} className="w-full text-xs text-gray-400 hover:text-green-600 pt-2.5 text-center transition-colors">
+                {showAllLiq ? 'Show less' : `+${allLiq.length - 3} more`}
+              </button>
+            )}
+          </>
         )}
       </div>
 
@@ -250,34 +272,33 @@ export default function TreasuryPage() {
         {recentDonations.length === 0 ? (
           <div className="text-sm text-gray-400 py-2">No donations yet.</div>
         ) : (
-          recentDonations.map((d, i) => (
-            <div key={i} className="flex justify-between items-center py-2.5 [&+&]:border-t border-gray-100">
-              <div>
-                <div className="text-sm font-semibold text-gray-900 font-mono">{shortAddr(d.wallet)}</div>
-                <div className="text-[11px] text-gray-400">{fmtDateShort(d.date)}</div>
+          <>
+            {recentDonations.map((d, i) => (
+              <div key={i} className="flex justify-between items-center py-2.5 [&+&]:border-t border-gray-100">
+                <div>
+                  <div className="text-sm font-semibold text-gray-900 font-mono">{shortAddr(d.wallet)}</div>
+                  <div className="text-[11px] text-gray-400">{fmtDateShort(d.date)}</div>
+                </div>
+                <div className="text-sm font-bold text-green-600 tabular-nums">{d.solDonated.toFixed(4)} SOL</div>
               </div>
-              <div className="text-sm font-bold text-green-600 tabular-nums">{d.solDonated.toFixed(4)} SOL</div>
-            </div>
-          ))
+            ))}
+            {allDonations.length > 3 && (
+              <button onClick={() => setShowAllDon(v => !v)} className="w-full text-xs text-gray-400 hover:text-green-600 pt-2.5 text-center transition-colors">
+                {showAllDon ? 'Show less' : `+${allDonations.length - 3} more`}
+              </button>
+            )}
+          </>
         )}
       </div>
 
       {/* Section 6 — Vault token contents */}
-      {tokens.length > 0 && (
+      {recentTokens.length > 0 && (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mt-3">
           <div className="text-[9px] font-bold tracking-widest text-gray-400 uppercase mb-3">Vault contents</div>
-          {tokens.map((token) => (
-            <div key={token.mint} className="py-2.5 [&+&]:border-t border-gray-100">
-              <div className="flex justify-between items-center mb-1.5">
-                <span className="text-sm font-mono text-gray-700">{shortAddr(token.mint)}</span>
-                <span className="text-sm font-bold text-gray-900 tabular-nums">${token.usdValue.toFixed(2)}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="flex-1 h-1.5 rounded-full bg-gray-100 overflow-hidden">
-                  <div className="h-full rounded-full bg-green-500 transition-all" style={{ width: `${token.pctOfThreshold}%` }} />
-                </div>
-                <span className="text-[10px] text-gray-400 tabular-nums w-16 text-right">{token.pctOfThreshold.toFixed(0)}% of $10</span>
-              </div>
+          {recentTokens.map((token) => (
+            <div key={token.mint} className="flex justify-between items-center py-2.5 [&+&]:border-t border-gray-100">
+              <span className="text-sm font-mono text-gray-700">{shortAddr(token.mint)}</span>
+              <span className="text-sm font-bold text-gray-900 tabular-nums">${token.usdValue.toFixed(2)}</span>
             </div>
           ))}
         </div>

@@ -1,8 +1,6 @@
 // app/api/admin/cron/route.ts
 // Called every 2 days by an external cron (cron-job.org / Railway).
-// 1. Liquidates ALL vault tokens → SOL via Jupiter (no USD threshold).
-// 2. Distributes accumulated SOL (liquidations + fees + donations) to pool stakers.
-// Uses VAULT_KEYPAIR for both operations — the SOL lives in the vault wallet.
+// Also callable from admin UI with { phase: "liquidate" | "distribute" | "all" }
 import { NextRequest, NextResponse } from 'next/server';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -15,9 +13,9 @@ import {
   sendAndConfirmTransaction,
   LAMPORTS_PER_SOL,
 } from '@solana/web3.js';
-import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID } from '@solana/spl-token';
 import { swapToSol } from '../../../../lib/jupiter';
-import { VAULT_PUBKEY } from '../../../../lib/constants';
+import { VAULT_PUBKEY, SMELT_MINT } from '../../../../lib/constants';
 import { MAINNET_RPC } from '../../../../lib/solana';
 import { DATA_DIR } from '../../../../lib/paths';
 import { loadPool, getEpochEligibleStakes, savePool } from '../../../../lib/staking-pool';
@@ -73,18 +71,19 @@ function saveJson(p: string, data: unknown): void {
 async function fetchVaultTokens(
   connection: Connection,
 ): Promise<Array<{ mint: string; rawAmount: number }>> {
-  const accounts = await connection.getParsedTokenAccountsByOwner(VAULT_PUBKEY, {
-    programId: TOKEN_PROGRAM_ID,
-  });
-  return accounts.value
+  const [legacy, t22] = await Promise.all([
+    connection.getParsedTokenAccountsByOwner(VAULT_PUBKEY, { programId: TOKEN_PROGRAM_ID }),
+    connection.getParsedTokenAccountsByOwner(VAULT_PUBKEY, { programId: TOKEN_2022_PROGRAM_ID }),
+  ]);
+  return [...legacy.value, ...t22.value]
     .map((a) => {
       const info = a.account.data.parsed.info as {
         mint: string;
-        tokenAmount: { amount: string; uiAmount: number | null };
+        tokenAmount: { amount: string };
       };
       return { mint: info.mint, rawAmount: parseInt(info.tokenAmount.amount, 10) };
     })
-    .filter((a) => a.rawAmount > 0);
+    .filter((a) => a.rawAmount > 0 && a.mint !== SMELT_MINT.toBase58());
 }
 
 // ── Main handler ──────────────────────────────────────────────────────────────
@@ -96,6 +95,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const body = await req.json().catch(() => ({})) as { phase?: string };
+  const phase = (body.phase === 'liquidate' || body.phase === 'distribute') ? body.phase : 'all';
+
   const log: string[] = [];
   const ts = () => new Date().toISOString();
 
@@ -103,7 +105,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const connection = new Connection(MAINNET_RPC, 'confirmed');
     const vaultKeypair = loadVaultKeypair();
 
-    log.push(`[${ts()}] Cron started. Vault: ${VAULT_PUBKEY.toBase58()}`);
+    log.push(`[${ts()}] Cron started. Vault: ${VAULT_PUBKEY.toBase58()} phase=${phase}`);
 
     // ── Phase 0: Weekly leaderboard reset ────────────────────────────────────
 
@@ -119,26 +121,31 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       log.push(`[${ts()}] Weekly leaderboard: ${hoursLeft}h until next reset.`);
     }
 
-    // ── Phase 1: Liquidate ALL vault tokens ──────────────────────────────────
-
-    log.push(`[${ts()}] Phase 1: liquidation`);
-    const tokens = await fetchVaultTokens(connection);
-    log.push(`  ${tokens.length} token(s) in vault`);
-
+    // ── Phase 1: Liquidate vault tokens (skip if distribute-only) ─────────────
     let newLiquidationSol = 0;
+    let tokens: Array<{ mint: string; rawAmount: number }> = [];
+    if (phase !== 'distribute') {
+      log.push(`[${ts()}] Phase 1: liquidation`);
+      tokens = await fetchVaultTokens(connection);
+      log.push(`  ${tokens.length} token(s) in vault`);
 
-    for (const token of tokens) {
-      log.push(`  Swapping ${token.mint.slice(0, 8)}... (${token.rawAmount} raw)`);
-      try {
-        const result = await swapToSol(connection, vaultKeypair, token.mint, token.rawAmount);
-        log.push(`    ✓ ${result.solReceived.toFixed(6)} SOL  tx: ${result.txSignature.slice(0, 16)}...`);
-        newLiquidationSol += result.solReceived;
-      } catch (err) {
-        log.push(`    ✗ swap failed: ${err instanceof Error ? err.message : String(err)}`);
+      for (const token of tokens) {
+        log.push(`  Swapping ${token.mint.slice(0, 8)}... (${token.rawAmount} raw)`);
+        try {
+          const result = await swapToSol(connection, vaultKeypair, token.mint, token.rawAmount);
+          log.push(`    ✓ ${result.solReceived.toFixed(6)} SOL  tx: ${result.txSignature.slice(0, 16)}...`);
+          newLiquidationSol += result.solReceived;
+        } catch (err) {
+          log.push(`    ✗ swap failed: ${err instanceof Error ? err.message : String(err)}`);
+        }
+      }
+      log.push(`  New SOL from liquidations: ${newLiquidationSol.toFixed(6)}`);
+
+      if (phase === 'liquidate') {
+        log.push(`[${ts()}] Liquidate-only mode — stopping before distribution.`);
+        return NextResponse.json({ ok: true, log, liquidated: tokens.length, distributed: 0 });
       }
     }
-
-    log.push(`  New SOL from liquidations: ${newLiquidationSol.toFixed(6)}`);
 
     // ── Phase 2: Use vault's actual on-chain balance as source of truth ──────
     // Railway's filesystem is ephemeral — JSON files reset on redeploy.
@@ -198,6 +205,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     log.push(`  Distributing to ${recipients.length} recipient(s) in batches of ${TRANSFERS_PER_TX}`);
 
     const txSignatures: string[] = [];
+    let failedBatches = 0;
     for (let i = 0; i < recipients.length; i += TRANSFERS_PER_TX) {
       const batch = recipients.slice(i, i + TRANSFERS_PER_TX);
       const tx = new Transaction();
@@ -218,16 +226,28 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         log.push(`  ✓ Batch ${batchNum}/${totalBatches}  tx: ${sig.slice(0, 16)}...`);
       } catch (err) {
         log.push(`  ✗ batch failed: ${err instanceof Error ? err.message : String(err)}`);
+        failedBatches++;
       }
     }
 
-    // ── Phase 5: Record distribution (JSON files are audit-only on Railway) ───
+    // ── Phase 5: Record distribution ──────────────────────────────────────────
+    if (failedBatches > 0) {
+      log.push(`[${ts()}] WARNING: ${failedBatches} batch(es) failed — epoch NOT advanced. Retry to complete distribution.`);
+      return NextResponse.json({
+        ok: false,
+        log,
+        liquidated: 0,
+        distributed: recipients.length - (failedBatches * TRANSFERS_PER_TX),
+        totalSol: distributableSol,
+        txSignatures,
+      });
+    }
 
     const distributions = loadJson<DistributionEntry>(DISTRIBUTIONS_PATH);
     distributions.push({
       date: ts(),
       totalSol: distributableSol,
-      liquidationSol: 0,
+      liquidationSol: newLiquidationSol,
       feeSol: 0,
       donationSol: 0,
       recipientCount: recipients.length,
@@ -235,7 +255,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     });
     saveJson(DISTRIBUTIONS_PATH, distributions);
 
-    // Advance epoch start so current stakers become eligible next cycle
     poolState.epochStart = new Date().toISOString();
     savePool(poolState);
 

@@ -11,8 +11,8 @@ const ALLOWED = new Set([
 ]);
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
-  const body = await req.json() as { secret?: string; files?: Record<string, unknown> };
-  if (!process.env.ADMIN_SECRET || body.secret !== process.env.ADMIN_SECRET) {
+  const body = await req.json() as { files?: Record<string, unknown> };
+  if (!process.env.ADMIN_SECRET || req.headers.get('x-admin-secret') !== process.env.ADMIN_SECRET) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   if (!body.files || typeof body.files !== 'object') {

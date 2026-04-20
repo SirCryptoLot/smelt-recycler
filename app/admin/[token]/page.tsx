@@ -143,10 +143,13 @@ export default function AdminPage() {
 
   const fetchDonations = useCallback(async () => {
     try {
-      const res = await fetch('/api/donations', { cache: 'no-store' });
+      const res = await fetch('/api/admin/donations', {
+        headers: { 'x-admin-secret': token },
+        cache: 'no-store',
+      });
       if (res.ok) setDonationsData(await res.json());
     } catch { /* ignore */ }
-  }, []);
+  }, [token]);
 
   const navigate = useCallback((id: Section) => {
     setSection(id);
@@ -235,7 +238,11 @@ export default function AdminPage() {
             </div>
           )}
           <button
-            onClick={() => refresh()}
+            onClick={() => {
+              refresh();
+              if (section === 'stakers') fetchStakers();
+              if (section === 'donations') fetchDonations();
+            }}
             disabled={refreshing}
             className="w-full flex items-center justify-center gap-1 text-xs px-2 py-1.5 rounded-lg border border-white/10 text-zinc-400 hover:text-zinc-200 disabled:opacity-40 transition-all"
           >
@@ -711,8 +718,8 @@ export default function AdminPage() {
                     try { parsed = JSON.parse(seedJson); } catch { setSeedMsg('Invalid JSON'); setSeedRunning(false); return; }
                     const res = await fetch('/api/admin/seed', {
                       method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ secret: token, files: { [seedFile]: parsed } }),
+                      headers: { 'Content-Type': 'application/json', 'x-admin-secret': token },
+                      body: JSON.stringify({ files: { [seedFile]: parsed } }),
                     });
                     const json = await res.json() as { ok?: boolean; written?: string[]; error?: string };
                     setSeedMsg(json.ok ? `✓ Wrote: ${json.written?.join(', ')}` : (json.error ?? 'Failed'));

@@ -67,9 +67,24 @@ const ANALYTICS = [
 export default function SwapPage() {
   const [smeltPrice, setSmeltPrice] = useState<number | null>(null);
   const [supply, setSupply]         = useState<number | null>(null);
+  const [marketCap, setMarketCap]   = useState<number | null>(null);
 
   useEffect(() => {
-    getSmeltPrice().then(setSmeltPrice).catch(() => {});
+    // Primary: DexScreener gives price + fdv (≈ market cap) in one call
+    fetch(`https://api.dexscreener.com/latest/dex/tokens/${MINT}`)
+      .then(r => r.json() as Promise<{ pairs?: { priceUsd?: string; fdv?: number }[] }>)
+      .then(d => {
+        const pair = d.pairs?.[0];
+        const price = parseFloat(pair?.priceUsd ?? '');
+        if (price > 0) setSmeltPrice(price);
+        if (pair?.fdv && pair.fdv > 0) setMarketCap(pair.fdv);
+      })
+      .catch(() => {});
+
+    // Jupiter price as fallback (runs concurrently, only sets if DexScreener missed)
+    getSmeltPrice().then(p => { if (p) setSmeltPrice(prev => prev ?? p); }).catch(() => {});
+
+    // Supply via Solana RPC (independent)
     fetch('https://api.mainnet-beta.solana.com', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -79,8 +94,6 @@ export default function SwapPage() {
       .then(d => { if (d?.result?.value?.uiAmount) setSupply(d.result.value.uiAmount); })
       .catch(() => {});
   }, []);
-
-  const marketCap = smeltPrice != null && supply != null ? smeltPrice * supply : null;
 
   return (
     <main className="flex-1 overflow-y-auto">

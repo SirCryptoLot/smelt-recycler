@@ -29,16 +29,27 @@ export async function getSmeltQuote(lamports: number): Promise<JupiterQuote | nu
   }
 }
 
-// Get current SMELT market price in SOL.
-// Returns price per SMELT in SOL, or null if unavailable.
+// Get current SMELT market price in USD.
+// Tries Jupiter Price API v2 first, falls back to DexScreener.
 export async function getSmeltPrice(): Promise<number | null> {
+  // Attempt 1: Jupiter Price API v2
   try {
     const res = await fetch(`https://api.jup.ag/price/v2?ids=${SMELT_MINT.toBase58()}`);
+    if (res.ok) {
+      const json = await res.json() as { data: Record<string, { price: string } | null> };
+      const entry = json.data[SMELT_MINT.toBase58()];
+      const price = entry ? parseFloat(entry.price) : 0;
+      if (price > 0) return price;
+    }
+  } catch { /* fall through */ }
+
+  // Attempt 2: DexScreener
+  try {
+    const res = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${SMELT_MINT.toBase58()}`);
     if (!res.ok) return null;
-    const json = await res.json() as { data: Record<string, { price: string } | null> };
-    const entry = json.data[SMELT_MINT.toBase58()];
-    if (!entry) return null;
-    return parseFloat(entry.price) || null;
+    const json = await res.json() as { pairs?: { priceUsd?: string }[] };
+    const price = parseFloat(json.pairs?.[0]?.priceUsd ?? '');
+    return price > 0 ? price : null;
   } catch {
     return null;
   }

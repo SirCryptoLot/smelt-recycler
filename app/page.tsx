@@ -165,23 +165,23 @@ export default function Home() {
   return (
     <div className="flex flex-col h-full overflow-hidden">
 
-      {/* Stats strip — 3 columns */}
+      {/* Stats strip — 3 columns, number-first */}
       {status === 'results' && (
         <div className="grid grid-cols-3 border-b border-gray-100 flex-shrink-0 bg-white">
-          <div className="px-3 sm:px-5 py-3 border-r border-gray-100">
-            <div className="text-[9px] font-bold tracking-widest text-gray-400 uppercase mb-0.5">Reclaim</div>
-            <div className="text-gray-900 font-extrabold text-lg sm:text-2xl tabular-nums leading-tight">{sol.toFixed(4)}</div>
-            <div className="text-gray-400 text-[10px] mt-0.5">{selected.length}/{accounts.length} · SOL</div>
+          <div className="px-3 sm:px-5 py-3 border-r border-gray-100 text-center">
+            <div className="text-gray-900 font-extrabold text-xl sm:text-2xl tabular-nums leading-none">{sol.toFixed(4)}</div>
+            <div className="text-[9px] font-bold tracking-widest text-gray-400 uppercase mt-1.5">SOL back</div>
+            <div className="text-gray-300 text-[10px] mt-0.5">{selected.length} of {accounts.length}</div>
           </div>
-          <div className="px-3 sm:px-5 py-3 border-r border-gray-100 bg-green-50/40">
-            <div className="text-[9px] font-bold tracking-widest text-green-600/70 uppercase mb-0.5">Earn</div>
-            <div className="text-green-600 font-extrabold text-lg sm:text-2xl tabular-nums leading-tight">+{smeltReward.toLocaleString()}</div>
-            <div className="text-green-500/60 text-[10px] mt-0.5">SMELT reward</div>
+          <div className="px-3 sm:px-5 py-3 border-r border-gray-100 text-center">
+            <div className="text-green-600 font-extrabold text-xl sm:text-2xl tabular-nums leading-none">+{smeltReward.toLocaleString()}</div>
+            <div className="text-[9px] font-bold tracking-widest text-green-500/70 uppercase mt-1.5">SMELT</div>
+            <div className="text-gray-300 text-[10px] mt-0.5">reward</div>
           </div>
-          <div className="px-3 sm:px-5 py-3">
-            <div className="text-[9px] font-bold tracking-widest text-gray-400 uppercase mb-0.5">Free</div>
-            <div className="text-gray-900 font-extrabold text-lg sm:text-2xl tabular-nums leading-tight">{fmtBytes(selected.length * BYTES_PER_ACCOUNT)}</div>
-            <div className="text-gray-400 text-[10px] mt-0.5">on-chain state</div>
+          <div className="px-3 sm:px-5 py-3 text-center">
+            <div className="text-gray-900 font-extrabold text-xl sm:text-2xl tabular-nums leading-none">{fmtBytes(selected.length * BYTES_PER_ACCOUNT)}</div>
+            <div className="text-[9px] font-bold tracking-widest text-gray-400 uppercase mt-1.5">Freed</div>
+            <div className="text-gray-300 text-[10px] mt-0.5">on-chain</div>
           </div>
         </div>
       )}

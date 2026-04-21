@@ -165,7 +165,26 @@ export default function Home() {
   return (
     <div className="flex flex-col h-full overflow-hidden">
 
-      {/* Stats banner — dark summary card inside results area (rendered below header) */}
+      {/* Stats strip — 3 columns */}
+      {status === 'results' && (
+        <div className="grid grid-cols-3 border-b border-gray-100 flex-shrink-0 bg-white">
+          <div className="px-3 sm:px-5 py-3 border-r border-gray-100">
+            <div className="text-[9px] font-bold tracking-widest text-gray-400 uppercase mb-0.5">Reclaim</div>
+            <div className="text-gray-900 font-extrabold text-lg sm:text-2xl tabular-nums leading-tight">{sol.toFixed(4)}</div>
+            <div className="text-gray-400 text-[10px] mt-0.5">{selected.length}/{accounts.length} · SOL</div>
+          </div>
+          <div className="px-3 sm:px-5 py-3 border-r border-gray-100 bg-green-50/40">
+            <div className="text-[9px] font-bold tracking-widest text-green-600/70 uppercase mb-0.5">Earn</div>
+            <div className="text-green-600 font-extrabold text-lg sm:text-2xl tabular-nums leading-tight">+{smeltReward.toLocaleString()}</div>
+            <div className="text-green-500/60 text-[10px] mt-0.5">SMELT reward</div>
+          </div>
+          <div className="px-3 sm:px-5 py-3">
+            <div className="text-[9px] font-bold tracking-widest text-gray-400 uppercase mb-0.5">Free</div>
+            <div className="text-gray-900 font-extrabold text-lg sm:text-2xl tabular-nums leading-tight">{fmtBytes(selected.length * BYTES_PER_ACCOUNT)}</div>
+            <div className="text-gray-400 text-[10px] mt-0.5">on-chain state</div>
+          </div>
+        </div>
+      )}
 
       {/* Disconnected — landing hero */}
       {status === 'disconnected' && (
@@ -295,82 +314,54 @@ export default function Home() {
             <div className="mx-4 mt-3 flex-shrink-0 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-600 text-sm">{error}</div>
           )}
 
-          {/* Stats summary card */}
-          <div className="mx-3 mt-3 mb-1 rounded-2xl bg-gray-950 px-4 py-4 flex items-center gap-3 flex-shrink-0">
-            <div className="flex-1 min-w-0">
-              <div className="text-gray-500 text-[9px] uppercase tracking-widest font-bold mb-0.5">Reclaiming</div>
-              <div className="text-white font-extrabold text-2xl tabular-nums leading-tight">
-                {sol.toFixed(4)}<span className="text-gray-500 text-sm font-semibold ml-1">SOL</span>
-              </div>
-              <div className="text-gray-600 text-[11px] mt-0.5">{selected.length} of {accounts.length} selected</div>
-            </div>
-            <div className="w-px h-12 bg-white/10 flex-shrink-0" />
-            <div className="text-right flex-shrink-0">
-              <div className="text-gray-500 text-[9px] uppercase tracking-widest font-bold mb-0.5">Earn</div>
-              <div className="text-green-400 font-extrabold text-lg tabular-nums leading-tight">+{smeltReward.toLocaleString()}</div>
-              <div className="text-gray-600 text-[10px]">SMELT</div>
-            </div>
-            <div className="w-px h-12 bg-white/10 flex-shrink-0" />
-            <div className="text-right flex-shrink-0">
-              <div className="text-gray-500 text-[9px] uppercase tracking-widest font-bold mb-0.5">Free</div>
-              <div className="text-gray-300 font-extrabold text-lg tabular-nums leading-tight">{fmtBytes(selected.length * BYTES_PER_ACCOUNT)}</div>
-              <div className="text-gray-600 text-[10px]">on-chain</div>
-            </div>
-          </div>
-
-          {/* Account grid */}
-          <div className="flex-1 overflow-y-auto px-3 py-2 grid grid-cols-2 sm:grid-cols-3 gap-2 content-start">
-            {accounts.map((account) => {
-              const key = account.pubkey.toBase58();
-              const mintStr = account.mint.toBase58();
-              const meta: TokenMeta | undefined = tokenMetas[mintStr];
-              const isSelected = selectedKeys.has(key);
-              const symbol = meta?.symbol || '???';
-              const name = meta?.name || 'Unknown token';
-              const initials = symbol !== '???' ? symbol.slice(0, 2).toUpperCase() : mintStr.slice(0, 2).toUpperCase();
-              const color = avatarColor(mintStr);
-              return (
-                <div
-                  key={key}
-                  onClick={() => toggleSelect(key)}
-                  className={`relative rounded-2xl border p-3 cursor-pointer select-none transition-all ${
-                    isSelected
-                      ? 'border-green-200 bg-white shadow-sm shadow-green-100/50'
-                      : 'border-gray-100 bg-white/60 opacity-40 hover:opacity-65'
-                  }`}
-                >
-                  {/* Checkbox top-right */}
-                  <input
-                    type="checkbox"
-                    checked={isSelected}
-                    onChange={() => toggleSelect(key)}
-                    onClick={(e) => e.stopPropagation()}
-                    className="absolute top-2.5 right-2.5 accent-green-600 w-4 h-4 cursor-pointer"
-                  />
-                  {/* Avatar + symbol */}
-                  <div className="flex items-center gap-2 mb-2.5">
-                    <div className={`w-8 h-8 rounded-xl ${color} flex items-center justify-center text-white font-bold text-xs flex-shrink-0`}>{initials}</div>
-                    <div className="min-w-0 flex-1 pr-5">
-                      <div className="text-gray-900 font-bold text-xs truncate leading-tight">{name}</div>
-                      {meta?.symbol && <div className="text-gray-400 text-[10px] font-mono truncate">{meta.symbol}</div>}
+          {/* Account list — narrow centered */}
+          <div className="flex-1 overflow-y-auto py-3">
+            <div className="max-w-md mx-auto px-3 space-y-1.5">
+              {accounts.map((account) => {
+                const key = account.pubkey.toBase58();
+                const mintStr = account.mint.toBase58();
+                const meta: TokenMeta | undefined = tokenMetas[mintStr];
+                const isSelected = selectedKeys.has(key);
+                const symbol = meta?.symbol || '???';
+                const name = meta?.name || 'Unknown token';
+                const initials = symbol !== '???' ? symbol.slice(0, 2).toUpperCase() : mintStr.slice(0, 2).toUpperCase();
+                const color = avatarColor(mintStr);
+                return (
+                  <div
+                    key={key}
+                    onClick={() => toggleSelect(key)}
+                    className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 cursor-pointer select-none transition-all ${
+                      isSelected
+                        ? 'border-green-200 bg-white shadow-sm shadow-green-100/40'
+                        : 'border-gray-100 bg-white/50 opacity-40 hover:opacity-60'
+                    }`}
+                  >
+                    <div className={`w-8 h-8 rounded-lg ${color} flex items-center justify-center text-white font-bold text-xs flex-shrink-0`}>{initials}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-baseline gap-1.5 min-w-0">
+                        <span className="text-gray-900 font-semibold text-sm truncate">{name}</span>
+                        {meta?.symbol && <span className="text-gray-400 text-[11px] font-mono flex-shrink-0">{meta.symbol}</span>}
+                      </div>
+                      <div className="text-gray-300 text-[10px] font-mono">{shortAddr(mintStr)}</div>
                     </div>
+                    <div className="text-right flex-shrink-0">
+                      {account.balance === 0 ? (
+                        <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold text-green-700">EMPTY</span>
+                      ) : (
+                        <>
+                          <div className="text-gray-800 font-bold text-sm tabular-nums">{account.usdValue > 0.0001 ? `$${account.usdValue.toFixed(4)}` : '<$0.01'}</div>
+                          <div className="text-gray-400 text-[10px] tabular-nums">{account.balance.toLocaleString()} tkn</div>
+                        </>
+                      )}
+                    </div>
+                    <input type="checkbox" checked={isSelected} onChange={() => toggleSelect(key)} onClick={(e) => e.stopPropagation()} className="accent-green-600 w-4 h-4 flex-shrink-0 cursor-pointer" />
                   </div>
-                  {/* Value row */}
-                  <div className="flex items-center justify-between">
-                    {account.balance === 0 ? (
-                      <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold text-green-700">EMPTY</span>
-                    ) : (
-                      <span className="text-gray-800 font-bold text-xs tabular-nums">
-                        {account.usdValue > 0.0001 ? `$${account.usdValue.toFixed(4)}` : '<$0.01'}
-                      </span>
-                    )}
-                    <span className="text-gray-300 text-[10px] font-mono">~0.002◎</span>
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
-          <div className="px-4 sm:px-6 py-5 border-t border-gray-100 flex-shrink-0 bg-white space-y-4">
+          <div className="border-t border-gray-100 flex-shrink-0 bg-white py-4">
+            <div className="max-w-md mx-auto px-4 space-y-3">
             {/* Donation toggle */}
             <div className="bg-[#f0faf4] border border-green-100 rounded-2xl px-4 py-3">
               <label className="flex items-center gap-3 cursor-pointer select-none">
@@ -420,7 +411,8 @@ export default function Home() {
                   : `get ${sol.toFixed(4)} SOL`}
               </span>
             </button>
-          </div>
+            </div>{/* /max-w-md */}
+          </div>{/* /bottom bar */}
         </div>
       )}
 

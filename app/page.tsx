@@ -165,30 +165,7 @@ export default function Home() {
   return (
     <div className="flex flex-col h-full overflow-hidden">
 
-      {/* Stats strip */}
-      {status === 'results' && (
-        <div className="flex items-stretch border-b border-gray-100 flex-shrink-0 bg-white">
-          <div className="flex-1 px-3 sm:px-5 py-2.5">
-            <div className="text-[9px] font-bold tracking-widest text-gray-400 uppercase mb-0.5">Reclaim</div>
-            <div className="text-gray-900 font-extrabold text-base sm:text-xl tracking-tight tabular-nums leading-none">{sol.toFixed(4)} <span className="text-xs font-semibold text-gray-400">SOL</span></div>
-            <div className="text-gray-400 text-[10px] mt-0.5">{selected.length} of {accounts.length} selected</div>
-          </div>
-          <div className="w-px bg-gray-100 my-2" />
-          <div className="flex-1 px-3 sm:px-5 py-2.5">
-            <div className="text-[9px] font-bold tracking-widest text-gray-400 uppercase mb-0.5">Earn</div>
-            <div className="text-green-600 font-extrabold text-base sm:text-xl leading-none tabular-nums">+{smeltReward.toLocaleString()} <span className="text-xs font-semibold text-green-400">SMELT</span></div>
-            {totalUsd > 0
-              ? <div className="text-gray-400 text-[10px] mt-0.5">${totalUsd.toFixed(2)} dust value</div>
-              : <div className="text-gray-400 text-[10px] mt-0.5">reward tokens</div>}
-          </div>
-          <div className="w-px bg-gray-100 my-2" />
-          <div className="flex-1 px-3 sm:px-5 py-2.5">
-            <div className="text-[9px] font-bold tracking-widest text-gray-400 uppercase mb-0.5">Free</div>
-            <div className="text-gray-900 font-extrabold text-base sm:text-xl leading-none tabular-nums">{fmtBytes(selected.length * BYTES_PER_ACCOUNT)}</div>
-            <div className="text-gray-400 text-[10px] mt-0.5">on-chain state</div>
-          </div>
-        </div>
-      )}
+      {/* Stats banner — dark summary card inside results area (rendered below header) */}
 
       {/* Disconnected — landing hero */}
       {status === 'disconnected' && (
@@ -290,29 +267,59 @@ export default function Home() {
       {/* Results */}
       {status === 'results' && (
         <div className="flex flex-col flex-1 overflow-hidden">
-          <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 border-b border-gray-100 flex-shrink-0">
+
+          {/* Header row */}
+          <div className="flex items-center justify-between px-4 py-3 flex-shrink-0 border-b border-gray-100 bg-white">
             <div className="flex items-center gap-2">
-              <span className="text-gray-900 text-sm font-bold">
-                {accounts.length} trash account{accounts.length !== 1 ? 's' : ''}
-              </span>
-              <button
-                onClick={scan}
-                title="Refresh"
-                className="text-gray-300 hover:text-green-600 transition-colors ml-0.5"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-900 text-white text-[11px] font-extrabold flex-shrink-0">{accounts.length}</span>
+              <span className="text-gray-600 text-sm font-medium">dust account{accounts.length !== 1 ? 's' : ''} found</span>
+              <button onClick={scan} title="Refresh" className="text-gray-300 hover:text-green-600 transition-colors p-0.5">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
               </button>
             </div>
-            <button onClick={toggleAll} className="text-green-600 text-sm font-semibold hover:text-green-700 transition-colors">
-              {allSelected ? 'Deselect all' : 'Select all'}
+            <button
+              onClick={toggleAll}
+              className={`text-xs font-bold px-3 py-1.5 rounded-full border transition-all ${
+                allSelected
+                  ? 'bg-green-600 text-white border-green-600'
+                  : 'border-green-200 text-green-600 hover:bg-green-50'
+              }`}
+            >
+              {allSelected ? '✓ All selected' : 'Select all'}
             </button>
           </div>
+
           {error && (
-            <div className="mx-6 mt-4 flex-shrink-0 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-600 text-sm">{error}</div>
+            <div className="mx-4 mt-3 flex-shrink-0 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-600 text-sm">{error}</div>
           )}
-          <div className="flex-1 overflow-y-auto px-3 sm:px-5 py-2.5 space-y-1.5">
+
+          {/* Stats summary card */}
+          <div className="mx-3 mt-3 mb-1 rounded-2xl bg-gray-950 px-4 py-4 flex items-center gap-3 flex-shrink-0">
+            <div className="flex-1 min-w-0">
+              <div className="text-gray-500 text-[9px] uppercase tracking-widest font-bold mb-0.5">Reclaiming</div>
+              <div className="text-white font-extrabold text-2xl tabular-nums leading-tight">
+                {sol.toFixed(4)}<span className="text-gray-500 text-sm font-semibold ml-1">SOL</span>
+              </div>
+              <div className="text-gray-600 text-[11px] mt-0.5">{selected.length} of {accounts.length} selected</div>
+            </div>
+            <div className="w-px h-12 bg-white/10 flex-shrink-0" />
+            <div className="text-right flex-shrink-0">
+              <div className="text-gray-500 text-[9px] uppercase tracking-widest font-bold mb-0.5">Earn</div>
+              <div className="text-green-400 font-extrabold text-lg tabular-nums leading-tight">+{smeltReward.toLocaleString()}</div>
+              <div className="text-gray-600 text-[10px]">SMELT</div>
+            </div>
+            <div className="w-px h-12 bg-white/10 flex-shrink-0" />
+            <div className="text-right flex-shrink-0">
+              <div className="text-gray-500 text-[9px] uppercase tracking-widest font-bold mb-0.5">Free</div>
+              <div className="text-gray-300 font-extrabold text-lg tabular-nums leading-tight">{fmtBytes(selected.length * BYTES_PER_ACCOUNT)}</div>
+              <div className="text-gray-600 text-[10px]">on-chain</div>
+            </div>
+          </div>
+
+          {/* Account grid */}
+          <div className="flex-1 overflow-y-auto px-3 py-2 grid grid-cols-2 sm:grid-cols-3 gap-2 content-start">
             {accounts.map((account) => {
               const key = account.pubkey.toBase58();
               const mintStr = account.mint.toBase58();
@@ -326,31 +333,39 @@ export default function Home() {
                 <div
                   key={key}
                   onClick={() => toggleSelect(key)}
-                  className={`flex items-center gap-2.5 rounded-xl border px-3 py-2.5 cursor-pointer select-none transition-all ${
+                  className={`relative rounded-2xl border p-3 cursor-pointer select-none transition-all ${
                     isSelected
-                      ? 'border-green-200 bg-white shadow-sm shadow-green-100/40'
-                      : 'border-gray-100 bg-white/50 opacity-40 hover:opacity-60'
+                      ? 'border-green-200 bg-white shadow-sm shadow-green-100/50'
+                      : 'border-gray-100 bg-white/60 opacity-40 hover:opacity-65'
                   }`}
                 >
-                  <div className={`w-8 h-8 rounded-lg ${color} flex items-center justify-center text-white font-bold text-xs flex-shrink-0`}>{initials}</div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-baseline gap-1.5 min-w-0">
-                      <span className="text-gray-900 font-semibold text-sm truncate leading-tight">{name}</span>
-                      {meta?.symbol && <span className="text-gray-400 text-[11px] flex-shrink-0 font-mono">{meta.symbol}</span>}
+                  {/* Checkbox top-right */}
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={() => toggleSelect(key)}
+                    onClick={(e) => e.stopPropagation()}
+                    className="absolute top-2.5 right-2.5 accent-green-600 w-4 h-4 cursor-pointer"
+                  />
+                  {/* Avatar + symbol */}
+                  <div className="flex items-center gap-2 mb-2.5">
+                    <div className={`w-8 h-8 rounded-xl ${color} flex items-center justify-center text-white font-bold text-xs flex-shrink-0`}>{initials}</div>
+                    <div className="min-w-0 flex-1 pr-5">
+                      <div className="text-gray-900 font-bold text-xs truncate leading-tight">{name}</div>
+                      {meta?.symbol && <div className="text-gray-400 text-[10px] font-mono truncate">{meta.symbol}</div>}
                     </div>
-                    <div className="text-gray-300 text-[10px] font-mono leading-tight">{shortAddr(mintStr)}</div>
                   </div>
-                  <div className="text-right flex-shrink-0">
+                  {/* Value row */}
+                  <div className="flex items-center justify-between">
                     {account.balance === 0 ? (
-                      <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold text-green-700 tracking-wide">EMPTY</span>
+                      <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold text-green-700">EMPTY</span>
                     ) : (
-                      <>
-                        <div className="text-gray-800 font-bold text-sm tabular-nums">{account.usdValue > 0.0001 ? `$${account.usdValue.toFixed(4)}` : '<$0.01'}</div>
-                        <div className="text-gray-400 text-[10px] tabular-nums">{account.balance.toLocaleString()} tkn</div>
-                      </>
+                      <span className="text-gray-800 font-bold text-xs tabular-nums">
+                        {account.usdValue > 0.0001 ? `$${account.usdValue.toFixed(4)}` : '<$0.01'}
+                      </span>
                     )}
+                    <span className="text-gray-300 text-[10px] font-mono">~0.002◎</span>
                   </div>
-                  <input type="checkbox" checked={isSelected} onChange={() => toggleSelect(key)} onClick={(e) => e.stopPropagation()} className="accent-green-600 w-4 h-4 flex-shrink-0 cursor-pointer" />
                 </div>
               );
             })}

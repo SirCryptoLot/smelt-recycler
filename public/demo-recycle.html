@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Recycle Page — Design Options</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { background: #e8f5ee; font-family: system-ui, -apple-system, sans-serif; }
+  .phone { width: 375px; background: #f0faf4; border-radius: 40px; overflow: hidden; box-shadow: 0 32px 64px rgba(0,0,0,0.18), 0 0 0 1px rgba(0,0,0,0.06); flex-shrink: 0; }
+  .phone-inner { height: 700px; display: flex; flex-direction: column; overflow: hidden; }
+  .label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #6b7280; text-align: center; margin-bottom: 12px; }
+  /* fake app chrome */
+  .app-bar { background: rgba(255,255,255,0.92); border-bottom: 1px solid rgba(187,247,208,0.5); height: 52px; display: flex; align-items: center; padding: 0 16px; gap: 10px; flex-shrink: 0; }
+  .app-bar-logo { width: 30px; height: 30px; background: #16a34a; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px; }
+  .app-bar-title { font-weight: 800; font-size: 17px; color: #111; flex: 1; }
+  .app-bar-btn { background: #16a34a; color: white; font-size: 12px; font-weight: 700; padding: 6px 14px; border-radius: 99px; border: none; cursor: pointer; }
+</style>
+</head>
+<body class="p-8">
+
+<div class="max-w-6xl mx-auto">
+  <h1 class="text-2xl font-extrabold text-gray-900 mb-2">Recycle Page — Stats Strip Ideas</h1>
+  <p class="text-gray-500 text-sm mb-10">All options use the same row list below. Pick a stats strip style.</p>
+
+  <div class="flex gap-8 flex-wrap justify-center">
+
+    <!-- ── CURRENT ─────────────────────────────────────── -->
+    <div>
+      <div class="label">Current</div>
+      <div class="phone">
+        <div class="phone-inner">
+          <div class="app-bar">
+            <div class="app-bar-logo">♻</div>
+            <span class="app-bar-title">Recycler</span>
+            <button class="app-bar-btn">Fh…Mo</button>
+          </div>
+
+          <!-- Stats strip: current -->
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:1px solid #f3f4f6;background:white;flex-shrink:0;">
+            <div style="padding:10px 12px;border-right:1px solid #f3f4f6;">
+              <div style="font-size:8px;font-weight:700;letter-spacing:.08em;color:#9ca3af;text-transform:uppercase;margin-bottom:2px;">Reclaim</div>
+              <div style="font-size:18px;font-weight:800;color:#111;line-height:1.1;">0.0019</div>
+              <div style="font-size:9px;color:#9ca3af;margin-top:2px;">1/1 · SOL</div>
+            </div>
+            <div style="padding:10px 12px;border-right:1px solid #f3f4f6;background:#f0fdf4;">
+              <div style="font-size:8px;font-weight:700;letter-spacing:.08em;color:#86efac;text-transform:uppercase;margin-bottom:2px;">Earn</div>
+              <div style="font-size:18px;font-weight:800;color:#16a34a;line-height:1.1;">+124</div>
+              <div style="font-size:9px;color:#86efac;margin-top:2px;">SMELT reward</div>
+            </div>
+            <div style="padding:10px 12px;">
+              <div style="font-size:8px;font-weight:700;letter-spacing:.08em;color:#9ca3af;text-transform:uppercase;margin-bottom:2px;">Free</div>
+              <div style="font-size:18px;font-weight:800;color:#111;line-height:1.1;">165 B</div>
+              <div style="font-size:9px;color:#9ca3af;margin-top:2px;">on-chain state</div>
+            </div>
+          </div>
+
+          <!-- Header row -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #f3f4f6;background:white;flex-shrink:0;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="width:22px;height:22px;border-radius:99px;background:#111;color:white;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;">1</span>
+              <span style="color:#4b5563;font-size:13px;font-weight:500;">dust account found</span>
+            </div>
+            <button style="font-size:11px;font-weight:700;padding:5px 12px;border-radius:99px;border:1.5px solid #bbf7d0;color:#16a34a;background:white;">Select all</button>
+          </div>
+
+          <!-- List -->
+          <div style="flex:1;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:6px;">
+            <div style="display:flex;align-items:center;gap:10px;border:1.5px solid #bbf7d0;border-radius:14px;padding:10px 12px;background:white;cursor:pointer;">
+              <div style="width:32px;height:32px;border-radius:10px;background:#7c3aed;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:11px;flex-shrink:0;">BO</div>
+              <div style="flex:1;min-width:0;">
+                <div style="font-weight:600;font-size:13px;color:#111;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Bonk</div>
+                <div style="font-size:10px;color:#d1d5db;font-family:monospace;">Bonk</div>
+              </div>
+              <span style="font-size:10px;font-weight:700;background:#dcfce7;color:#15803d;padding:2px 8px;border-radius:99px;">EMPTY</span>
+              <input type="checkbox" checked style="accent-color:#16a34a;width:15px;height:15px;" />
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;border:1px solid #f3f4f6;border-radius:14px;padding:10px 12px;background:rgba(255,255,255,0.5);opacity:0.4;cursor:pointer;">
+              <div style="width:32px;height:32px;border-radius:10px;background:#0284c7;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:11px;flex-shrink:0;">JI</div>
+              <div style="flex:1;min-width:0;">
+                <div style="font-weight:600;font-size:13px;color:#111;">JitoSOL</div>
+                <div style="font-size:10px;color:#d1d5db;font-family:monospace;">JitoSOL</div>
+              </div>
+              <div style="text-align:right;">
+                <div style="font-weight:700;font-size:13px;color:#1f2937;">$0.0012</div>
+                <div style="font-size:10px;color:#9ca3af;">42 tkn</div>
+              </div>
+              <input type="checkbox" style="accent-color:#16a34a;width:15px;height:15px;" />
+            </div>
+          </div>
+
+          <!-- Bottom -->
+          <div style="border-top:1px solid #f3f4f6;padding:14px 14px;background:white;flex-shrink:0;">
+            <button style="width:100%;background:#16a34a;color:white;font-weight:700;font-size:15px;padding:14px;border-radius:99px;border:none;cursor:pointer;box-shadow:0 4px 14px rgba(22,163,74,0.3);">♻ Recycle 1 account · get 0.0019 SOL</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── OPTION A: bigger numbers, label below ───────── -->
+    <div>
+      <div class="label">A — Numbers first, label below</div>
+      <div class="phone">
+        <div class="phone-inner">
+          <div class="app-bar">
+            <div class="app-bar-logo">♻</div>
+            <span class="app-bar-title">Recycler</span>
+            <button class="app-bar-btn">Fh…Mo</button>
+          </div>
+
+          <!-- Stats strip A -->
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:1px solid #f3f4f6;background:white;flex-shrink:0;">
+            <div style="padding:12px 12px 10px;border-right:1px solid #f3f4f6;text-align:center;">
+              <div style="font-size:22px;font-weight:800;color:#111;line-height:1;margin-bottom:4px;">0.0019</div>
+              <div style="font-size:9px;font-weight:700;letter-spacing:.07em;color:#9ca3af;text-transform:uppercase;">SOL back</div>
+              <div style="font-size:9px;color:#d1d5db;margin-top:1px;">1 of 1</div>
+            </div>
+            <div style="padding:12px 12px 10px;border-right:1px solid #f3f4f6;text-align:center;">
+              <div style="font-size:22px;font-weight:800;color:#16a34a;line-height:1;margin-bottom:4px;">+124</div>
+              <div style="font-size:9px;font-weight:700;letter-spacing:.07em;color:#86efac;text-transform:uppercase;">SMELT</div>
+              <div style="font-size:9px;color:#d1d5db;margin-top:1px;">reward</div>
+            </div>
+            <div style="padding:12px 12px 10px;text-align:center;">
+              <div style="font-size:22px;font-weight:800;color:#111;line-height:1;margin-bottom:4px;">165B</div>
+              <div style="font-size:9px;font-weight:700;letter-spacing:.07em;color:#9ca3af;text-transform:uppercase;">Freed</div>
+              <div style="font-size:9px;color:#d1d5db;margin-top:1px;">on-chain</div>
+            </div>
+          </div>
+
+          <!-- Header row -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #f3f4f6;background:white;flex-shrink:0;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="width:22px;height:22px;border-radius:99px;background:#111;color:white;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;">1</span>
+              <span style="color:#4b5563;font-size:13px;font-weight:500;">dust account found</span>
+            </div>
+            <button style="font-size:11px;font-weight:700;padding:5px 12px;border-radius:99px;border:1.5px solid #bbf7d0;color:#16a34a;background:white;">Select all</button>
+          </div>
+
+          <!-- List (same) -->
+          <div style="flex:1;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:6px;">
+            <div style="display:flex;align-items:center;gap:10px;border:1.5px solid #bbf7d0;border-radius:14px;padding:10px 12px;background:white;">
+              <div style="width:32px;height:32px;border-radius:10px;background:#7c3aed;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:11px;flex-shrink:0;">BO</div>
+              <div style="flex:1;"><div style="font-weight:600;font-size:13px;color:#111;">Bonk</div><div style="font-size:10px;color:#d1d5db;font-family:monospace;">BONK</div></div>
+              <span style="font-size:10px;font-weight:700;background:#dcfce7;color:#15803d;padding:2px 8px;border-radius:99px;">EMPTY</span>
+              <input type="checkbox" checked style="accent-color:#16a34a;width:15px;height:15px;" />
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;border:1px solid #f3f4f6;border-radius:14px;padding:10px 12px;background:rgba(255,255,255,0.5);opacity:0.4;">
+              <div style="width:32px;height:32px;border-radius:10px;background:#0284c7;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:11px;flex-shrink:0;">JI</div>
+              <div style="flex:1;"><div style="font-weight:600;font-size:13px;color:#111;">JitoSOL</div><div style="font-size:10px;color:#d1d5db;font-family:monospace;">JitoSOL</div></div>
+              <div style="text-align:right;"><div style="font-weight:700;font-size:13px;">$0.0012</div><div style="font-size:10px;color:#9ca3af;">42 tkn</div></div>
+              <input type="checkbox" style="accent-color:#16a34a;width:15px;height:15px;" />
+            </div>
+          </div>
+          <div style="border-top:1px solid #f3f4f6;padding:14px;background:white;flex-shrink:0;">
+            <button style="width:100%;background:#16a34a;color:white;font-weight:700;font-size:15px;padding:14px;border-radius:99px;border:none;cursor:pointer;box-shadow:0 4px 14px rgba(22,163,74,0.3);">♻ Recycle 1 account · get 0.0019 SOL</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── OPTION B: pill badges ───────────────────────── -->
+    <div>
+      <div class="label">B — Pill badges row</div>
+      <div class="phone">
+        <div class="phone-inner">
+          <div class="app-bar">
+            <div class="app-bar-logo">♻</div>
+            <span class="app-bar-title">Recycler</span>
+            <button class="app-bar-btn">Fh…Mo</button>
+          </div>
+
+          <!-- Stats strip B: pills -->
+          <div style="padding:10px 14px;border-bottom:1px solid #f3f4f6;background:white;flex-shrink:0;display:flex;gap:6px;flex-wrap:wrap;">
+            <div style="display:flex;align-items:center;gap:6px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:99px;padding:5px 10px 5px 8px;">
+              <div style="width:18px;height:18px;border-radius:99px;background:#111;display:flex;align-items:center;justify-content:center;font-size:9px;color:white;font-weight:700;">◎</div>
+              <div>
+                <div style="font-size:13px;font-weight:800;color:#111;line-height:1;">0.0019 SOL</div>
+                <div style="font-size:9px;color:#9ca3af;line-height:1;margin-top:1px;">reclaim</div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:99px;padding:5px 10px 5px 8px;">
+              <div style="width:18px;height:18px;border-radius:99px;background:#16a34a;display:flex;align-items:center;justify-content:center;font-size:9px;color:white;font-weight:700;">S</div>
+              <div>
+                <div style="font-size:13px;font-weight:800;color:#16a34a;line-height:1;">+124 SMELT</div>
+                <div style="font-size:9px;color:#86efac;line-height:1;margin-top:1px;">earn</div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:99px;padding:5px 10px 5px 8px;">
+              <div style="width:18px;height:18px;border-radius:99px;background:#6366f1;display:flex;align-items:center;justify-content:center;font-size:9px;color:white;font-weight:700;">↑</div>
+              <div>
+                <div style="font-size:13px;font-weight:800;color:#111;line-height:1;">165 B</div>
+                <div style="font-size:9px;color:#9ca3af;line-height:1;margin-top:1px;">freed</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Header row -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #f3f4f6;background:white;flex-shrink:0;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="width:22px;height:22px;border-radius:99px;background:#111;color:white;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;">1</span>
+              <span style="color:#4b5563;font-size:13px;font-weight:500;">dust account found</span>
+            </div>
+            <button style="font-size:11px;font-weight:700;padding:5px 12px;border-radius:99px;border:1.5px solid #bbf7d0;color:#16a34a;background:white;">Select all</button>
+          </div>
+
+          <div style="flex:1;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:6px;">
+            <div style="display:flex;align-items:center;gap:10px;border:1.5px solid #bbf7d0;border-radius:14px;padding:10px 12px;background:white;">
+              <div style="width:32px;height:32px;border-radius:10px;background:#7c3aed;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:11px;flex-shrink:0;">BO</div>
+              <div style="flex:1;"><div style="font-weight:600;font-size:13px;color:#111;">Bonk</div><div style="font-size:10px;color:#d1d5db;font-family:monospace;">BONK</div></div>
+              <span style="font-size:10px;font-weight:700;background:#dcfce7;color:#15803d;padding:2px 8px;border-radius:99px;">EMPTY</span>
+              <input type="checkbox" checked style="accent-color:#16a34a;width:15px;height:15px;" />
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;border:1px solid #f3f4f6;border-radius:14px;padding:10px 12px;background:rgba(255,255,255,0.5);opacity:0.4;">
+              <div style="width:32px;height:32px;border-radius:10px;background:#0284c7;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:11px;flex-shrink:0;">JI</div>
+              <div style="flex:1;"><div style="font-weight:600;font-size:13px;color:#111;">JitoSOL</div><div style="font-size:10px;color:#d1d5db;font-family:monospace;">JitoSOL</div></div>
+              <div style="text-align:right;"><div style="font-weight:700;font-size:13px;">$0.0012</div><div style="font-size:10px;color:#9ca3af;">42 tkn</div></div>
+              <input type="checkbox" style="accent-color:#16a34a;width:15px;height:15px;" />
+            </div>
+          </div>
+          <div style="border-top:1px solid #f3f4f6;padding:14px;background:white;flex-shrink:0;">
+            <button style="width:100%;background:#16a34a;color:white;font-weight:700;font-size:15px;padding:14px;border-radius:99px;border:none;cursor:pointer;box-shadow:0 4px 14px rgba(22,163,74,0.3);">♻ Recycle 1 account · get 0.0019 SOL</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── OPTION C: colored top border accents ────────── -->
+    <div>
+      <div class="label">C — Colored top accent per column</div>
+      <div class="phone">
+        <div class="phone-inner">
+          <div class="app-bar">
+            <div class="app-bar-logo">♻</div>
+            <span class="app-bar-title">Recycler</span>
+            <button class="app-bar-btn">Fh…Mo</button>
+          </div>
+
+          <!-- Stats strip C: top accent borders -->
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:1px solid #f3f4f6;background:white;flex-shrink:0;">
+            <div style="padding:10px 12px;border-right:1px solid #f3f4f6;border-top:3px solid #d1d5db;">
+              <div style="font-size:8px;font-weight:700;letter-spacing:.08em;color:#9ca3af;text-transform:uppercase;margin-bottom:2px;">Reclaim</div>
+              <div style="font-size:18px;font-weight:800;color:#111;line-height:1.1;">0.0019</div>
+              <div style="font-size:9px;color:#9ca3af;margin-top:2px;">SOL · 1/1</div>
+            </div>
+            <div style="padding:10px 12px;border-right:1px solid #f3f4f6;border-top:3px solid #16a34a;">
+              <div style="font-size:8px;font-weight:700;letter-spacing:.08em;color:#9ca3af;text-transform:uppercase;margin-bottom:2px;">Earn</div>
+              <div style="font-size:18px;font-weight:800;color:#16a34a;line-height:1.1;">+124</div>
+              <div style="font-size:9px;color:#9ca3af;margin-top:2px;">SMELT</div>
+            </div>
+            <div style="padding:10px 12px;border-top:3px solid #6366f1;">
+              <div style="font-size:8px;font-weight:700;letter-spacing:.08em;color:#9ca3af;text-transform:uppercase;margin-bottom:2px;">Free</div>
+              <div style="font-size:18px;font-weight:800;color:#111;line-height:1.1;">165B</div>
+              <div style="font-size:9px;color:#9ca3af;margin-top:2px;">on-chain</div>
+            </div>
+          </div>
+
+          <!-- Header row -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #f3f4f6;background:white;flex-shrink:0;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="width:22px;height:22px;border-radius:99px;background:#111;color:white;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;">1</span>
+              <span style="color:#4b5563;font-size:13px;font-weight:500;">dust account found</span>
+            </div>
+            <button style="font-size:11px;font-weight:700;padding:5px 12px;border-radius:99px;border:1.5px solid #bbf7d0;color:#16a34a;background:white;">Select all</button>
+          </div>
+
+          <div style="flex:1;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:6px;">
+            <div style="display:flex;align-items:center;gap:10px;border:1.5px solid #bbf7d0;border-radius:14px;padding:10px 12px;background:white;">
+              <div style="width:32px;height:32px;border-radius:10px;background:#7c3aed;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:11px;flex-shrink:0;">BO</div>
+              <div style="flex:1;"><div style="font-weight:600;font-size:13px;color:#111;">Bonk</div><div style="font-size:10px;color:#d1d5db;font-family:monospace;">BONK</div></div>
+              <span style="font-size:10px;font-weight:700;background:#dcfce7;color:#15803d;padding:2px 8px;border-radius:99px;">EMPTY</span>
+              <input type="checkbox" checked style="accent-color:#16a34a;width:15px;height:15px;" />
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;border:1px solid #f3f4f6;border-radius:14px;padding:10px 12px;background:rgba(255,255,255,0.5);opacity:0.4;">
+              <div style="width:32px;height:32px;border-radius:10px;background:#0284c7;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:11px;flex-shrink:0;">JI</div>
+              <div style="flex:1;"><div style="font-weight:600;font-size:13px;color:#111;">JitoSOL</div><div style="font-size:10px;color:#d1d5db;font-family:monospace;">JitoSOL</div></div>
+              <div style="text-align:right;"><div style="font-weight:700;font-size:13px;">$0.0012</div><div style="font-size:10px;color:#9ca3af;">42 tkn</div></div>
+              <input type="checkbox" style="accent-color:#16a34a;width:15px;height:15px;" />
+            </div>
+          </div>
+          <div style="border-top:1px solid #f3f4f6;padding:14px;background:white;flex-shrink:0;">
+            <button style="width:100%;background:#16a34a;color:white;font-weight:700;font-size:15px;padding:14px;border-radius:99px;border:none;cursor:pointer;box-shadow:0 4px 14px rgba(22,163,74,0.3);">♻ Recycle 1 account · get 0.0019 SOL</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── OPTION D: inline header ─────────────────────── -->
+    <div>
+      <div class="label">D — Stats merged into header</div>
+      <div class="phone">
+        <div class="phone-inner">
+          <div class="app-bar">
+            <div class="app-bar-logo">♻</div>
+            <span class="app-bar-title">Recycler</span>
+            <button class="app-bar-btn">Fh…Mo</button>
+          </div>
+
+          <!-- Stats strip D: single header line -->
+          <div style="padding:10px 14px 8px;border-bottom:1px solid #f3f4f6;background:white;flex-shrink:0;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span style="width:22px;height:22px;border-radius:99px;background:#111;color:white;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;">1</span>
+                <span style="color:#4b5563;font-size:13px;font-weight:500;">dust account found</span>
+              </div>
+              <button style="font-size:11px;font-weight:700;padding:5px 12px;border-radius:99px;border:1.5px solid #bbf7d0;color:#16a34a;background:white;">Select all</button>
+            </div>
+            <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;">
+              <span style="font-size:12px;font-weight:700;color:#374151;">0.0019 SOL</span>
+              <span style="color:#d1d5db;font-size:11px;">·</span>
+              <span style="font-size:12px;font-weight:700;color:#16a34a;">+124 SMELT</span>
+              <span style="color:#d1d5db;font-size:11px;">·</span>
+              <span style="font-size:12px;font-weight:700;color:#6366f1;">165B freed</span>
+            </div>
+          </div>
+
+          <div style="flex:1;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:6px;">
+            <div style="display:flex;align-items:center;gap:10px;border:1.5px solid #bbf7d0;border-radius:14px;padding:10px 12px;background:white;">
+              <div style="width:32px;height:32px;border-radius:10px;background:#7c3aed;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:11px;flex-shrink:0;">BO</div>
+              <div style="flex:1;"><div style="font-weight:600;font-size:13px;color:#111;">Bonk</div><div style="font-size:10px;color:#d1d5db;font-family:monospace;">BONK</div></div>
+              <span style="font-size:10px;font-weight:700;background:#dcfce7;color:#15803d;padding:2px 8px;border-radius:99px;">EMPTY</span>
+              <input type="checkbox" checked style="accent-color:#16a34a;width:15px;height:15px;" />
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;border:1px solid #f3f4f6;border-radius:14px;padding:10px 12px;background:rgba(255,255,255,0.5);opacity:0.4;">
+              <div style="width:32px;height:32px;border-radius:10px;background:#0284c7;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:11px;flex-shrink:0;">JI</div>
+              <div style="flex:1;"><div style="font-weight:600;font-size:13px;color:#111;">JitoSOL</div><div style="font-size:10px;color:#d1d5db;font-family:monospace;">JitoSOL</div></div>
+              <div style="text-align:right;"><div style="font-weight:700;font-size:13px;">$0.0012</div><div style="font-size:10px;color:#9ca3af;">42 tkn</div></div>
+              <input type="checkbox" style="accent-color:#16a34a;width:15px;height:15px;" />
+            </div>
+          </div>
+          <div style="border-top:1px solid #f3f4f6;padding:14px;background:white;flex-shrink:0;">
+            <button style="width:100%;background:#16a34a;color:white;font-weight:700;font-size:15px;padding:14px;border-radius:99px;border:none;cursor:pointer;box-shadow:0 4px 14px rgba(22,163,74,0.3);">♻ Recycle 1 account · get 0.0019 SOL</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /flex wrap -->
+
+  <p class="text-center text-gray-400 text-sm mt-10">Open at <code class="bg-white px-2 py-0.5 rounded text-gray-600">localhost:3000/demo-recycle.html</code></p>
+</div>
+</body>
+</html>

@@ -6,6 +6,7 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import {
   getTrashAccounts,
+  checkVaultAtas,
   solToReclaim,
   TrashAccount,
   connection,
@@ -86,6 +87,7 @@ export default function Home() {
   } | null>(null);
   const [donationEnabled, setDonationEnabled] = useState(false);
   const [donationPct, setDonationPct] = useState(25);
+  const [vaultAtaMap, setVaultAtaMap] = useState<Record<string, boolean>>({});
 
   // ── NFT state ──────────────────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState<ActiveTab>('tokens');
@@ -124,6 +126,7 @@ export default function Home() {
         setSelectedKeys(new Set(result.map((a) => a.pubkey.toBase58())));
         setStatus('results');
         fetchTokenMetas(result.map((a) => a.mint.toBase58())).then(setTokenMetas);
+        checkVaultAtas(result).then(setVaultAtaMap).catch(() => {});
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
@@ -526,13 +529,18 @@ export default function Home() {
                           </div>
                           <div className="text-gray-300 text-[10px] font-mono">{shortAddr(mintStr)}</div>
                         </div>
-                        <div className="text-right flex-shrink-0">
+                        <div className="text-right flex-shrink-0 space-y-1">
                           {account.balance === 0 ? (
                             <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold text-green-700">EMPTY</span>
                           ) : (
                             <>
                               <div className="text-gray-800 font-bold text-sm tabular-nums">{account.usdValue > 0.0001 ? `$${account.usdValue.toFixed(4)}` : '<$0.01'}</div>
                               <div className="text-gray-400 text-[10px] tabular-nums">{account.balance.toLocaleString()} tkn</div>
+                              {mintStr in vaultAtaMap && (
+                                vaultAtaMap[mintStr]
+                                  ? <span className="inline-flex items-center gap-0.5 text-[9px] font-bold text-blue-500 bg-blue-50 border border-blue-100 rounded px-1.5 py-0.5">🏦 vault</span>
+                                  : <span className="inline-flex items-center gap-0.5 text-[9px] font-bold text-orange-500 bg-orange-50 border border-orange-100 rounded px-1.5 py-0.5">🔥 burn</span>
+                              )}
                             </>
                           )}
                         </div>
@@ -545,13 +553,21 @@ export default function Home() {
 
               <div className="border-t border-gray-100 flex-shrink-0 bg-white py-4">
                 <div className="max-w-md mx-auto px-4 space-y-3">
-                  <div className="bg-[#f0faf4] border border-green-100 rounded-2xl px-4 py-3">
-                    <label className="flex items-center gap-3 cursor-pointer select-none">
-                      <input type="checkbox" checked={donationEnabled} onChange={(e) => setDonationEnabled(e.target.checked)} className="accent-green-600 w-4 h-4" />
-                      <span className="text-sm font-medium text-gray-700">Donate reclaimed SOL to ecosystem</span>
-                    </label>
+                  <div
+                    className={`border rounded-2xl px-4 py-3 transition-colors cursor-pointer select-none ${donationEnabled ? 'bg-green-50 border-green-200' : 'bg-[#f0faf4] border-green-100'}`}
+                    onClick={() => setDonationEnabled((v) => !v)}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <div className="text-sm font-semibold text-gray-800">Donate to ecosystem</div>
+                        <div className="text-xs text-gray-400 mt-0.5">Your SOL helps grow the reward pool</div>
+                      </div>
+                      <div className={`relative w-10 h-5 rounded-full transition-colors flex-shrink-0 ${donationEnabled ? 'bg-green-500' : 'bg-gray-200'}`}>
+                        <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 ${donationEnabled ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                      </div>
+                    </div>
                     {donationEnabled && (
-                      <div className="mt-3 space-y-2">
+                      <div className="mt-3 space-y-2" onClick={(e) => e.stopPropagation()}>
                         <div className="flex gap-2">
                           {([25, 50, 100] as const).map((pct) => (
                             <button key={pct} onClick={() => setDonationPct(pct)} className={`flex-1 py-1.5 rounded-xl text-xs font-bold transition-colors ${donationPct === pct ? 'bg-green-600 text-white' : 'border border-green-200 text-green-700 hover:bg-green-50'}`}>{pct}%</button>

@@ -153,7 +153,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       )}
 
       {/* TOP NAV */}
-      <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-green-100/60 flex items-center px-4 sm:px-6" style={{ height: '4rem' }}>
+      <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-green-100/60 flex justify-center" style={{ height: '4rem' }}>
+      <div className="w-full max-w-[900px] px-4 sm:px-6 flex items-center h-full">
 
         {/* Mobile: hamburger + logo */}
         <div className="flex items-center gap-3 md:hidden">
@@ -186,7 +187,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   key={href}
                   href={href}
                   className={[
-                    'px-4 py-2 rounded-xl text-[15px] font-medium transition-colors',
+                    'px-3 py-2 rounded-xl text-[14px] font-medium transition-colors whitespace-nowrap',
                     active ? 'bg-green-50 text-green-700 font-semibold' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900',
                   ].join(' ')}
                 >
@@ -211,6 +212,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <div className="w-32 h-10 rounded-full bg-green-100 animate-pulse" />
           )}
         </div>
+      </div>
       </header>
 
       {/* STATS BAR */}
@@ -230,7 +232,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           ))}
         </div>
         {/* Desktop: single row */}
-        <div className="hidden sm:flex items-stretch w-full max-w-5xl mx-auto">
+        <div className="hidden sm:flex items-stretch w-full max-w-[900px] mx-auto">
           {[
             { label: 'Circulating', value: `${fmtSupply(totalSupply)} SMELT`, sub: 'supply', tooltip: 'Total circulating SMELT supply on-chain.' },
             { label: 'Reward pool', value: `${pendingSol > 0 ? pendingSol.toFixed(4) : '—'} SOL`, sub: 'pending', tooltip: 'Undistributed SOL waiting for SMELT holders.' },

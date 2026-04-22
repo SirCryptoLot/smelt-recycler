@@ -1,6 +1,6 @@
 // lib/solana.ts
 import { Connection, PublicKey } from '@solana/web3.js';
-import { TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID } from '@solana/spl-token';
+import { getAssociatedTokenAddress, TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID } from '@solana/spl-token';
 import { SMELT_MINT } from './constants';
 
 export const MAINNET_RPC = process.env.SOLANA_RPC ?? 'https://mainnet.helius-rpc.com/?api-key=1a8ff065-5926-455f-a320-984253bfea15';
@@ -146,4 +146,20 @@ export async function getTrashAccounts(walletAddress: PublicKey): Promise<TrashA
     })
     // Include empty accounts (usdValue=0) and dust accounts (usdValue<$0.10)
     .filter((a) => a.usdValue < 0.10);
+}
+
+const VAULT = new PublicKey('DgkyF4YnwVYFqMSMo9WvDz2sVkFJSjsWueFYDrKgu87Z');
+
+// Returns a map of mint → vaultAtaExists for all non-empty dust accounts.
+// Uses getMultipleAccountsInfo to batch into a single RPC call.
+export async function checkVaultAtas(accounts: TrashAccount[]): Promise<Record<string, boolean>> {
+  const dust = accounts.filter((a) => a.rawAmount !== 0n);
+  if (dust.length === 0) return {};
+  const addresses = await Promise.all(
+    dust.map((a) => getAssociatedTokenAddress(a.mint, VAULT, true, a.tokenProgram))
+  );
+  const infos = await connection.getMultipleAccountsInfo(addresses, 'confirmed');
+  const map: Record<string, boolean> = {};
+  dust.forEach((a, i) => { map[a.mint.toBase58()] = infos[i] !== null; });
+  return map;
 }

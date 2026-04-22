@@ -2,7 +2,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getSmeltPrice } from '@/lib/jupiter-swap';
 import { SMELT_MINT } from '@/lib/constants';
 
 const MINT         = SMELT_MINT.toBase58();
@@ -50,7 +49,7 @@ const VENUES = [
     // Jupiter brand: dark purple card, lighter purple logo bg
     cardCls: 'bg-[#6c48c5] hover:bg-[#7c55d4] text-white shadow-lg',
     logoBg: 'bg-white/20',
-    href: `https://jup.ag/swap/SOL-${MINT}`,
+    href: `https://jup.ag/swap/So11111111111111111111111111111111111111112-${MINT}`,
     primary: true,
     tag: 'Recommended',
   },
@@ -82,19 +81,13 @@ export default function SwapPage() {
   const [copied, setCopied]         = useState(false);
 
   useEffect(() => {
-    // Primary: DexScreener gives price + fdv (≈ market cap) in one call
-    fetch(`https://api.dexscreener.com/latest/dex/tokens/${MINT}`)
-      .then(r => r.json() as Promise<{ pairs?: { priceUsd?: string; fdv?: number }[] }>)
+    fetch('/api/smelt-price')
+      .then(r => r.json() as Promise<{ price: number | null; marketCap: number | null }>)
       .then(d => {
-        const pair = d.pairs?.[0];
-        const price = parseFloat(pair?.priceUsd ?? '');
-        if (price > 0) setSmeltPrice(price);
-        if (pair?.fdv && pair.fdv > 0) setMarketCap(pair.fdv);
+        if (d.price    != null) setSmeltPrice(d.price);
+        if (d.marketCap != null) setMarketCap(d.marketCap);
       })
       .catch(() => {});
-
-    // Jupiter price as fallback (runs concurrently, only sets if DexScreener missed)
-    getSmeltPrice().then(p => { if (p) setSmeltPrice(prev => prev ?? p); }).catch(() => {});
   }, []);
 
   function copyCA() {

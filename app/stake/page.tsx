@@ -7,6 +7,7 @@ import { useConnection } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { fetchSmeltBalance, buildStakeTransaction } from '@/lib/smelt';
 import { COOLDOWN_DAYS } from '@/lib/constants';
+import Link from 'next/link';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -61,6 +62,12 @@ function fmtCountdown(ms: number): string {
   const m = Math.floor((ms % 3_600_000) / 60_000);
   const s = Math.floor((ms % 60_000) / 1_000);
   return `${h}h ${m}m ${s}s`;
+}
+
+function usdStr(smelt: number, price: number | null): string | null {
+  if (!price || smelt <= 0) return null;
+  const v = smelt * price;
+  return `≈ $${v < 0.01 ? v.toFixed(6) : v.toFixed(2)}`;
 }
 
 // ── Sub-components ─────────────────────────────────────────────────────────────
@@ -121,20 +128,35 @@ function StatusPill({ stakeData, poolData, now }: { stakeData: StakeData; poolDa
   );
 }
 
+function StatusMsg({ msg }: { msg: string }) {
+  if (!msg) return null;
+  const isError = /fail|error|invalid|not found|does not match|no smelt/i.test(msg);
+  return (
+    <div className={`mt-3 text-sm text-center rounded-xl px-4 py-3 ${
+      isError
+        ? 'text-red-700 bg-red-50 border border-red-100'
+        : 'text-green-700 bg-green-50 border border-green-100'
+    }`}>
+      {msg}
+    </div>
+  );
+}
+
 // ── Page ───────────────────────────────────────────────────────────────────────
 
 export default function StakePage() {
   const { publicKey, signTransaction, signMessage } = useWallet();
   const { connection } = useConnection();
 
-  const [poolData, setPoolData] = useState<PoolData | null>(null);
-  const [stakeData, setStakeData] = useState<StakeData | null>(null);
+  const [poolData, setPoolData]     = useState<PoolData | null>(null);
+  const [stakeData, setStakeData]   = useState<StakeData | null>(null);
   const [walletSmelt, setWalletSmelt] = useState(0);
+  const [smeltPrice, setSmeltPrice] = useState<number | null>(null);
   const [stakeAmount, setStakeAmount] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [msg, setMsg] = useState('');
-  const [poolError, setPoolError] = useState('');
-  const [now, setNow] = useState(Date.now());
+  const [loading, setLoading]       = useState(false);
+  const [msg, setMsg]               = useState('');
+  const [poolError, setPoolError]   = useState('');
+  const [now, setNow]               = useState(Date.now());
   const [topStakers, setTopStakers] = useState<Array<{ wallet: string; stakedUi: number; sharePct: number }>>([]);
   const [showAllDist, setShowAllDist] = useState(false);
 
@@ -164,12 +186,9 @@ export default function StakePage() {
       ]);
       setWalletSmelt(Number(bal) / 1e9);
       if (res.ok) setStakeData(await res.json() as StakeData);
-    } catch {
-      // non-fatal
-    }
+    } catch { /* non-fatal */ }
   }, [publicKey, connection]);
 
-  // Load pool on mount + refresh every 30s
   useEffect(() => {
     void refreshPool();
     const id = setInterval(() => { void refreshPool(); }, 30_000);
@@ -181,14 +200,14 @@ export default function StakePage() {
       .then(r => r.ok ? r.json() : [])
       .then(setTopStakers)
       .catch(() => {});
+    fetch('/api/smelt-price', { cache: 'no-store' })
+      .then(r => r.ok ? r.json() : null)
+      .then((d: { price: number | null } | null) => { if (d?.price) setSmeltPrice(d.price); })
+      .catch(() => {});
   }, []);
 
-  // Load stake data when wallet connects
-  useEffect(() => {
-    void refreshStake();
-  }, [refreshStake]);
+  useEffect(() => { void refreshStake(); }, [refreshStake]);
 
-  // Clear stale wallet data on disconnect
   useEffect(() => {
     if (!publicKey) {
       setStakeData(null);
@@ -197,24 +216,38 @@ export default function StakePage() {
     }
   }, [publicKey]);
 
-  // Derived epoch values (computed each render)
+  // Derived values
   const epochDurationMs = 48 * 60 * 60 * 1000;
-  const epochStartMs = poolData ? new Date(poolData.epochStart).getTime() : 0;
-  const nextDistMs = poolData ? new Date(poolData.nextDistributionAt).getTime() : 0;
-  const epochProgress = poolData
+  const epochStartMs    = poolData ? new Date(poolData.epochStart).getTime() : 0;
+  const nextDistMs      = poolData ? new Date(poolData.nextDistributionAt).getTime() : 0;
+  const epochProgress   = poolData
     ? Math.min(100, Math.max(0, ((now - epochStartMs) / epochDurationMs) * 100))
     : 0;
   const msRemaining = Math.max(0, nextDistMs - now);
 
-  const staked = stakeData?.stakedUi ?? 0;
-  const sharePct = stakeData?.sharePct ?? 0;
+  const staked      = stakeData?.stakedUi ?? 0;
+  const sharePct    = stakeData?.sharePct ?? 0;
   const estimatedReward = (sharePct / 100) * (poolData?.distributableSol ?? 0);
-  const showEstimate = staked > 0 && !stakeData?.cooldownStartedAt;
+  const showEstimate    = staked > 0 && !stakeData?.cooldownStartedAt;
 
-  const cooldownMs = COOLDOWN_DAYS * 24 * 60 * 60 * 1000;
+  const cooldownMs       = COOLDOWN_DAYS * 24 * 60 * 60 * 1000;
   const cooldownComplete = stakeData?.cooldownStartedAt
     ? now - new Date(stakeData.cooldownStartedAt).getTime() >= cooldownMs
     : false;
+
+  // APR estimate from last distribution
+  const aprEstimate: number | null = (() => {
+    if (!poolData || poolData.distributions.length === 0 || poolData.totalSmeltStakedUi <= 0) return null;
+    const last = poolData.distributions[0];
+    // SOL per SMELT per epoch, annualized (365 / 2 = 182.5 epochs/year for 48h epochs)
+    const solPerSmeltPerEpoch = last.totalSol / poolData.totalSmeltStakedUi;
+    return solPerSmeltPerEpoch * 182.5 * 100; // as percentage
+  })();
+
+  // Input validation
+  const stakeAmountNum = parseFloat(stakeAmount) || 0;
+  const stakeExceedsBalance = stakeAmountNum > walletSmelt && walletSmelt > 0;
+  const stakeDisabled = loading || !stakeAmount || stakeAmountNum <= 0 || stakeExceedsBalance;
 
   // ── Actions ──────────────────────────────────────────────────────────────────
 
@@ -320,9 +353,18 @@ export default function StakePage() {
           {/* Stat strip */}
           <div className="grid grid-cols-3 border border-gray-100 bg-white rounded-2xl overflow-hidden shadow-sm mt-5">
             <StatCell label="Pool SMELT" value={fmtSmelt(poolData.totalSmeltStakedUi)} sub="total staked" />
-            <StatCell label="Vault SOL" value={poolData.distributableSol.toFixed(3)} sub="pending dist." green />
-            <StatCell label="Stakers" value={String(poolData.stakerCount)} sub="active" />
+            <StatCell label="Vault SOL"  value={poolData.distributableSol.toFixed(3)}  sub="pending dist." green />
+            <StatCell label="Stakers"    value={String(poolData.stakerCount)}           sub="active" />
           </div>
+
+          {/* APR estimate */}
+          {aprEstimate !== null && (
+            <div className="mt-2 flex items-center justify-center gap-1.5 text-xs text-gray-400">
+              <span>Est. APR</span>
+              <span className="font-bold text-green-600">{aprEstimate.toFixed(1)}%</span>
+              <span className="text-gray-300">· based on last distribution</span>
+            </div>
+          )}
 
           {/* Epoch card */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mt-3">
@@ -363,11 +405,25 @@ export default function StakePage() {
               {stakeData && (
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mt-3">
                   <div className="text-[9px] font-bold tracking-widest text-gray-400 uppercase mb-1">Your position</div>
-                  <Row label="Wallet SMELT"><span className="text-gray-900">{fmtSmeltFull(walletSmelt)}</span></Row>
-                  <Row label="Staked SMELT"><span className="text-green-600">{fmtSmeltFull(staked)}</span></Row>
+                  <Row label="Wallet SMELT">
+                    <div className="text-right">
+                      <div>{fmtSmeltFull(walletSmelt)}</div>
+                      {usdStr(walletSmelt, smeltPrice) && (
+                        <div className="text-[11px] text-gray-400 font-normal">{usdStr(walletSmelt, smeltPrice)}</div>
+                      )}
+                    </div>
+                  </Row>
+                  <Row label="Staked SMELT">
+                    <div className="text-right">
+                      <div className="text-green-600">{fmtSmeltFull(staked)}</div>
+                      {usdStr(staked, smeltPrice) && (
+                        <div className="text-[11px] text-gray-400 font-normal">{usdStr(staked, smeltPrice)}</div>
+                      )}
+                    </div>
+                  </Row>
                   <Row label="Pool share"><span className="text-green-600">{sharePct.toFixed(3)}%</span></Row>
                   <Row label="Staked since">
-                    <span className="text-gray-900">{stakeData.depositedAt ? fmtDateShort(stakeData.depositedAt) : '—'}</span>
+                    <span>{stakeData.depositedAt ? fmtDateShort(stakeData.depositedAt) : '—'}</span>
                   </Row>
                   <Row label="Status">
                     {staked > 0
@@ -398,35 +454,62 @@ export default function StakePage() {
                 </div>
               )}
 
-              {/* Stake form */}
+              {/* Stake form OR get SMELT CTA */}
               {!stakeData?.cooldownStartedAt && (
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mt-3">
-                  <div className="text-[9px] font-bold tracking-widest text-gray-400 uppercase mb-3">Add stake</div>
-                  <div className="text-xs text-gray-400 mb-2">Amount (SMELT)</div>
-                  <div className="flex gap-2">
-                    <input
-                      type="number"
-                      min="0"
-                      value={stakeAmount}
-                      onChange={(e) => setStakeAmount(e.target.value)}
-                      placeholder="0"
-                      className="flex-1 border border-gray-200 rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-green-300"
-                    />
+                walletSmelt === 0 && staked === 0 ? (
+                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mt-3 space-y-3">
+                    <div className="text-[9px] font-bold tracking-widest text-gray-400 uppercase">Get SMELT to stake</div>
+                    <p className="text-sm text-gray-500">You need SMELT tokens to stake. Earn them for free by recycling dust accounts, or buy on the swap page.</p>
+                    <div className="flex gap-2">
+                      <Link href="/" className="flex-1 py-3 rounded-full bg-green-600 hover:bg-green-500 text-white font-bold text-sm text-center transition-all">
+                        ♻ Recycle &amp; Earn
+                      </Link>
+                      <Link href="/swap" className="flex-1 py-3 rounded-full border border-gray-200 text-gray-600 font-semibold text-sm text-center hover:bg-gray-50 transition-all">
+                        Buy SMELT
+                      </Link>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mt-3">
+                    <div className="text-[9px] font-bold tracking-widest text-gray-400 uppercase mb-3">Add stake</div>
+                    <div className="text-xs text-gray-400 mb-2">
+                      Amount (SMELT)
+                      {walletSmelt > 0 && (
+                        <span className="ml-1 text-gray-300">· {fmtSmeltFull(walletSmelt)} available</span>
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      <input
+                        type="number"
+                        min="0"
+                        value={stakeAmount}
+                        onChange={(e) => setStakeAmount(e.target.value)}
+                        placeholder="0"
+                        className={`flex-1 border rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:ring-2 transition-colors ${
+                          stakeExceedsBalance
+                            ? 'border-red-300 focus:ring-red-200 bg-red-50'
+                            : 'border-gray-200 focus:ring-green-300'
+                        }`}
+                      />
+                      <button
+                        onClick={() => setStakeAmount(walletSmelt.toString())}
+                        className="px-3 py-2 text-xs font-bold text-green-700 bg-green-50 rounded-xl hover:bg-green-100"
+                      >
+                        MAX
+                      </button>
+                    </div>
+                    {stakeExceedsBalance && (
+                      <div className="text-xs text-red-500 mt-1.5">Exceeds wallet balance ({fmtSmeltFull(walletSmelt)} SMELT)</div>
+                    )}
                     <button
-                      onClick={() => setStakeAmount((Math.floor(walletSmelt * 1e9) / 1e9).toString())}
-                      className="px-3 py-2 text-xs font-bold text-green-700 bg-green-50 rounded-xl hover:bg-green-100"
+                      onClick={handleStake}
+                      disabled={stakeDisabled}
+                      className="w-full mt-3 py-3.5 rounded-full bg-green-600 hover:bg-green-500 active:scale-[0.98] text-white font-bold text-sm disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-green-200 transition-all"
                     >
-                      MAX
+                      {loading ? 'Processing…' : 'Stake SMELT'}
                     </button>
                   </div>
-                  <button
-                    onClick={handleStake}
-                    disabled={loading || !stakeAmount || parseFloat(stakeAmount) <= 0}
-                    className="w-full mt-3 py-3.5 rounded-full bg-green-600 hover:bg-green-500 active:scale-[0.98] text-white font-bold text-sm disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-green-200 transition-all"
-                  >
-                    {loading ? 'Processing…' : 'Stake SMELT'}
-                  </button>
-                </div>
+                )
               )}
 
               {/* Unstake buttons */}
@@ -454,9 +537,7 @@ export default function StakePage() {
               )}
 
               {/* Status message */}
-              {msg && (
-                <div className="mt-3 text-sm text-center text-gray-600 bg-gray-50 rounded-xl px-4 py-3">{msg}</div>
-              )}
+              <StatusMsg msg={msg} />
             </>
           )}
 
@@ -467,25 +548,24 @@ export default function StakePage() {
               <div className="text-sm text-gray-400 py-2">No distributions yet.</div>
             ) : (
               <>
-                {(showAllDist ? poolData.distributions : poolData.distributions.slice(0, 3)).map((d, i) => {
-                  const estimated = (sharePct / 100) * d.totalSol;
-                  return (
-                    <div key={i} className="flex justify-between items-center py-2.5 [&+&]:border-t border-gray-100">
-                      <div>
-                        <div className="text-sm font-semibold text-gray-900">{fmtDateShort(d.date)}</div>
-                        <div className="text-[11px] text-gray-400">
-                          {d.totalSol.toFixed(4)} SOL · {d.recipientCount} stakers
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-sm font-bold text-green-600">
-                          {publicKey ? `+${estimated.toFixed(4)} SOL` : '—'}
-                        </div>
-                        <div className="text-[11px] text-gray-400">{publicKey ? 'est. earned' : 'connect wallet'}</div>
+                {(showAllDist ? poolData.distributions : poolData.distributions.slice(0, 3)).map((d, i) => (
+                  <div key={i} className="flex justify-between items-center py-2.5 [&+&]:border-t border-gray-100">
+                    <div>
+                      <div className="text-sm font-semibold text-gray-900">{fmtDateShort(d.date)}</div>
+                      <div className="text-[11px] text-gray-400">
+                        {d.totalSol.toFixed(4)} SOL · {d.recipientCount} stakers
                       </div>
                     </div>
-                  );
-                })}
+                    {publicKey && sharePct > 0 && (
+                      <div className="text-right">
+                        <div className="text-sm font-bold text-green-600">
+                          ~{((sharePct / 100) * d.totalSol).toFixed(4)} SOL
+                        </div>
+                        <div className="text-[10px] text-gray-300">at current share</div>
+                      </div>
+                    )}
+                  </div>
+                ))}
                 {poolData.distributions.length > 3 && (
                   <button onClick={() => setShowAllDist(v => !v)} className="w-full text-xs text-gray-400 hover:text-green-600 pt-2.5 text-center transition-colors">
                     {showAllDist ? 'Show less' : `+${poolData.distributions.length - 3} more`}
@@ -501,18 +581,24 @@ export default function StakePage() {
             {topStakers.length === 0 ? (
               <div className="text-sm text-gray-400 py-2">No stakers yet.</div>
             ) : (
-              topStakers.map((s, i) => (
-                <div key={s.wallet} className="flex items-center justify-between py-2.5 [&+&]:border-t border-gray-100">
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs font-bold text-gray-300 w-4 tabular-nums">{i + 1}</span>
-                    <span className="text-sm font-mono text-gray-600">{`${s.wallet.slice(0, 6)}…${s.wallet.slice(-4)}`}</span>
+              topStakers.map((s, i) => {
+                const isYou = publicKey?.toBase58() === s.wallet;
+                return (
+                  <div key={s.wallet} className={`flex items-center justify-between py-2.5 [&+&]:border-t border-gray-100 ${isYou ? 'bg-green-50 -mx-4 px-4 rounded-xl' : ''}`}>
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs font-bold text-gray-300 w-4 tabular-nums">{i + 1}</span>
+                      <span className={`text-sm font-mono ${isYou ? 'text-green-700 font-bold' : 'text-gray-600'}`}>
+                        {`${s.wallet.slice(0, 6)}…${s.wallet.slice(-4)}`}
+                      </span>
+                      {isYou && <span className="text-[10px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full">You</span>}
+                    </div>
+                    <div className="text-right">
+                      <div className={`text-sm font-bold tabular-nums ${isYou ? 'text-green-700' : 'text-gray-900'}`}>{fmtSmelt(s.stakedUi)}</div>
+                      <div className="text-[11px] text-gray-400">{s.sharePct.toFixed(2)}% share</div>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-sm font-bold text-gray-900 tabular-nums">{fmtSmelt(s.stakedUi)}</div>
-                    <div className="text-[11px] text-gray-400">{s.sharePct.toFixed(2)}% share</div>
-                  </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
 

@@ -230,9 +230,9 @@ export default function Home() {
       setStatus('success');
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Transaction cancelled';
-      // Phantom occasionally fires "rejected" after a tx already lands on-chain.
-      // Prompt the user to scan rather than showing a hard error.
-      if (msg.toLowerCase().includes('rejected') || msg.toLowerCase().includes('user cancel')) {
+      if (msg === 'NOT_ENOUGH_SOL') {
+        setError('NOT_ENOUGH_SOL');
+      } else if (msg.toLowerCase().includes('rejected') || msg.toLowerCase().includes('user cancel')) {
         setError('Wallet reported a rejection — the transaction may have landed anyway. Scan again to verify.');
       } else {
         setError(msg);
@@ -488,7 +488,17 @@ export default function Home() {
               </div>
 
               {error && (
-                <div className="mx-4 mt-3 flex-shrink-0 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-600 text-sm">{error}</div>
+                error === 'NOT_ENOUGH_SOL' ? (
+                  <div className="mx-4 mt-3 flex-shrink-0 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3.5 flex items-start gap-3">
+                    <span className="text-xl flex-shrink-0">⚠️</span>
+                    <div>
+                      <div className="text-amber-800 font-semibold text-sm">Not enough SOL</div>
+                      <div className="text-amber-600 text-xs mt-0.5">Add ~0.01 SOL to cover the transaction fee and platform fee, then try again.</div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mx-4 mt-3 flex-shrink-0 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-600 text-sm">{error}</div>
+                )
               )}
 
               <div className="flex-1 overflow-y-auto py-3">

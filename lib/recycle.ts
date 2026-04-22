@@ -62,10 +62,12 @@ async function preSimulate(tx: Transaction): Promise<string | null> {
     const val = json.result?.value;
     if (!val?.err) return null;
     const logs = val.logs ?? [];
-    const detail = logs.length > 0
-      ? logs.join('\n')
-      : JSON.stringify(val.err);
-    return detail;
+    const combined = logs.join('\n');
+    // Detect low-SOL condition and return a human-readable message instead of raw logs
+    if (combined.includes('insufficient lamports') || combined.includes('Insufficient funds')) {
+      return 'NOT_ENOUGH_SOL';
+    }
+    return combined.length > 0 ? combined : JSON.stringify(val.err);
   } catch {
     return null; // non-blocking — let wallet try
   }
@@ -206,6 +208,9 @@ export async function recycleAccounts(
   for (let i = 0; i < transactions.length; i++) {
     const failDetail = await preSimulate(transactions[i]);
     if (failDetail !== null) {
+      if (failDetail === 'NOT_ENOUGH_SOL') {
+        throw new Error('NOT_ENOUGH_SOL');
+      }
       throw new Error(`Batch ${i + 1} simulation failed — ${failDetail}`);
     }
   }

@@ -7,6 +7,8 @@ import { useConnection } from '@solana/wallet-adapter-react';
 import { SystemProgram, Transaction } from '@solana/web3.js';
 import { EcosystemData } from '@/lib/ecosystem';
 import { VAULT_PUBKEY } from '@/lib/constants';
+import { PageShell } from '@/components/PageShell';
+import { PageHeading } from '@/components/PageHeading';
 
 interface LeaderboardEntry {
   wallet: string;
@@ -23,6 +25,14 @@ interface LeaderboardData {
 type Tab = 'weekly' | 'allTime';
 
 function shortAddr(addr: string) { return `${addr.slice(0, 6)}…${addr.slice(-4)}`; }
+
+const ECO_STATS = (eco: EcosystemData | null, totalSolDonated: number) => [
+  { label: 'Wallets cleaned', value: (eco?.totalWallets ?? 0).toLocaleString(), icon: '🧹', accent: false },
+  { label: 'Accounts closed', value: (eco?.totalAccountsClosed ?? 0).toLocaleString(), icon: '♻️', accent: false },
+  { label: 'SOL unlocked', value: `${(eco?.totalSolReclaimed ?? 0).toFixed(2)} SOL`, icon: '🔓', accent: false },
+  { label: 'SMELT minted', value: (eco?.totalSmeltMinted ?? 0).toLocaleString(), icon: '🪙', accent: true },
+  { label: 'SOL donated', value: `${totalSolDonated.toFixed(4)} SOL`, icon: '💚', accent: true },
+];
 
 export default function CommunityPage() {
   const { publicKey, signTransaction } = useWallet();
@@ -69,6 +79,7 @@ export default function CommunityPage() {
   const currentEntries = tab === 'weekly' ? (lb?.weekly.entries ?? []) : (lb?.allTime.entries ?? []);
   const userWallet = publicKey?.toBase58() ?? '';
   const userRank = currentEntries.findIndex((e) => e.wallet === userWallet);
+  const userEntry = userRank >= 0 ? currentEntries[userRank] : null;
 
   async function handleDonate() {
     if (!publicKey || !signTransaction) return;
@@ -110,39 +121,31 @@ export default function CommunityPage() {
 
   if (loading) {
     return (
-      <main className="flex-1 overflow-y-auto p-4 sm:p-8">
-        <div className="max-w-3xl mx-auto space-y-4">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-24 rounded-2xl bg-gray-200 animate-pulse" />
-          ))}
-        </div>
-      </main>
+      <PageShell className="space-y-4">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="h-24 rounded-2xl bg-gray-200 animate-pulse" />
+        ))}
+      </PageShell>
     );
   }
 
   return (
-    <main className="flex-1 overflow-y-auto">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-10">
-
-        {/* Page heading */}
-        <div>
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight">Community</h1>
-          <p className="text-gray-400 text-sm mt-1">Ecosystem health, leaderboard &amp; donations</p>
-        </div>
+    <PageShell className="space-y-8">
+      <PageHeading
+        title="Community"
+        subtitle="Ecosystem health, leaderboard &amp; donations"
+      />
 
         {/* Ecosystem Health */}
         <section>
           <h2 className="text-lg font-bold text-gray-900 mb-5">Ecosystem Health</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-            {[
-              { label: 'Wallets cleaned', value: (eco?.totalWallets ?? 0).toLocaleString(), accent: false },
-              { label: 'Accounts closed', value: (eco?.totalAccountsClosed ?? 0).toLocaleString(), accent: false },
-              { label: 'SOL unlocked', value: `${(eco?.totalSolReclaimed ?? 0).toFixed(2)} SOL`, accent: false },
-              { label: 'SMELT minted', value: (eco?.totalSmeltMinted ?? 0).toLocaleString(), accent: true },
-              { label: 'SOL donated', value: totalSolDonated.toFixed(4), accent: true },
-            ].map(({ label, value, accent }) => (
+            {ECO_STATS(eco, totalSolDonated).map(({ label, value, icon, accent }) => (
               <div key={label} className="rounded-2xl bg-white border border-gray-100 px-3 sm:px-4 py-4">
-                <div className="text-[9px] sm:text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-2">{label}</div>
+                <div className="flex items-center gap-1.5 mb-2">
+                  <span className="text-base leading-none">{icon}</span>
+                  <div className="text-[9px] sm:text-[10px] font-bold tracking-widest text-gray-400 uppercase">{label}</div>
+                </div>
                 <div className={`font-extrabold text-lg sm:text-xl tabular-nums leading-tight ${accent ? 'text-green-600' : 'text-gray-900'}`}>
                   {value}
                 </div>
@@ -158,8 +161,8 @@ export default function CommunityPage() {
             <p className="text-sm text-gray-500 mb-4">
               Send SOL directly to the distribution pool. It will be included in the next epoch&apos;s distribution to stakers.
             </p>
-            <div className="flex gap-2 mb-3">
-              {[0.1, 0.5, 1].map(amt => (
+            <div className="flex flex-wrap gap-2 mb-3">
+              {[0.01, 0.05, 0.1, 0.5, 1].map(amt => (
                 <button
                   key={amt}
                   onClick={() => setDonateAmount(String(amt))}
@@ -188,18 +191,26 @@ export default function CommunityPage() {
               <button
                 onClick={handleDonate}
                 disabled={donating || !donateAmount || Number(donateAmount) <= 0}
-                className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-40 text-white font-semibold rounded-xl py-2.5 text-sm transition-colors"
+                className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-40 text-white font-semibold rounded-xl py-2.5 text-sm transition-colors flex items-center justify-center gap-2"
               >
+                {donating && (
+                  <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                  </svg>
+                )}
                 {donating ? 'Sending…' : 'Donate'}
               </button>
             )}
             {donateSuccess && (
-              <div className="mt-3 text-sm text-green-700 font-semibold text-center">
-                Thank you! Your donation was recorded.
+              <div className="mt-3 rounded-xl bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-700 font-semibold text-center">
+                Thank you! Your donation was recorded. 💚
               </div>
             )}
             {donateError && (
-              <div className="mt-3 text-sm text-red-500 text-center">{donateError}</div>
+              <div className="mt-3 rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600 text-center">
+                {donateError}
+              </div>
             )}
           </div>
         </section>
@@ -208,11 +219,11 @@ export default function CommunityPage() {
         <section>
           <div className="flex items-center justify-between mb-5">
             <h2 className="text-lg font-bold text-gray-900">Leaderboard</h2>
-            {tab === 'weekly' && lb?.weekly.since && (
-              <span className="text-xs text-gray-400">
-                Since {new Date(lb.weekly.since).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-              </span>
-            )}
+            <span className="text-xs text-gray-400">
+              {tab === 'weekly' && lb?.weekly.since
+                ? `Since ${new Date(lb.weekly.since).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+                : 'All-time rankings'}
+            </span>
           </div>
 
           <div className="flex bg-gray-100 rounded-xl p-1 gap-1 mb-5 w-fit">
@@ -246,7 +257,7 @@ export default function CommunityPage() {
                           <span className="font-mono text-sm text-gray-700">{shortAddr(entry.wallet)}</span>
                           {isUser && <span className="text-green-700 text-[10px] font-bold bg-green-100 px-1.5 py-0.5 rounded-full">you</span>}
                         </div>
-                        <div className="text-xs text-gray-400 mt-0.5">{entry.solReclaimed.toFixed(4)} SOL reclaimed</div>
+                        <div className="text-xs text-gray-400 mt-0.5">{entry.solReclaimed.toFixed(4)} SOL · {entry.smeltEarned.toLocaleString()} SMELT</div>
                       </div>
                       <div className="text-right flex-shrink-0">
                         <div className="text-gray-900 font-bold tabular-nums">{entry.accounts}</div>
@@ -264,6 +275,7 @@ export default function CommunityPage() {
                     <th className="text-left px-4 py-3">Wallet</th>
                     <th className="text-right px-4 py-3">Accounts</th>
                     <th className="text-right px-4 py-3">SOL reclaimed</th>
+                    <th className="text-right px-4 py-3">SMELT earned</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -279,6 +291,7 @@ export default function CommunityPage() {
                         </td>
                         <td className="px-4 py-3 text-right text-gray-900 font-semibold">{entry.accounts}</td>
                         <td className="px-4 py-3 text-right text-gray-500">{entry.solReclaimed.toFixed(4)}</td>
+                        <td className="px-4 py-3 text-right text-green-600 font-semibold">{entry.smeltEarned.toLocaleString()}</td>
                       </tr>
                     );
                   })}
@@ -286,17 +299,28 @@ export default function CommunityPage() {
               </table>
 
               {userRank === -1 && userWallet && (
-                <div className="border-t border-gray-100 px-4 py-3 flex items-center justify-between gap-3 text-xs bg-green-50">
-                  <span className="text-gray-400">Not in top 20</span>
-                  <span className="text-gray-500 font-mono">{shortAddr(userWallet)}</span>
-                  <span className="text-green-700 text-[10px] bg-green-100 px-1.5 py-0.5 rounded font-semibold">you</span>
+                <div className="border-t border-gray-100 px-4 py-3 bg-green-50">
+                  <div className="flex items-center gap-3 text-xs">
+                    <span className="text-gray-400 shrink-0">Not in top 20</span>
+                    <span className="text-gray-500 font-mono">{shortAddr(userWallet)}</span>
+                    <span className="text-green-700 text-[10px] bg-green-100 px-1.5 py-0.5 rounded font-semibold">you</span>
+                  </div>
+                </div>
+              )}
+              {userEntry && userRank >= 0 && (
+                <div className="border-t border-green-100 px-4 py-3 bg-green-50 hidden sm:block">
+                  <div className="flex items-center gap-3 text-xs text-gray-500">
+                    <span className="font-semibold text-green-700">Your rank: #{userRank + 1}</span>
+                    <span>{userEntry.accounts} accounts</span>
+                    <span>{userEntry.solReclaimed.toFixed(4)} SOL</span>
+                    <span className="text-green-600 font-semibold">{userEntry.smeltEarned.toLocaleString()} SMELT</span>
+                  </div>
                 </div>
               )}
             </div>
           )}
         </section>
 
-      </div>
-    </main>
+    </PageShell>
   );
 }

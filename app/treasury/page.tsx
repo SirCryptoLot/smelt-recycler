@@ -4,6 +4,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { fetchStakeInfo } from '@/lib/smelt';
+import { PageShell } from '@/components/PageShell';
+import { PageHeading } from '@/components/PageHeading';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -175,11 +177,11 @@ export default function TreasuryPage() {
   }
 
   return (
-    <div className="max-w-lg mx-auto px-4 pb-16">
-
-      {/* Header */}
-      <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight pt-6">Treasury</h1>
-      <p className="text-gray-400 text-sm mt-1">Protocol inflows, vault balance, and distribution history.</p>
+    <PageShell>
+      <PageHeading
+        title="Treasury"
+        subtitle="Protocol inflows, vault balance, and distribution history."
+      />
 
       {/* Section 1 — Inflows strip */}
       <div className="grid grid-cols-3 border border-gray-100 bg-white rounded-2xl overflow-hidden shadow-sm mt-5">
@@ -304,6 +306,6 @@ export default function TreasuryPage() {
         </div>
       )}
 
-    </div>
+    </PageShell>
   );
 }

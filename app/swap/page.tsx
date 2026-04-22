@@ -3,6 +3,8 @@
 
 import { useEffect, useState } from 'react';
 import { SMELT_MINT } from '@/lib/constants';
+import { PageShell } from '@/components/PageShell';
+import { PageHeading } from '@/components/PageHeading';
 
 const MINT         = SMELT_MINT.toBase58();
 const RAYDIUM_POOL = '2maqTUbPGA8eUodVi8gcqAG3rUP1V2uqKa5a5PB87X32';
@@ -98,14 +100,11 @@ export default function SwapPage() {
   }
 
   return (
-    <main className="flex-1 overflow-y-auto">
-      <div className="max-w-[520px] mx-auto px-4 py-8 space-y-4">
-
-        {/* Header */}
-        <div>
-          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Buy SMELT</h1>
-          <p className="text-gray-400 text-sm mt-1">Swap SOL for SMELT — the Recycler reward token.</p>
-        </div>
+    <PageShell className="space-y-6">
+      <PageHeading
+        title="Buy SMELT"
+        subtitle="Swap SOL for SMELT — the Recycler reward token."
+      />
 
         {/* Market data strip */}
         <div className="rounded-2xl border border-gray-100 bg-white shadow-sm px-5 py-4 space-y-3">
@@ -242,7 +241,6 @@ export default function SwapPage() {
           <span className="text-green-600 group-hover:translate-x-0.5 transition-transform text-lg">→</span>
         </a>
 
-      </div>
-    </main>
+    </PageShell>
   );
 }

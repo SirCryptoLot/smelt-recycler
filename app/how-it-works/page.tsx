@@ -2,6 +2,8 @@
 'use client';
 
 import { useState } from 'react';
+import { PageShell } from '@/components/PageShell';
+import { PageHeading } from '@/components/PageHeading';
 
 function AddressRow({ label, address }: { label: string; address: string }) {
   const [copied, setCopied] = useState(false);
@@ -38,16 +40,11 @@ function AddressRow({ label, address }: { label: string; address: string }) {
 
 export default function HowItWorksPage() {
   return (
-    <main className="flex-1 overflow-y-auto">
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 sm:py-10 space-y-10">
-
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">How it works</h1>
-          <p className="text-gray-500 text-sm leading-relaxed">
-            Recycler helps you clean up your Solana wallet, reclaim locked SOL, and earn SMELT —
-            a reward token that earns you a share of all future protocol revenue.
-          </p>
-        </div>
+    <PageShell className="space-y-8">
+      <PageHeading
+        title="How it works"
+        subtitle="Recycler helps you clean up your Solana wallet, reclaim locked SOL, and earn SMELT — a reward token that earns you a share of all future protocol revenue."
+      />
 
         {/* What is dust */}
         <section className="space-y-3">
@@ -180,7 +177,6 @@ export default function HowItWorksPage() {
           ))}
         </section>
 
-      </div>
-    </main>
+    </PageShell>
   );
 }

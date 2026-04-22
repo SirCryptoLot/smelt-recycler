@@ -387,7 +387,7 @@ export default function Home() {
             <p className="text-gray-400 text-[13px] mt-3">Non-custodial · No fees on connect · Open source</p>
           </div>
 
-          <div className="border-t border-gray-100 px-6 py-10 sm:py-14 max-w-2xl mx-auto w-full">
+          <div className="border-t border-gray-100 px-6 py-10 sm:py-14 max-w-[720px] mx-auto w-full">
             <div className="text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-8 text-center">How it works</div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-6">
               {[
@@ -405,7 +405,7 @@ export default function Home() {
           </div>
 
           <div className="bg-white border-y border-gray-100 px-6 py-8 sm:py-10">
-            <div className="max-w-2xl mx-auto">
+            <div className="max-w-[720px] mx-auto">
               <div className="text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-4">Why it matters</div>
               <p className="text-gray-800 text-base sm:text-lg font-medium leading-relaxed">
                 Every open token account occupies a slot in Solana&rsquo;s global state. Validators must load all accounts on every block — the more unused accounts exist, the heavier the chain becomes for everyone.

@@ -6,6 +6,7 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { useSmelt } from '@/lib/smelt-context';
 import Link from 'next/link';
+import { PageShell } from '@/components/PageShell';
 
 interface DashboardData {
   activity: {
@@ -122,21 +123,19 @@ export default function DashboardPage() {
   const loading = data === null;
 
   return (
-    <main className="flex-1 overflow-y-auto">
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 space-y-8">
-
-        {/* Header */}
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight">Dashboard</h1>
-            <div className="text-gray-400 text-sm mt-1 font-mono">{shortAddr(publicKey.toBase58())}</div>
-          </div>
-          <button onClick={load} title="Refresh" className="text-gray-300 hover:text-green-600 transition-colors p-2 rounded-xl hover:bg-green-50">
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-          </button>
+    <PageShell className="space-y-8">
+      {/* Header */}
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Dashboard</h1>
+          <div className="text-gray-400 text-sm mt-1 font-mono">{shortAddr(publicKey.toBase58())}</div>
         </div>
+        <button onClick={load} title="Refresh" className="text-gray-300 hover:text-green-600 transition-colors p-2 rounded-xl hover:bg-green-50">
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+        </button>
+      </div>
 
         {/* SMELT Holdings */}
         <section>
@@ -356,7 +355,6 @@ export default function DashboardPage() {
           </div>
         </section>
 
-      </div>
-    </main>
+    </PageShell>
   );
 }

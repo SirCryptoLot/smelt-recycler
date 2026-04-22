@@ -8,6 +8,8 @@ import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { fetchSmeltBalance, buildStakeTransaction } from '@/lib/smelt';
 import { COOLDOWN_DAYS } from '@/lib/constants';
 import Link from 'next/link';
+import { PageShell } from '@/components/PageShell';
+import { PageHeading } from '@/components/PageHeading';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -330,11 +332,11 @@ export default function StakePage() {
   // ── Render ────────────────────────────────────────────────────────────────────
 
   return (
-    <div className="max-w-lg mx-auto px-4 pb-16">
-
-      {/* Header */}
-      <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight pt-6">Stake SMELT</h1>
-      <p className="text-gray-400 text-sm mt-1">Lock SMELT to earn SOL rewards every epoch.</p>
+    <PageShell>
+      <PageHeading
+        title="Stake SMELT"
+        subtitle="Lock SMELT to earn SOL rewards every epoch."
+      />
 
       {/* Pool error */}
       {poolError && (
@@ -604,6 +606,6 @@ export default function StakePage() {
 
         </>
       )}
-    </div>
+    </PageShell>
   );
 }

@@ -128,19 +128,28 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </nav>
 
           {connected && publicKey && (
-            <div className="p-4 border-t border-gray-100">
-              <div className="bg-[#f0faf4] border border-green-100 rounded-2xl px-4 py-4 mb-3 space-y-2">
-                <div className="text-[11px] font-bold tracking-widest text-gray-400 uppercase">Wallet</div>
-                <div className="text-gray-700 text-sm font-mono">{shortAddr(publicKey.toBase58())}</div>
-                <div className="flex justify-between text-sm pt-1">
-                  <span className="text-gray-400 font-medium">SMELT</span>
-                  <span className="text-gray-900 font-bold">{(Number(smeltBalance) / 1e9).toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-400 font-medium">NAV</span>
-                  <span className="text-green-600 font-bold">{nav} SOL</span>
-                </div>
+            <div className="p-4 border-t border-gray-100 space-y-2">
+              {/* SMELT balance */}
+              <div className="bg-green-600 rounded-2xl px-4 py-3 flex items-center justify-between">
+                <span className="text-green-100 text-xs font-semibold tracking-widest uppercase">SMELT</span>
+                <span className="text-white font-extrabold text-lg tabular-nums">
+                  {(Number(smeltBalance) / 1e9).toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                </span>
               </div>
+              {/* Wallet address */}
+              <div className="bg-gray-50 border border-gray-100 rounded-2xl px-4 py-3 flex items-center justify-between gap-2">
+                <span className="text-gray-500 font-mono text-sm truncate">{shortAddr(publicKey.toBase58())}</span>
+                <button
+                  onClick={() => navigator.clipboard.writeText(publicKey.toBase58()).catch(() => {})}
+                  className="text-gray-300 hover:text-green-600 transition-colors flex-shrink-0"
+                  title="Copy address"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                </button>
+              </div>
+              {/* Disconnect */}
               <button
                 onClick={() => disconnect()}
                 className="w-full text-gray-500 text-sm font-semibold rounded-xl py-3 border border-gray-200 hover:border-gray-300 hover:text-gray-700 hover:bg-gray-50 transition-all"

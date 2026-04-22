@@ -36,7 +36,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   let nextDistributionDate: string | null = null;
   if (lastDist) {
     const d = new Date(lastDist.date);
-    d.setDate(d.getDate() + 7);
+    d.setHours(d.getHours() + 48); // cron runs every 48 h
     nextDistributionDate = d.toISOString();
   }
 

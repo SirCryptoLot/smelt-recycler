@@ -71,12 +71,14 @@ async function preSimulate(tx: Transaction): Promise<string | null> {
   }
 }
 
+// Builds the core close/transfer instructions only — fee and donation are added
+// separately in recycleAccounts so that the SMELT ATA creation (which needs rent
+// lamports) is inserted before any donation drains the wallet.
 async function buildBatchTransaction(
   batch: TrashAccount[],
   owner: PublicKey,
   blockhash: string,
   connection: Connection,
-  donationPct: number,
 ): Promise<Transaction> {
   const tx = new Transaction();
   tx.recentBlockhash = blockhash;
@@ -95,7 +97,6 @@ async function buildBatchTransaction(
       const tokenProg = account.tokenProgram;
 
       // Re-fetch the live balance to ensure we transfer the exact current amount.
-      // The cached rawAmount may be stale if tokens arrived after the scan.
       let liveAmount = account.rawAmount;
       let liveDecimals = account.decimals;
       try {
@@ -109,8 +110,6 @@ async function buildBatchTransaction(
 
       const vaultATA = await getAssociatedTokenAddress(account.mint, VAULT, true, tokenProg);
 
-      // Guard: if source === destination the connected wallet IS the vault.
-      // Self-transfers are no-ops so the account can never be drained.
       if (vaultATA.equals(account.pubkey)) {
         throw new Error(
           'Cannot recycle vault accounts — disconnect the vault wallet and reconnect with your personal wallet.'
@@ -123,29 +122,6 @@ async function buildBatchTransaction(
           account.pubkey, account.mint, vaultATA, owner, liveAmount, liveDecimals, [], tokenProg
         ),
         createCloseAccountInstruction(account.pubkey, owner, owner, [], tokenProg),
-      );
-    }
-  }
-
-  // Platform fee (5%)
-  tx.add(
-    SystemProgram.transfer({
-      fromPubkey: owner,
-      toPubkey: VAULT,
-      lamports: FEE_LAMPORTS_PER_ACCOUNT * batch.length,
-    }),
-  );
-
-  // Optional donation
-  if (donationPct > 0) {
-    const donationLamports = Math.floor(NET_LAMPORTS_PER_ACCOUNT * batch.length * donationPct / 100);
-    if (donationLamports > 0) {
-      tx.add(
-        SystemProgram.transfer({
-          fromPubkey: owner,
-          toPubkey: VAULT,
-          lamports: donationLamports,
-        }),
       );
     }
   }
@@ -187,11 +163,11 @@ export async function recycleAccounts(
   const { blockhash } = await connection.getLatestBlockhash('confirmed');
 
   const transactions = await Promise.all(
-    batches.map((batch) => buildBatchTransaction(batch, owner, blockhash, connection, donationPct))
+    batches.map((batch) => buildBatchTransaction(batch, owner, blockhash, connection))
   );
 
-  // Append SMELT ATA creation to the first transaction ONLY if it doesn't exist yet.
-  // Placed at the end so it's funded by SOL reclaimed from the closes above it.
+  // Step 1: SMELT ATA creation (if needed) — must come before fee/donation so the
+  // 2,039,280-lamport rent is funded by reclaimed SOL before any donation drains it.
   const ownerSmeltATA = await getAssociatedTokenAddress(
     SMELT_MINT, owner, false, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID,
   );
@@ -202,6 +178,29 @@ export async function recycleAccounts(
         owner, ownerSmeltATA, owner, SMELT_MINT, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID,
       )
     );
+  }
+
+  // Step 2: platform fee (5%) + optional donation — appended after ATA creation
+  for (let i = 0; i < transactions.length; i++) {
+    transactions[i].add(
+      SystemProgram.transfer({
+        fromPubkey: owner,
+        toPubkey: VAULT,
+        lamports: FEE_LAMPORTS_PER_ACCOUNT * batches[i].length,
+      }),
+    );
+    if (donationPct > 0) {
+      const donationLamports = Math.floor(NET_LAMPORTS_PER_ACCOUNT * batches[i].length * donationPct / 100);
+      if (donationLamports > 0) {
+        transactions[i].add(
+          SystemProgram.transfer({
+            fromPubkey: owner,
+            toPubkey: VAULT,
+            lamports: donationLamports,
+          }),
+        );
+      }
+    }
   }
 
   for (let i = 0; i < transactions.length; i++) {

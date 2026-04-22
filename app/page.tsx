@@ -229,7 +229,14 @@ export default function Home() {
       }
       setStatus('success');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Transaction cancelled');
+      const msg = err instanceof Error ? err.message : 'Transaction cancelled';
+      // Phantom occasionally fires "rejected" after a tx already lands on-chain.
+      // Prompt the user to scan rather than showing a hard error.
+      if (msg.toLowerCase().includes('rejected') || msg.toLowerCase().includes('user cancel')) {
+        setError('Wallet reported a rejection — the transaction may have landed anyway. Scan again to verify.');
+      } else {
+        setError(msg);
+      }
       setStatus('results');
     }
   }, [accounts, selectedKeys, publicKey, signAllTransactions, refreshSmelt, donationEnabled, donationPct]);

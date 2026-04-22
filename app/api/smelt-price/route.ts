@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 const SMELT_MINT   = 'SME88JJYc8NrRvLVwWUgqk3kLuhuUwqu2JKDFeHdXb8';
 const RAYDIUM_POOL = '2maqTUbPGA8eUodVi8gcqAG3rUP1V2uqKa5a5PB87X32';
 
-export const revalidate = 60;
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
   let price: number | null = null;

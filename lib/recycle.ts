@@ -8,6 +8,7 @@ import {
 } from '@solana/web3.js';
 import {
   createAssociatedTokenAccountIdempotentInstruction,
+  createBurnCheckedInstruction,
   createCloseAccountInstruction,
   createTransferCheckedInstruction,
   getAssociatedTokenAddress,
@@ -118,13 +119,24 @@ async function buildBatchTransaction(
         );
       }
 
-      tx.add(
-        createAssociatedTokenAccountIdempotentInstruction(owner, vaultATA, VAULT, account.mint, tokenProg),
-        createTransferCheckedInstruction(
-          account.pubkey, account.mint, vaultATA, owner, liveAmount, liveDecimals, [], tokenProg
-        ),
-        createCloseAccountInstruction(account.pubkey, owner, owner, [], tokenProg),
-      );
+      // Check if vault ATA already exists. If not, creating it costs ~0.00204 SOL
+      // (ATA rent) which cancels out the ~0.002 SOL the user gets back from closing
+      // their own ATA — resulting in a net loss. In that case, burn the dust tokens
+      // directly so the user always receives positive SOL from closing their ATA.
+      const vaultATAInfo = await connection.getAccountInfo(vaultATA, 'confirmed');
+      if (vaultATAInfo) {
+        tx.add(
+          createTransferCheckedInstruction(
+            account.pubkey, account.mint, vaultATA, owner, liveAmount, liveDecimals, [], tokenProg
+          ),
+          createCloseAccountInstruction(account.pubkey, owner, owner, [], tokenProg),
+        );
+      } else {
+        tx.add(
+          createBurnCheckedInstruction(account.pubkey, account.mint, owner, liveAmount, liveDecimals, [], tokenProg),
+          createCloseAccountInstruction(account.pubkey, owner, owner, [], tokenProg),
+        );
+      }
     }
   }
 

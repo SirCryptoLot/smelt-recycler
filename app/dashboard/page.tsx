@@ -27,6 +27,7 @@ interface DashboardData {
     recent: { date: string; totalSol: number; recipientCount: number }[];
     nextDistributionDate: string | null;
   };
+  forge: { plotId: number; inscription: string } | null;
 }
 
 interface StakeData {

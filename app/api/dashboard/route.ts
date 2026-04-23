@@ -6,6 +6,7 @@ import * as path from 'path';
 import { getWalletStats, getWeeklyRank } from '../../../lib/leaderboard';
 import { getReferralStats } from '../../../lib/referrals';
 import { DATA_DIR } from '../../../lib/paths';
+import { getPlotByOwner } from '../../../lib/foundry';
 
 interface DistributionEntry {
   date: string;
@@ -40,6 +41,8 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     nextDistributionDate = d.toISOString();
   }
 
+  const forge = getPlotByOwner(wallet);
+
   return NextResponse.json({
     activity: {
       weeklyAccounts: stats.weekly.accounts,
@@ -59,5 +62,6 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       recent: distributions.slice(-5).reverse(),
       nextDistributionDate,
     },
+    forge: forge ? { plotId: forge.id, inscription: forge.inscription } : null,
   });
 }

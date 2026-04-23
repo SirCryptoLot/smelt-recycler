@@ -7,7 +7,7 @@ const FOUNDRY_PATH = path.join(DATA_DIR, 'foundry.json');
 export const TOTAL_PLOTS = 500;
 export const SMELT_CLAIM_COST = 5_000;
 export const FORGE_MULTIPLIER = 1.25;
-export const MIN_ACCOUNTS_TO_CLAIM = 10;
+export const MIN_ACCOUNTS_TO_CLAIM = 3;
 
 export interface ForgeEntry {
   id: number;

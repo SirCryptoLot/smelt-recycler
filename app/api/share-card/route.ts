@@ -31,8 +31,11 @@ export async function GET(req: NextRequest) {
   }
 
   // Read logo as base64 data URL (works in Node runtime, no HTTP needed)
-  const logoBuffer = fs.readFileSync(path.join(process.cwd(), 'public', 'logo.png'));
-  const logoSrc = `data:image/png;base64,${logoBuffer.toString('base64')}`;
+  let logoSrc = '';
+  try {
+    const logoBuffer = fs.readFileSync(path.join(process.cwd(), 'public', 'logo.png'));
+    logoSrc = `data:image/png;base64,${logoBuffer.toString('base64')}`;
+  } catch { /* render without logo if file missing */ }
 
   const hasStats = accounts > 0;
 

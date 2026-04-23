@@ -9,8 +9,6 @@ import {
   SMELT_MINT,
   LIQUIDATION_THRESHOLD_USD,
   currentSmeltPerAccount,
-  PROGRAM_START_TIMESTAMP,
-  EPOCH_DURATION_MS,
 } from '@/lib/constants';
 import { MAINNET_RPC } from '@/lib/solana';
 import { DATA_DIR } from '@/lib/paths';
@@ -59,11 +57,6 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     nextDistributionDate = d.toISOString();
   }
 
-  // Epoch info
-  const elapsed = Date.now() - PROGRAM_START_TIMESTAMP;
-  const currentEpoch = Math.max(0, Math.floor(elapsed / EPOCH_DURATION_MS));
-  const nextEpochAt = PROGRAM_START_TIMESTAMP + (currentEpoch + 1) * EPOCH_DURATION_MS;
-  const msUntilHalving = Math.max(0, nextEpochAt - Date.now());
 
   // Chain data
   const connection = new Connection(MAINNET_RPC, 'confirmed');
@@ -121,8 +114,6 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     smelt: {
       supply: smeltSupply,
       epochRate: currentSmeltPerAccount(),
-      currentEpoch,
-      msUntilHalving,
       nav,
     },
     fees: {

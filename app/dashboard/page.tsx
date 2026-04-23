@@ -209,6 +209,20 @@ export default function DashboardPage() {
           </div>
         </section>
 
+        {/* Share stats banner — only shown when user has recycled at least once */}
+        {!loading && (data?.activity.allTimeAccounts ?? 0) > 0 && (
+          <Link
+            href={`/card/${publicKey.toBase58()}`}
+            className="flex items-center justify-between rounded-2xl border border-green-100 bg-green-50 px-4 py-3 group hover:border-green-200 transition-colors"
+          >
+            <div>
+              <div className="text-sm font-semibold text-green-800">Share your recycling stats</div>
+              <div className="text-xs text-green-600 mt-0.5">Generate a card to share on X, Telegram &amp; Discord</div>
+            </div>
+            <span className="text-green-600 group-hover:translate-x-0.5 transition-transform text-lg">→</span>
+          </Link>
+        )}
+
         {/* Rewards */}
         <section>
           <h2 className="text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-3">Rewards</h2>

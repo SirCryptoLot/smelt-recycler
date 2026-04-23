@@ -23,9 +23,9 @@ export async function GET(req: NextRequest) {
   if (wallet.length > 10) {
     try {
       const stats = getWalletStats(wallet);
-      accounts     = stats.allTime.accounts;
-      solReclaimed = stats.allTime.solReclaimed;
-      smeltEarned  = stats.allTime.smeltEarned;
+      accounts     = Number.isFinite(stats.allTime.accounts)     ? stats.allTime.accounts     : 0;
+      solReclaimed = Number.isFinite(stats.allTime.solReclaimed) ? stats.allTime.solReclaimed : 0;
+      smeltEarned  = Number.isFinite(stats.allTime.smeltEarned)  ? stats.allTime.smeltEarned  : 0;
       rank         = getWeeklyRank(wallet); // 0 = not ranked, else 1-based
     } catch { /* return blank card */ }
   }

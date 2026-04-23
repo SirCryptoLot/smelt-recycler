@@ -33,7 +33,9 @@ function load(): FoundryData {
 function save(data: FoundryData): void {
   try {
     fs.writeFileSync(FOUNDRY_PATH, JSON.stringify(data, null, 2));
-  } catch { /* non-blocking */ }
+  } catch (err) {
+    console.error('[foundry] Failed to save foundry.json:', err);
+  }
 }
 
 export function getPlots(): ForgeEntry[] {
@@ -65,12 +67,18 @@ export function buildInscription(
   smeltEarned: number,
 ): string {
   const short = `${wallet.slice(0, 6)}…${wallet.slice(-4)}`;
-  const since = new Date().toLocaleString('en-US', { month: 'short', year: 'numeric' });
+  const d = new Date();
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const since = `${months[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
   return `Forge #${plotId} · ${short} · ${accounts} accounts smelted · ${smeltEarned.toLocaleString('en-US')} SMELT extracted · Active since ${since}`;
 }
 
 export function recordPlot(entry: ForgeEntry): void {
   const data = load();
+  if (data.plots.some(p => p.owner === entry.owner)) {
+    console.warn(`[foundry] recordPlot: wallet ${entry.owner} already owns a forge — skipping`);
+    return;
+  }
   data.plots.push(entry);
   save(data);
 }

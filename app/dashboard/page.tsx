@@ -175,6 +175,34 @@ export default function DashboardPage() {
               <span className="text-green-600 group-hover:translate-x-0.5 transition-transform">→</span>
             </Link>
           )}
+
+          {/* Forge badge — owns a plot */}
+          {!loading && data?.forge && (
+            <Link
+              href="/foundry"
+              className="flex items-center justify-between rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 mb-3 group hover:border-amber-300 transition-colors"
+            >
+              <div>
+                <div className="text-amber-800 font-semibold text-sm">⚒ Forge #{data.forge.plotId} owned · 1.25× SMELT boost active</div>
+                <div className="text-amber-600 text-xs mt-0.5">Every recycle earns 25% more SMELT</div>
+              </div>
+              <span className="text-amber-600 group-hover:translate-x-0.5 transition-transform">→</span>
+            </Link>
+          )}
+
+          {/* Forge nudge — eligible but hasn't claimed */}
+          {!loading && !data?.forge && (data?.activity.allTimeAccounts ?? 0) >= 10 && (
+            <Link
+              href="/foundry"
+              className="flex items-center justify-between rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3 mb-3 group hover:border-amber-200 transition-colors"
+            >
+              <div>
+                <div className="text-gray-700 font-semibold text-sm">⚒ Claim your forge — 1.25× SMELT boost</div>
+                <div className="text-gray-500 text-xs mt-0.5">You've recycled {data?.activity.allTimeAccounts} accounts — you're eligible</div>
+              </div>
+              <span className="text-gray-400 group-hover:translate-x-0.5 transition-transform">→</span>
+            </Link>
+          )}
         </section>
 
         {/* Stats */}

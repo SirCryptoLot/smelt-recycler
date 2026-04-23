@@ -353,7 +353,9 @@ export default function Home() {
       {/* Disconnected — landing hero */}
       {status === 'disconnected' && (
         <div className="flex-1 overflow-y-auto">
-          <div className="flex flex-col items-center text-center px-6 pt-14 pb-10 sm:pt-20 sm:pb-16">
+
+          {/* ── Hero ── */}
+          <div className="flex flex-col items-center text-center px-6 pt-14 pb-12 sm:pt-20">
             <div className="inline-flex items-center gap-2 bg-green-50 border border-green-200 rounded-full px-4 py-1.5 mb-7">
               <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse flex-shrink-0" />
               <span className="text-green-700 text-xs font-semibold tracking-wide">Live on Solana mainnet</span>
@@ -361,12 +363,12 @@ export default function Home() {
             <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-900 tracking-tight leading-[1.08] max-w-xs sm:max-w-lg">
               Reclaim SOL.<br />Clean the chain.
             </h1>
-            <p className="text-gray-500 text-base sm:text-lg mt-5 max-w-sm leading-relaxed">
-              Close empty token accounts, get your locked SOL back, and earn SMELT rewards for every account recycled.
+            <p className="text-gray-500 text-base sm:text-lg mt-5 max-w-md leading-relaxed">
+              Close junk token accounts, recover locked SOL, burn spam NFTs, and earn SMELT — a reward token that pays you SOL every 48 hours.
             </p>
 
             {totalAccountsClosed > 0 && (
-              <div className="mt-8 flex items-stretch bg-white border border-green-100 rounded-2xl overflow-hidden shadow-sm shadow-green-100/50">
+              <div className="mt-8 flex items-stretch bg-white border border-green-100 rounded-2xl overflow-hidden shadow-sm">
                 <div className="px-6 py-4 text-center">
                   <div className="text-2xl sm:text-3xl font-extrabold text-gray-900 tabular-nums">{totalAccountsClosed.toLocaleString()}</div>
                   <div className="text-xs text-gray-400 font-medium mt-1">accounts recycled</div>
@@ -387,34 +389,173 @@ export default function Home() {
             <p className="text-gray-400 text-[13px] mt-3">Non-custodial · No fees on connect · Open source</p>
           </div>
 
-          <div className="border-t border-gray-100 px-6 py-10 sm:py-14 max-w-[720px] mx-auto w-full">
-            <div className="text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-8 text-center">How it works</div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-6">
-              {[
-                { step: '01', title: 'Scan', body: 'We read all your token accounts and flag ones with less than $0.10 in value — the dust Solana accumulates over time.' },
-                { step: '02', title: 'Recycle', body: 'Select the accounts to close. Tokens go to the platform vault. The ~0.002 SOL rent locked per account comes back to you.' },
-                { step: '03', title: 'Earn', body: 'You receive SMELT tokens as a reward for each recycled account — a share of the ecosystem you help clean.' },
-              ].map(({ step, title, body }) => (
-                <div key={step} className="flex flex-col gap-2.5">
-                  <div className="text-[10px] font-bold tracking-widest text-green-600/60 uppercase">{step}</div>
-                  <div className="text-gray-900 font-bold text-xl leading-tight">{title}</div>
-                  <div className="text-gray-500 text-sm leading-relaxed">{body}</div>
+          {/* ── Protocol flow diagram ── */}
+          <div className="border-t border-gray-100 px-6 py-12 max-w-[720px] mx-auto w-full">
+            <div className="text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-10 text-center">How it works</div>
+
+            {/* Step 1 — Recycle */}
+            <div className="mb-8">
+              <div className="text-[10px] font-bold tracking-widest text-green-600/70 uppercase mb-3">Step 1 — Clean your wallet</div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">
+                {/* Your wallet */}
+                <div className="rounded-2xl border border-gray-100 bg-white px-4 py-4">
+                  <div className="text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-3">Your wallet</div>
+                  <div className="space-y-1.5">
+                    {[
+                      { label: 'Token accounts', sub: 'dust &lt; $0.10', color: 'bg-red-100 border-red-200 text-red-700' },
+                      { label: 'Spam NFTs', sub: 'junk airdrops', color: 'bg-orange-100 border-orange-200 text-orange-700' },
+                      { label: 'Good tokens', sub: 'untouched', color: 'bg-gray-100 border-gray-200 text-gray-500' },
+                    ].map(({ label, sub, color }) => (
+                      <div key={label} className={`flex items-center justify-between rounded-lg border px-2.5 py-1.5 text-xs ${color}`}>
+                        <span className="font-semibold">{label}</span>
+                        <span className="opacity-70" dangerouslySetInnerHTML={{ __html: sub }} />
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              ))}
+
+                {/* Arrow + action */}
+                <div className="flex flex-col items-center justify-center gap-3 py-2">
+                  <div className="text-2xl">♻️</div>
+                  <div className="text-center space-y-1">
+                    <div className="text-xs font-bold text-gray-700">Recycle tokens</div>
+                    <div className="text-[10px] text-gray-400">Close accounts on-chain</div>
+                    <div className="h-px w-10 bg-gray-200 mx-auto" />
+                    <div className="text-xs font-bold text-orange-600">🔥 Burn NFTs</div>
+                    <div className="text-[10px] text-gray-400">Spam NFTs deleted</div>
+                  </div>
+                </div>
+
+                {/* You receive */}
+                <div className="rounded-2xl border border-green-100 bg-green-50 px-4 py-4">
+                  <div className="text-[10px] font-bold tracking-widest text-green-700/70 uppercase mb-3">You receive</div>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-lg bg-white border border-green-200 flex items-center justify-center text-sm flex-shrink-0">◎</div>
+                      <div>
+                        <div className="text-xs font-bold text-gray-800">~0.002 SOL</div>
+                        <div className="text-[10px] text-gray-400">per account closed</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-lg bg-white border border-green-200 flex items-center justify-center text-sm flex-shrink-0">🪙</div>
+                      <div>
+                        <div className="text-xs font-bold text-gray-800">62 SMELT</div>
+                        <div className="text-[10px] text-gray-400">per account · 124 for NFTs</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-lg bg-white border border-green-200 flex items-center justify-center text-xs flex-shrink-0">5%</div>
+                      <div>
+                        <div className="text-xs font-semibold text-gray-500">Platform fee</div>
+                        <div className="text-[10px] text-gray-400">goes to stakers</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Step 2 — Stake */}
+            <div className="mb-8">
+              <div className="text-[10px] font-bold tracking-widest text-green-600/70 uppercase mb-3">Step 2 — Put SMELT to work</div>
+              <div className="rounded-2xl border border-gray-100 bg-white px-5 py-5">
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 items-center text-center text-xs">
+
+                  <div className="space-y-1">
+                    <div className="mx-auto w-10 h-10 rounded-xl bg-green-50 border border-green-100 flex items-center justify-center text-lg">🪙</div>
+                    <div className="font-bold text-gray-800">Your SMELT</div>
+                    <div className="text-gray-400">earned from recycling</div>
+                  </div>
+
+                  <div className="hidden sm:flex items-center justify-center gap-1 text-gray-300">
+                    <div className="flex-1 h-px bg-gray-100" />
+                    <span className="text-lg">→</span>
+                  </div>
+
+                  <div className="space-y-1">
+                    <div className="mx-auto w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-lg">🔒</div>
+                    <div className="font-bold text-gray-800">Stake</div>
+                    <div className="text-gray-400">7-day cooldown to unstake</div>
+                  </div>
+
+                  <div className="rounded-xl bg-amber-50 border border-amber-100 px-3 py-3 space-y-1.5 text-left">
+                    <div className="text-[9px] font-bold tracking-widest text-amber-700 uppercase">Every 48 h you earn</div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm">◎</span>
+                      <div>
+                        <div className="font-bold text-gray-800">SOL rewards</div>
+                        <div className="text-[10px] text-gray-400">from fees + vault liquidations</div>
+                      </div>
+                    </div>
+                    <div className="text-[10px] text-gray-500">Proportional to your staked SMELT share</div>
+                  </div>
+                </div>
+
+                {/* Revenue sources */}
+                <div className="mt-4 pt-4 border-t border-gray-100">
+                  <div className="text-[9px] font-bold tracking-widest text-gray-400 uppercase mb-2">What fills the reward pool</div>
+                  <div className="grid grid-cols-3 gap-2 text-[10px]">
+                    {[
+                      { icon: '💸', label: '5% fee', sub: 'on every recycle' },
+                      { icon: '🏦', label: 'Vault sales', sub: 'dust tokens → SOL' },
+                      { icon: '💚', label: 'Donations', sub: 'community SOL' },
+                    ].map(({ icon, label, sub }) => (
+                      <div key={label} className="rounded-lg bg-gray-50 border border-gray-100 px-2 py-2 text-center">
+                        <div className="text-base mb-1">{icon}</div>
+                        <div className="font-semibold text-gray-700">{label}</div>
+                        <div className="text-gray-400">{sub}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Step 3 — The Foundry */}
+            <div>
+              <div className="text-[10px] font-bold tracking-widest text-amber-600/70 uppercase mb-3">Step 3 — Optional · The Foundry</div>
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4">
+                <div className="flex flex-col sm:flex-row gap-4 items-start">
+                  <div className="flex-1 space-y-1">
+                    <div className="font-bold text-gray-900 text-sm">⚒ Own a Forge Plot</div>
+                    <div className="text-xs text-gray-500 leading-relaxed">
+                      Burn 5,000 SMELT once to claim one of 500 forge plots. Your forge permanently upgrades every recycle you do — more SMELT per account, more SOL per epoch.
+                    </div>
+                  </div>
+                  <div className="flex-shrink-0 rounded-xl border border-amber-200 bg-white px-4 py-3 space-y-2 text-xs min-w-[140px]">
+                    <div className="text-[9px] font-bold tracking-widest text-amber-700 uppercase">Forge benefits</div>
+                    <div className="flex items-center gap-2">
+                      <span className="w-5 h-5 rounded bg-amber-100 flex items-center justify-center text-amber-700 font-bold text-[10px]">×</span>
+                      <span className="text-gray-700">1.25× SMELT per recycle</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="w-5 h-5 rounded bg-amber-100 flex items-center justify-center text-amber-700 font-bold text-[10px]">+</span>
+                      <span className="text-gray-700">+25% staking SOL share</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="w-5 h-5 rounded bg-amber-100 flex items-center justify-center text-amber-700 font-bold text-[10px]">∞</span>
+                      <span className="text-gray-700">Permanent · 500 plots only</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="bg-white border-y border-gray-100 px-6 py-8 sm:py-10">
+          {/* ── Why it matters ── */}
+          <div className="bg-white border-t border-gray-100 px-6 py-10">
             <div className="max-w-[720px] mx-auto">
               <div className="text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-4">Why it matters</div>
               <p className="text-gray-800 text-base sm:text-lg font-medium leading-relaxed">
                 Every open token account occupies a slot in Solana&rsquo;s global state. Validators must load all accounts on every block — the more unused accounts exist, the heavier the chain becomes for everyone.
               </p>
               <p className="text-gray-500 text-sm mt-3 leading-relaxed">
-                Recycler is a public good. You get your rent back. The chain gets a little lighter.
+                Recycler turns cleanup into an incentive. You get SOL back, earn yield-bearing SMELT, and help make Solana lighter for everyone.
               </p>
             </div>
           </div>
+
           <div className="h-16" />
         </div>
       )}

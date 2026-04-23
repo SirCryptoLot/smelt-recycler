@@ -11,6 +11,7 @@ import { ReferralDetector } from '@/components/ReferralDetector';
 const rubik = Rubik({ subsets: ['latin'], weight: ['400', '500', '600', '700', '800'], variable: '--font-rubik' });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL ?? 'https://smelt-recycler.app'),
   title: '♻ Recycler',
   description: 'Reclaim your SOL from dust accounts',
 };

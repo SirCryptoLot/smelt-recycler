@@ -8,6 +8,7 @@ import { currentSmeltPerAccount } from '../../../lib/constants';
 import { recordRecycle as recordLeaderboard, getWalletStats } from '../../../lib/leaderboard';
 import { recordReferral } from '../../../lib/referrals';
 import { recordRecycle as recordEcosystem, incrementWalletCount } from '../../../lib/ecosystem';
+import { ownsForge, FORGE_MULTIPLIER } from '../../../lib/foundry';
 import { appendDonation } from '../../../lib/donations';
 import { DATA_DIR } from '../../../lib/paths';
 
@@ -47,7 +48,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
     }
 
-    const smeltMinted = currentSmeltPerAccount() * accountsClosed;
+    const baseSmelt = currentSmeltPerAccount() * accountsClosed;
+    const smeltMinted = ownsForge(wallet) ? Math.round(baseSmelt * FORGE_MULTIPLIER) : baseSmelt;
     const solReclaimed = SOL_RECLAIMED_PER_ACCOUNT * accountsClosed;
 
     // ── Record activity FIRST, regardless of mint outcome ──────────────

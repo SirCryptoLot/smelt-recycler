@@ -23,9 +23,10 @@ const WP = WalletProvider as ComponentType<{ wallets: Adapter[]; autoConnect: bo
 const WMP = WalletModalProvider as ComponentType<{ children: React.ReactNode }>;
 
 export function Providers({ children }: { children: React.ReactNode }) {
+  const appUri = typeof window !== 'undefined' ? window.location.origin : 'https://localhost:3000';
   const wallets = useMemo(() => [
     new SolanaMobileWalletAdapter({
-      appIdentity: { name: 'Recycler', uri: 'https://recycler.app', icon: '/favicon.ico' },
+      appIdentity: { name: 'SMELT Recycler', uri: appUri, icon: `${appUri}/favicon.ico` },
       addressSelector: createDefaultAddressSelector(),
       authorizationResultCache: createDefaultAuthorizationResultCache(),
       cluster: WalletAdapterNetwork.Mainnet,

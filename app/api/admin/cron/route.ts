@@ -21,6 +21,7 @@ import { DATA_DIR } from '../../../../lib/paths';
 import { loadPool, getEpochEligibleStakes, savePool } from '../../../../lib/staking-pool';
 import { getLeaderboard, resetWeeklyLeaderboard } from '../../../../lib/leaderboard';
 import { getPendingBonuses, clearPendingBonuses } from '../../../../lib/referrals';
+import { ownsForge, FORGE_MULTIPLIER } from '../../../../lib/foundry';
 
 export const dynamic = 'force-dynamic';
 
@@ -195,9 +196,18 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const RENT_EXEMPT_MIN = await connection.getMinimumBalanceForRentExemption(0);
     const totalLamports = Math.floor(distributableSol * LAMPORTS_PER_SOL);
 
+    // Apply forge multiplier (1.25×) to staking weight for forge owners.
+    // Use 5/4 integer arithmetic to avoid floating point with BigInt.
+    const FORGE_BOOST_NUM = BigInt(Math.round(FORGE_MULTIPLIER * 4)); // 5n
+    const effectiveWeights = eligibleStakes.map(({ wallet, smeltRaw }) => ({
+      wallet,
+      effectiveRaw: ownsForge(wallet) ? smeltRaw * FORGE_BOOST_NUM / 4n : smeltRaw,
+    }));
+    const totalEffective = effectiveWeights.reduce((s, e) => s + e.effectiveRaw, 0n);
+
     const recipients: Array<{ address: PublicKey; lamports: number }> = [];
-    for (const { wallet, smeltRaw } of eligibleStakes) {
-      const share = Number(smeltRaw * BigInt(totalLamports) / totalStaked);
+    for (const { wallet, effectiveRaw } of effectiveWeights) {
+      const share = totalEffective > 0n ? Number(effectiveRaw * BigInt(totalLamports) / totalEffective) : 0;
       if (share >= RENT_EXEMPT_MIN) {
         recipients.push({ address: new PublicKey(wallet), lamports: share });
       }

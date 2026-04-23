@@ -156,6 +156,7 @@ export default function StakePage() {
   const [smeltPrice, setSmeltPrice] = useState<number | null>(null);
   const [stakeAmount, setStakeAmount] = useState('');
   const [loading, setLoading]       = useState(false);
+  const [forgePlotId, setForgePlotId] = useState<number | null>(null);
   const [msg, setMsg]               = useState('');
   const [poolError, setPoolError]   = useState('');
   const [now, setNow]               = useState(Date.now());
@@ -182,12 +183,19 @@ export default function StakePage() {
   const refreshStake = useCallback(async () => {
     if (!publicKey) return;
     try {
-      const [bal, res] = await Promise.all([
+      const wallet = publicKey.toBase58();
+      const [bal, res, foundryRes] = await Promise.all([
         fetchSmeltBalance(connection, publicKey),
-        fetch(`/api/stake?wallet=${publicKey.toBase58()}`),
+        fetch(`/api/stake?wallet=${wallet}`),
+        fetch('/api/foundry', { cache: 'no-store' }),
       ]);
       setWalletSmelt(Number(bal) / 1e9);
       if (res.ok) setStakeData(await res.json() as StakeData);
+      if (foundryRes.ok) {
+        const fd = await foundryRes.json() as { plots: Array<{ owner: string | null; id: number }> };
+        const myPlot = fd.plots.find(p => p.owner === wallet);
+        setForgePlotId(myPlot?.id ?? null);
+      }
     } catch { /* non-fatal */ }
   }, [publicKey, connection]);
 
@@ -433,6 +441,11 @@ export default function StakePage() {
                       : <span className="text-gray-400 text-sm">Not staked</span>
                     }
                   </Row>
+                  {forgePlotId !== null && (
+                    <Row label="Forge bonus">
+                      <span className="text-amber-600 font-semibold text-sm">⚒ Forge #{forgePlotId} · 1.25× SOL share</span>
+                    </Row>
+                  )}
                 </div>
               )}
 

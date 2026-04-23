@@ -26,12 +26,13 @@ type Tab = 'weekly' | 'allTime';
 
 function shortAddr(addr: string) { return `${addr.slice(0, 6)}…${addr.slice(-4)}`; }
 
-const ECO_STATS = (eco: EcosystemData | null, totalSolDonated: number) => [
+const ECO_STATS = (eco: EcosystemData | null, totalSolDonated: number, forgeCount: number) => [
   { label: 'Wallets cleaned', value: (eco?.totalWallets ?? 0).toLocaleString(), icon: '🧹', accent: false },
   { label: 'Accounts closed', value: (eco?.totalAccountsClosed ?? 0).toLocaleString(), icon: '♻️', accent: false },
   { label: 'SOL unlocked', value: `${(eco?.totalSolReclaimed ?? 0).toFixed(2)} SOL`, icon: '🔓', accent: false },
   { label: 'SMELT minted', value: (eco?.totalSmeltMinted ?? 0).toLocaleString(), icon: '🪙', accent: true },
   { label: 'SOL donated', value: `${totalSolDonated.toFixed(4)} SOL`, icon: '💚', accent: true },
+  { label: 'Forges established', value: forgeCount.toLocaleString(), icon: '⚒', accent: false },
 ];
 
 export default function CommunityPage() {
@@ -43,6 +44,7 @@ export default function CommunityPage() {
   const [tab, setTab] = useState<Tab>('weekly');
   const [loading, setLoading] = useState(true);
   const [totalSolDonated, setTotalSolDonated] = useState(0);
+  const [forgeCount, setForgeCount] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Donate state
@@ -54,16 +56,21 @@ export default function CommunityPage() {
   const refresh = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
     try {
-      const [ecoRes, lbRes, donationsRes] = await Promise.all([
+      const [ecoRes, lbRes, donationsRes, foundryRes] = await Promise.all([
         fetch('/api/ecosystem', { cache: 'no-store' }),
         fetch('/api/leaderboard', { cache: 'no-store' }),
         fetch('/api/donations', { cache: 'no-store' }),
+        fetch('/api/foundry'),
       ]);
       if (ecoRes.ok) setEco(await ecoRes.json() as EcosystemData);
       if (lbRes.ok) setLb(await lbRes.json() as LeaderboardData);
       if (donationsRes.ok) {
         const d = await donationsRes.json() as { totalSolDonated: number };
         setTotalSolDonated(d.totalSolDonated);
+      }
+      if (foundryRes.ok) {
+        const fd = await foundryRes.json() as { claimedCount: number };
+        setForgeCount(fd.claimedCount);
       }
     } finally {
       setLoading(false);
@@ -139,8 +146,8 @@ export default function CommunityPage() {
         {/* Ecosystem Health */}
         <section>
           <h2 className="text-lg font-bold text-gray-900 mb-5">Ecosystem Health</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-            {ECO_STATS(eco, totalSolDonated).map(({ label, value, icon, accent }) => (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            {ECO_STATS(eco, totalSolDonated, forgeCount).map(({ label, value, icon, accent }) => (
               <div key={label} className="rounded-2xl bg-white border border-gray-100 px-3 sm:px-4 py-4">
                 <div className="flex items-center gap-1.5 mb-2">
                   <span className="text-base leading-none">{icon}</span>

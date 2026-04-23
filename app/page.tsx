@@ -17,7 +17,6 @@ import { recycleAccounts } from '@/lib/recycle';
 import { fetchNfts, burnNfts, NftAsset } from '@/lib/nft-burn';
 import { useSmelt } from '@/lib/smelt-context';
 import { currentSmeltPerAccount } from '@/lib/constants';
-import { MobileWalletConnect } from '@/components/MobileWalletConnect';
 
 type Status = 'disconnected' | 'scanning' | 'results' | 'empty' | 'error' | 'recycling' | 'success';
 type NftStatus = 'idle' | 'scanning' | 'ready' | 'empty' | 'burning' | 'success';
@@ -384,7 +383,7 @@ export default function Home() {
 
             {mounted && (
               <div className="mt-8 w-full max-w-xs">
-                <MobileWalletConnect />
+                <WalletMultiButton className="!w-full !justify-center !text-base !font-bold !rounded-full !py-4 !h-auto !text-white !bg-green-600 hover:!bg-green-700" />
               </div>
             )}
             <p className="text-gray-400 text-[13px] mt-3">Non-custodial · No fees on connect · Open source</p>

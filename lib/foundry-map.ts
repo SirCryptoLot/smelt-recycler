@@ -59,8 +59,12 @@ export function generateMap(): WorldMap {
         t = 'water';
       } else if (dist > 0.78 && n > 0.45) {
         t = 'water'; // coastal water
+      } else if (n < 0.022) {
+        t = 'lava';
       } else if (n < 0.05) {
         t = 'mountains';
+      } else if (n < 0.055) {
+        t = 'cliffs';
       } else if (n < 0.10) {
         t = 'hills';
       } else if (n < 0.16) {
@@ -69,10 +73,6 @@ export function generateMap(): WorldMap {
         t = 'desert';
       } else if (n < 0.21) {
         t = 'swamp';
-      } else if (n < 0.022) {
-        t = 'lava';
-      } else if (n < 0.055) {
-        t = 'cliffs';
       } else {
         t = n > 0.6 ? 'grass2' : 'grass';
       }

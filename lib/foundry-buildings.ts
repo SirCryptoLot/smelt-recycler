@@ -79,14 +79,16 @@ function emptyLevels(): Record<BuildingType, number> {
 
 // ── Auto-complete construction on read ────────────────────────────────────────
 
-function applyConstruction(fb: ForgeBuildings): ForgeBuildings {
-  if (!fb.construction) return fb;
-  if (new Date(fb.construction.completesAt) > new Date()) return fb;
-  // Construction finished — apply level
-  fb.levels[fb.construction.buildingType] = fb.construction.toLevel;
-  fb.construction = null;
-  fb.updatedAt = new Date().toISOString();
-  return fb;
+function applyConstruction(fb: ForgeBuildings): { result: ForgeBuildings; dirty: boolean } {
+  if (!fb.construction) return { result: fb, dirty: false };
+  if (new Date(fb.construction.completesAt) > new Date()) return { result: fb, dirty: false };
+  const result: ForgeBuildings = {
+    ...fb,
+    levels: { ...fb.levels, [fb.construction.buildingType]: fb.construction.toLevel },
+    construction: null,
+    updatedAt: new Date().toISOString(),
+  };
+  return { result, dirty: true };
 }
 
 // ── Public API ────────────────────────────────────────────────────────────────
@@ -104,9 +106,8 @@ export function getForgeBuildings(forgeId: number, seedSmelt = 0): ForgeBuilding
     };
     saveStore(store);
   }
-  const fb = applyConstruction(store[key]);
-  // Persist if construction was just completed
-  if (!fb.construction && store[key].construction) {
+  const { result: fb, dirty } = applyConstruction(store[key]);
+  if (dirty) {
     store[key] = fb;
     saveStore(store);
   }

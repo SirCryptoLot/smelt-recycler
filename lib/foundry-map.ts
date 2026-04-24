@@ -26,7 +26,7 @@ const MAP_PATH = path.join(process.cwd(), 'data', 'foundry-map.json');
 const MAP_W = 60;
 const MAP_H = 50;
 const TOTAL_FORGE_PLOTS = 500;
-const MIN_PLOT_SPACING = 3; // Manhattan distance minimum between forge plots
+const MIN_PLOT_SPACING = 2; // Manhattan distance minimum between forge plots
 const GEN_SEED = 0xdeadbeef;
 
 // Deterministic seeded RNG (Lehmer)

@@ -82,3 +82,6 @@ export function recordPlot(entry: ForgeEntry): void {
   data.plots.push(entry);
   save(data);
 }
+
+// Re-export map helpers for convenience
+export { getPlotPosition, plotDistance } from '@/lib/foundry-map';

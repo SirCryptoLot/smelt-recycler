@@ -8,3 +8,4 @@ target/
 test-ledger/
 # Admin backend state (never commit keypairs or local data)
 data/
+!data/foundry-map.json

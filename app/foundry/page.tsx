@@ -148,7 +148,7 @@ export default function FoundryWorldMap() {
             ⚒ Forge #{myForge.plotId} — manage
           </Link>
         ) : wallet ? (
-          <Link href="/foundry/forge/claim"
+          <Link href="/foundry/claim"
             className="bg-[#1a2e12] border border-[#2d4a1e] rounded-full px-3 py-1 text-xs font-bold text-green-400 hover:border-green-400 transition-colors">
             + Claim a Forge
           </Link>

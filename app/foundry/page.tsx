@@ -1,266 +1,300 @@
 // app/foundry/page.tsx
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
-import { useWallet, useConnection } from '@solana/wallet-adapter-react';
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
-import { Transaction } from '@solana/web3.js';
-import {
-  createBurnCheckedInstruction,
-  getAssociatedTokenAddress,
-  TOKEN_PROGRAM_ID,
-} from '@solana/spl-token';
-import { SMELT_MINT } from '@/lib/constants';
-import { PageShell } from '@/components/PageShell';
-import { PageHeading } from '@/components/PageHeading';
-import type { PlotResponse } from '@/app/api/foundry/route';
+import Link from 'next/link';
+import type { MapResponse, MapForge } from '@/app/api/foundry/map/route';
+import type { TerrainType } from '@/lib/foundry-map';
 
-const SMELT_CLAIM_COST = 5_000;
-const TOTAL_PLOTS = 500;
-const SMELT_DECIMALS = 9;
+// ── Terrain config ───────────────────────────────────────────────────────────
 
-function plotIcon(plot: PlotResponse, myWallet: string): string {
-  if (!plot.owner) return '';
-  if (plot.owner === myWallet) return '🏆';
-  if (plot.accounts >= 100) return '💎';
-  if (plot.accounts >= 50)  return '🏭';
-  if (plot.accounts >= 25)  return '⚒️';
-  return '🔥';
-}
+const TERRAIN_BG: Record<TerrainType, string> = {
+  grass:     '#3a6231',
+  grass2:    '#3d6130',
+  forest:    '#1e3d14',
+  hills:     '#6b5a3e',
+  water:     '#1e5280',
+  mountains: '#5a5a5a',
+  cliffs:    '#3d3030',
+  desert:    '#a8863c',
+  swamp:     '#2a4020',
+  lava:      '#8b1a00',
+};
 
-interface FoundryData {
-  totalPlots: number;
-  claimedCount: number;
-  plots: PlotResponse[];
-}
+const TERRAIN_ICON: Partial<Record<TerrainType, string>> = {
+  water:     '🌊',
+  mountains: '🗻',
+  forest:    '🌲',
+  hills:     '⛰',
+  lava:      '🔥',
+  cliffs:    '🪨',
+};
 
-export default function FoundryPage() {
-  const { publicKey, signTransaction, connected } = useWallet();
-  const { connection } = useConnection();
+const IMPASSABLE = new Set<TerrainType>(['water', 'mountains', 'cliffs']);
 
-  const [data, setData]             = useState<FoundryData | null>(null);
-  const [loading, setLoading]       = useState(true);
-  const [selected, setSelected]     = useState<PlotResponse | null>(null);
-  const [showClaim, setShowClaim]   = useState(false);
-  const [claiming, setClaiming]     = useState(false);
-  const [claimError, setClaimError] = useState('');
-  const [claimSuccess, setClaimSuccess] = useState<{ plotId: number; inscription: string } | null>(null);
+const FORGE_COLOR: Record<string, string> = {
+  mine:    '#f59e0b',
+  ally:    '#4ade80',
+  enemy:   '#ef4444',
+  neutral: '#6b4f2a',
+  empty:   'transparent',
+};
 
-  const userWallet = publicKey?.toBase58() ?? '';
+const TILE_PX = 36;
 
-  const fetchPlots = useCallback(async () => {
+// ── Component ────────────────────────────────────────────────────────────────
+
+export default function FoundryWorldMap() {
+  const { publicKey } = useWallet();
+  const wallet = publicKey?.toBase58() ?? '';
+
+  const [mapData, setMapData]     = useState<MapResponse | null>(null);
+  const [loading, setLoading]     = useState(true);
+  const [selected, setSelected]   = useState<MapForge | null>(null);
+  const [scale, setScale]         = useState(1);
+  const [offset, setOffset]       = useState({ x: 0, y: 0 });
+
+  const wrapRef   = useRef<HTMLDivElement>(null);
+  const miniRef   = useRef<HTMLCanvasElement>(null);
+  const dragging  = useRef(false);
+  const lastPos   = useRef({ x: 0, y: 0 });
+
+  // Fetch map (re-fetch when wallet changes so tier 'mine' highlights correctly)
+  const fetchMap = useCallback(async () => {
     try {
-      const res = await fetch('/api/foundry', { cache: 'no-store' });
-      if (res.ok) setData(await res.json() as FoundryData);
+      const res = await fetch(`/api/foundry/map${wallet ? `?wallet=${wallet}` : ''}`, { cache: 'no-store' });
+      if (res.ok) {
+        const data = await res.json() as MapResponse;
+        setMapData(data);
+      }
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [wallet]);
 
-  useEffect(() => { fetchPlots(); }, [fetchPlots]);
+  useEffect(() => { fetchMap(); }, [fetchMap]);
 
-  const myPlot     = data?.plots.find(p => p.owner === userWallet) ?? null;
-  const canClaim   = connected && !myPlot && !loading;
-  const nextPlotId = data?.plots.find(p => p.owner === null)?.id ?? null;
+  // Draw minimap on canvas whenever map loads
+  useEffect(() => {
+    if (!mapData || !miniRef.current) return;
+    const canvas = miniRef.current;
+    const ctx = canvas.getContext('2d')!;
+    const { width, height, tiles, forges } = mapData;
+    const tw = canvas.width / width;
+    const th = canvas.height / height;
 
-  async function handleClaim() {
-    if (!publicKey || !signTransaction) return;
-    setClaiming(true);
-    setClaimError('');
-    try {
-      const userATA    = await getAssociatedTokenAddress(SMELT_MINT, publicKey, false, TOKEN_PROGRAM_ID);
-      const burnAmount = BigInt(SMELT_CLAIM_COST) * BigInt(10 ** SMELT_DECIMALS);
-      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
-      const tx = new Transaction();
-      tx.recentBlockhash = blockhash;
-      tx.feePayer = publicKey;
-      tx.add(createBurnCheckedInstruction(userATA, SMELT_MINT, publicKey, burnAmount, SMELT_DECIMALS, [], TOKEN_PROGRAM_ID));
-
-      const signed = await signTransaction(tx);
-      const txSig  = await connection.sendRawTransaction(signed.serialize());
-      await connection.confirmTransaction({ signature: txSig, blockhash, lastValidBlockHeight }, 'confirmed');
-
-      const res  = await fetch('/api/foundry/claim', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ wallet: userWallet, txSignature: txSig }),
-      });
-      const json = await res.json() as { plotId?: number; inscription?: string; error?: string };
-      if (!res.ok) throw new Error(json.error ?? 'Claim failed');
-
-      setClaimSuccess({ plotId: json.plotId!, inscription: json.inscription! });
-      setShowClaim(false);
-      await fetchPlots();
-    } catch (err) {
-      setClaimError(err instanceof Error ? err.message : 'Claim failed');
-    } finally {
-      setClaiming(false);
+    for (let r = 0; r < height; r++) {
+      for (let c = 0; c < width; c++) {
+        ctx.fillStyle = TERRAIN_BG[tiles[r][c]];
+        ctx.fillRect(c * tw, r * th, tw + 0.5, th + 0.5);
+      }
     }
-  }
+    for (const f of forges) {
+      if (f.tier === 'empty') continue;
+      ctx.fillStyle = FORGE_COLOR[f.tier];
+      ctx.beginPath();
+      ctx.arc(f.col * tw + tw / 2, f.row * th + th / 2, Math.max(tw, 1.5), 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }, [mapData]);
+
+  // Drag-to-pan
+  const onMouseDown = (e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).closest('[data-forge]')) return;
+    dragging.current = true;
+    lastPos.current = { x: e.clientX, y: e.clientY };
+  };
+  const onMouseMove = useCallback((e: MouseEvent) => {
+    if (!dragging.current) return;
+    setOffset(o => ({ x: o.x + e.clientX - lastPos.current.x, y: o.y + e.clientY - lastPos.current.y }));
+    lastPos.current = { x: e.clientX, y: e.clientY };
+  }, []);
+  const onMouseUp = () => { dragging.current = false; };
+
+  useEffect(() => {
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+    return () => { window.removeEventListener('mousemove', onMouseMove); window.removeEventListener('mouseup', onMouseUp); };
+  }, [onMouseMove]);
+
+  const zoom = (f: number) => setScale(s => Math.min(Math.max(s * f, 0.3), 3));
+
+  if (loading) return (
+    <div className="flex items-center justify-center h-screen bg-[#0d1117] text-amber-400 text-lg font-bold">
+      Loading world map…
+    </div>
+  );
+
+  const myForge = mapData?.forges.find(f => f.tier === 'mine');
+
+  // Pre-build forge lookup: "row,col" → MapForge (avoids O(tiles × forges) scan per render)
+  const forgeByPos = useMemo(() => {
+    const m = new Map<string, MapForge>();
+    mapData?.forges.forEach(f => m.set(`${f.row},${f.col}`, f));
+    return m;
+  }, [mapData]);
 
   return (
-    <PageShell className="space-y-6">
-      <PageHeading
-        title="The Foundry"
-        subtitle="500 forge plots. Own one, earn 1.25× SMELT on every recycle forever."
-      />
+    <div className="flex flex-col h-screen bg-[#0d1117] overflow-hidden">
 
-      {/* Stats strip */}
-      {!loading && data && (
-        <div className="flex gap-6 text-sm">
-          <span className="text-gray-500"><span className="font-bold text-gray-900">{data.claimedCount}</span> forges claimed</span>
-          <span className="text-gray-500"><span className="font-bold text-amber-600">{TOTAL_PLOTS - data.claimedCount}</span> remaining</span>
+      {/* ── HUD ── */}
+      <div className="flex-shrink-0 flex items-center gap-3 px-4 py-2 bg-gradient-to-b from-[#1a110a] to-[#110c06] border-b-2 border-[#5a3e1b] flex-wrap">
+        <WalletMultiButton className="!bg-amber-700 !text-white !font-bold !rounded-lg !px-3 !py-1.5 !h-auto !text-xs" />
+        {myForge ? (
+          <Link href={`/foundry/forge/${myForge.plotId}`}
+            className="bg-[#2d1805] border border-[#92400e] rounded-full px-3 py-1 text-xs font-bold text-amber-400 hover:border-amber-400 transition-colors">
+            ⚒ Forge #{myForge.plotId} — manage
+          </Link>
+        ) : wallet ? (
+          <Link href="/foundry/forge/claim"
+            className="bg-[#1a2e12] border border-[#2d4a1e] rounded-full px-3 py-1 text-xs font-bold text-green-400 hover:border-green-400 transition-colors">
+            + Claim a Forge
+          </Link>
+        ) : null}
+        <div className="ml-auto flex items-center gap-2">
+          <span className="text-xs text-[#6b4f2a]">
+            {mapData?.forges.filter(f => f.tier !== 'empty').length ?? 0} / 500 forges claimed
+          </span>
+          <button onClick={() => zoom(1.2)} className="w-7 h-7 bg-[#1f1208] border border-[#3d2b0f] rounded text-amber-400 text-sm hover:border-[#78350f]">+</button>
+          <button onClick={() => zoom(0.833)} className="w-7 h-7 bg-[#1f1208] border border-[#3d2b0f] rounded text-amber-400 text-sm hover:border-[#78350f]">−</button>
+          <button onClick={() => { setScale(1); setOffset({ x: 0, y: 0 }); }}
+            className="w-7 h-7 bg-[#1f1208] border border-[#3d2b0f] rounded text-amber-400 text-xs hover:border-[#78350f]">⊙</button>
         </div>
-      )}
+      </div>
 
-      {/* My forge banner */}
-      {myPlot && (
-        <div className="rounded-2xl border-2 border-amber-300 bg-amber-50 px-5 py-4">
-          <div className="text-amber-800 font-bold text-sm mb-1">🏆 Your Forge #{myPlot.id} — 1.25× SMELT boost active</div>
-          <div className="text-amber-700 text-xs leading-relaxed">{myPlot.inscription}</div>
-        </div>
-      )}
-
-      {/* Claim success banner */}
-      {claimSuccess && (
-        <div className="rounded-2xl border border-green-200 bg-green-50 px-5 py-4">
-          <div className="text-green-800 font-bold text-sm mb-1">⚒ Forge #{claimSuccess.plotId} claimed! 1.25× boost is now active.</div>
-          <div className="text-green-700 text-xs">{claimSuccess.inscription}</div>
-        </div>
-      )}
-
-      {/* Claim button */}
-      {canClaim && !claimSuccess && (
-        <button
-          onClick={() => setShowClaim(true)}
-          className="flex items-center gap-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-semibold px-5 py-2.5 text-sm transition-colors"
-        >
-          ⚒ Claim a Forge — 5,000 SMELT
-        </button>
-      )}
-
-      {!connected && (
-        <div className="flex items-center gap-3 text-sm text-gray-500">
-          <WalletMultiButton className="!bg-green-600 !text-white !font-bold !rounded-xl !px-4 !py-2 !h-auto !text-sm" />
-          <span>Connect to claim a forge</span>
-        </div>
-      )}
-
-      {/* Grid */}
-      {loading ? (
-        <div className="h-64 rounded-2xl bg-gray-100 animate-pulse" />
-      ) : (
+      {/* ── Map ── */}
+      <div
+        ref={wrapRef}
+        className="flex-1 relative overflow-hidden cursor-grab active:cursor-grabbing select-none"
+        style={{ background: '#1a3a5c' }}
+        onMouseDown={onMouseDown}
+      >
+        {/* Terrain + forge grid */}
         <div
-          className="rounded-2xl border border-gray-100 bg-[#0c0a06] p-4 overflow-auto"
-          style={{ maxHeight: '60vh' }}
+          style={{
+            position: 'absolute',
+            top: '50%', left: '50%',
+            transform: `translate(calc(-50% + ${offset.x}px), calc(-50% + ${offset.y}px)) scale(${scale})`,
+            transformOrigin: 'center center',
+            display: 'grid',
+            gridTemplateColumns: `repeat(${mapData?.width ?? 60}, ${TILE_PX}px)`,
+            gap: 0,
+          }}
         >
-          <div
-            className="grid gap-1"
-            style={{ gridTemplateColumns: 'repeat(20, minmax(0, 1fr))', minWidth: '400px' }}
-          >
-            {data?.plots.map(plot => {
-              const owned = !!plot.owner;
-              const isMe  = plot.owner === userWallet;
+          {mapData?.tiles.flatMap((row, r) =>
+            row.map((terrain, c) => {
+              const forge = forgeByPos.get(`${r},${c}`);
+              const isPassable = !IMPASSABLE.has(terrain);
               return (
-                <button
-                  key={plot.id}
-                  onClick={() => owned ? setSelected(plot) : undefined}
-                  title={owned ? plot.inscription ?? undefined : `Plot #${plot.id} — unclaimed`}
-                  className={[
-                    'aspect-square flex items-center justify-center text-[11px] rounded transition-all',
-                    owned
-                      ? isMe
-                        ? 'bg-[#1c1410] border-2 border-amber-400 shadow-[0_0_6px_#fbbf2444] cursor-pointer hover:border-amber-300'
-                        : 'bg-[#1c1410] border border-[#78350f] cursor-pointer hover:border-amber-600'
-                      : 'bg-[#1a2e12] border border-[#2d4a1e] cursor-default',
-                  ].join(' ')}
+                <div
+                  key={`${r}-${c}`}
+                  data-forge={forge ? forge.plotId : undefined}
+                  onClick={() => forge && forge.tier !== 'empty' ? setSelected(forge) : undefined}
+                  title={forge && forge.tier !== 'empty' ? forge.inscription ?? undefined : terrain}
+                  style={{
+                    width: TILE_PX, height: TILE_PX,
+                    background: TERRAIN_BG[terrain],
+                    border: '1px solid rgba(0,0,0,0.2)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 12, position: 'relative',
+                    cursor: forge && forge.tier !== 'empty' ? 'pointer' : isPassable ? 'default' : 'not-allowed',
+                    boxShadow: forge?.tier === 'mine' ? '0 0 8px #f59e0b88 inset' : undefined,
+                  }}
                 >
-                  {owned ? plotIcon(plot, userWallet) : ''}
-                </button>
+                  {/* Terrain icon */}
+                  {!forge && TERRAIN_ICON[terrain] && (
+                    <span style={{ opacity: 0.75, pointerEvents: 'none' }}>{TERRAIN_ICON[terrain]}</span>
+                  )}
+                  {/* Forge marker */}
+                  {forge && forge.tier !== 'empty' && (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+                      <div style={{
+                        width: 16, height: 16, borderRadius: 3,
+                        background: FORGE_COLOR[forge.tier],
+                        border: `2px solid ${forge.tier === 'mine' ? '#fbbf24' : 'rgba(255,255,255,0.3)'}`,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: 8, color: '#fff', fontWeight: 700,
+                        boxShadow: forge.tier === 'mine' ? '0 0 6px #fbbf24' : undefined,
+                        animation: forge.tier === 'mine' ? 'pulse 2s ease-in-out infinite' : undefined,
+                      }}>
+                        {forge.tier === 'mine' ? '⚒' : forge.tier === 'ally' ? '🤝' : forge.tier === 'enemy' ? '⚔' : '?'}
+                      </div>
+                      <span style={{ fontSize: 7, color: '#fbbf24', fontFamily: 'monospace', textShadow: '0 1px 2px black' }}>
+                        #{forge.plotId}
+                      </span>
+                    </div>
+                  )}
+                  {/* Empty forge plot marker */}
+                  {forge && forge.tier === 'empty' && (
+                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'rgba(255,200,100,0.25)', border: '1px solid rgba(255,200,100,0.4)' }} />
+                  )}
+                </div>
               );
-            })}
-          </div>
+            })
+          )}
         </div>
-      )}
 
-      <p className="text-xs text-gray-400">Click any claimed plot to see the owner&apos;s forge details.</p>
-
-      {/* Plot popup */}
-      {selected && (
-        <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-          onClick={() => setSelected(null)}
-        >
-          <div
-            className="bg-[#0f0c08] border-2 border-amber-400 rounded-2xl p-6 max-w-sm w-full shadow-2xl"
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="text-amber-400 font-bold text-lg mb-1">Forge #{selected.id}</div>
-            <div className="text-amber-200 text-xs font-mono mb-3">{selected.owner}</div>
-            <div className="text-amber-100 text-sm leading-relaxed italic mb-4">{selected.inscription}</div>
-            <div className="flex gap-4 text-xs text-amber-300">
-              <span>{selected.accounts.toLocaleString()} accounts smelted</span>
-              <span>{selected.smeltEarned.toLocaleString()} SMELT</span>
+        {/* Legend */}
+        <div className="absolute top-3 left-3 bg-[#0f0c06cc] border border-[#3d2b0f] rounded-lg p-2.5 backdrop-blur-sm text-[10px] text-[#92724a] space-y-1">
+          <div className="font-bold text-[#6b4f2a] uppercase tracking-wider mb-1.5">Terrain</div>
+          {(['grass', 'water', 'forest', 'hills', 'mountains', 'desert', 'lava'] as TerrainType[]).map(t => (
+            <div key={t} className="flex items-center gap-1.5">
+              <div style={{ width: 10, height: 10, borderRadius: 2, background: TERRAIN_BG[t], border: '1px solid rgba(255,255,255,0.1)', flexShrink: 0 }} />
+              <span className="capitalize">{t}</span>
             </div>
-            <button
-              onClick={() => setSelected(null)}
-              className="mt-4 w-full rounded-xl border border-amber-800 text-amber-400 text-sm py-2 hover:border-amber-600 transition-colors"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Claim modal */}
-      {showClaim && (
-        <div
-          className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4"
-          onClick={() => !claiming && setShowClaim(false)}
-        >
-          <div
-            className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl"
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="text-gray-900 font-extrabold text-xl mb-1">⚒ Claim a Forge</div>
-            {nextPlotId && (
-              <div className="text-gray-500 text-sm mb-4">You will be assigned Forge #{nextPlotId}.</div>
-            )}
-            <div className="rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 mb-4">
-              <div className="text-amber-800 font-semibold text-sm">Cost: 5,000 SMELT</div>
-              <div className="text-amber-600 text-xs mt-0.5">Burned permanently. You receive a permanent 1.25× SMELT boost.</div>
-            </div>
-            <div className="text-xs text-gray-400 mb-4">
-              Requirements: 3+ accounts recycled &amp; enough SMELT in your wallet.
-            </div>
-            {claimError && (
-              <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600 mb-4">
-                {claimError}
+          ))}
+          <div className="border-t border-[#2d1f0a] pt-1.5 mt-1.5 space-y-1">
+            {([['mine', 'Your forge'], ['neutral', 'Claimed'], ['empty', 'Available']] as const).map(([tier, label]) => (
+              <div key={tier} className="flex items-center gap-1.5">
+                <div style={{ width: 10, height: 10, borderRadius: '50%', background: FORGE_COLOR[tier], border: '1px solid rgba(255,255,255,0.2)', flexShrink: 0 }} />
+                <span>{label}</span>
               </div>
-            )}
-            <button
-              onClick={handleClaim}
-              disabled={claiming}
-              className="w-full bg-amber-600 hover:bg-amber-700 disabled:opacity-40 text-white font-semibold rounded-xl py-3 text-sm transition-colors flex items-center justify-center gap-2"
-            >
-              {claiming && (
-                <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-                </svg>
-              )}
-              {claiming ? 'Burning SMELT…' : 'Confirm — Burn 5,000 SMELT'}
-            </button>
-            <button
-              onClick={() => setShowClaim(false)}
-              disabled={claiming}
-              className="mt-2 w-full text-gray-400 text-sm py-2 hover:text-gray-600 transition-colors"
-            >
-              Cancel
-            </button>
+            ))}
           </div>
         </div>
-      )}
-    </PageShell>
+
+        {/* Minimap */}
+        <div className="absolute bottom-3 right-3 border-2 border-[#5a3e1b] rounded-md overflow-hidden shadow-lg">
+          <canvas ref={miniRef} width={140} height={116} />
+        </div>
+
+        {/* Forge popup */}
+        {selected && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
+            <div
+              className="bg-[#1a1208] border-2 border-[#78350f] rounded-2xl p-5 max-w-xs w-full shadow-2xl pointer-events-auto"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="text-amber-400 font-extrabold text-lg mb-0.5">⚒ Forge #{selected.plotId}</div>
+              <div className="text-[10px] text-[#6b4f2a] font-mono mb-3">{selected.owner}</div>
+              {selected.inscription && (
+                <div className="bg-[#0f0c06] border border-[#2d1f0a] rounded-xl px-3 py-2.5 text-xs text-amber-200 italic leading-relaxed mb-3">
+                  {selected.inscription}
+                </div>
+              )}
+              <div className="flex gap-2 mt-1">
+                <Link href={`/foundry/forge/${selected.plotId}`}
+                  className="flex-1 text-center bg-[#2d1805] border border-[#78350f] text-amber-400 text-xs font-bold rounded-lg py-2 hover:border-amber-500 transition-colors">
+                  View Forge
+                </Link>
+                <button onClick={() => setSelected(null)}
+                  className="flex-1 bg-[#140e04] border border-[#2d1f0a] text-[#6b4f2a] text-xs rounded-lg py-2 hover:text-amber-400 transition-colors">
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <style>{`
+        @keyframes pulse {
+          0%, 100% { box-shadow: 0 0 4px #fbbf24aa; }
+          50% { box-shadow: 0 0 12px #fbbf24; }
+        }
+      `}</style>
+    </div>
   );
 }

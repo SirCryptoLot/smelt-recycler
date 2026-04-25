@@ -6,6 +6,7 @@ import { getForgeBuildings, BuildingType, ConstructionSlot } from '@/lib/foundry
 import { getForgeTroops, TroopCount, TrainingItem, BASE_TROOP_CAPACITY, CAPACITY_PER_BARRACKS } from '@/lib/foundry-troops';
 import { getForgeAttacks, AttackRecord } from '@/lib/foundry-combat';
 import { loadLeagueData, computeWarScore, getOrCreateLeagueEntry, LeagueTier } from '@/lib/foundry-leagues';
+import { getForgeItems, ForgeItems } from '@/lib/foundry-items';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,6 +23,7 @@ export interface ForgeStateResponse {
   pendingAttacks: AttackRecord[];
   league: LeagueTier;
   warScore: number;
+  items: ForgeItems;
 }
 
 export async function GET(
@@ -56,6 +58,8 @@ export async function GET(
     const leagueEntry = getOrCreateLeagueEntry(forgeId, plot.owner);
     const warScore    = computeWarScore(forgeId, plot.owner, leagueData.seasonStart);
 
+    const items = getForgeItems(forgeId);
+
     const response: ForgeStateResponse = {
       forgeId,
       owner: plot.owner,
@@ -69,6 +73,7 @@ export async function GET(
       pendingAttacks,
       league:   leagueEntry.league,
       warScore,
+      items,
     };
 
     return NextResponse.json(response);

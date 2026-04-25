@@ -17,9 +17,9 @@ export const TROOP_META: Record<TroopType, {
   cost: number;      // SMELT per troop
   trainMins: number; // base minutes per troop (before Barracks reduction)
 }> = {
-  smelters:    { label: 'Smelters',    icon: '⚔️', atk: 40, def: 25, cost: 200, trainMins: 5 },
-  ash_archers: { label: 'Ash Archers', icon: '🏹', atk: 60, def: 15, cost: 350, trainMins: 8 },
-  iron_guards: { label: 'Iron Guards', icon: '🛡️', atk: 20, def: 80, cost: 300, trainMins: 7 },
+  smelters:    { label: 'Smelters',    icon: '⚔️', atk: 40, def: 25, cost:   2, trainMins: 5 },
+  ash_archers: { label: 'Ash Archers', icon: '🏹', atk: 60, def: 15, cost:   4, trainMins: 8 },
+  iron_guards: { label: 'Iron Guards', icon: '🛡️', atk: 20, def: 80, cost:   3, trainMins: 7 },
 };
 
 export const BASE_TROOP_CAPACITY = 20;

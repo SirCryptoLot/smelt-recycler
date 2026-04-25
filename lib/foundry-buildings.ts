@@ -20,11 +20,11 @@ export const BUILDING_META: Record<BuildingType, {
   baseCost: number;
   effectLabel: string;
 }> = {
-  blast_furnace: { label: 'Blast Furnace', icon: '🔥', baseCost:   20, effectLabel: '+20% SMELT production / level' },
+  blast_furnace: { label: 'Blast Furnace', icon: '🔥', baseCost:   20, effectLabel: '+20% Ingot production / level' },
   barracks:      { label: 'Barracks',      icon: '⚔️', baseCost:   25, effectLabel: '−10% train time, +5 troop cap / level' },
   rampart:       { label: 'Rampart',       icon: '🛡️', baseCost:   30, effectLabel: '+15% defense power / level' },
   rally_point:   { label: 'Rally Point',   icon: '🗺️', baseCost:   15, effectLabel: 'Unlock attacks; +4 tile range / level' },
-  vault_storage: { label: 'Vault Storage', icon: '📦', baseCost:   20, effectLabel: 'Shield +2,000 SMELT from raids / level' },
+  vault_storage: { label: 'Vault Storage', icon: '📦', baseCost:   20, effectLabel: 'Shield +2,000 Ingots from raids / level' },
   smithy:        { label: 'Smithy',        icon: '⚗️', baseCost:   40, effectLabel: 'Unlock crafting; +1 craft slot / level' },
   war_hall:      { label: 'War Hall',      icon: '📯', baseCost:   50, effectLabel: '+10% weekly war score / level' },
   embassy:       { label: 'Embassy',       icon: '🤝', baseCost:   35, effectLabel: 'Join alliance; +5 reinforce cap / level' },

@@ -74,7 +74,6 @@ function TowerMarker({ tier }: { tier: 'mine' | 'neutral' }) {
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         fontSize: 9, color: isMine ? '#fff' : '#bfdbfe',
         position: 'relative',
-        boxShadow: isMine ? '0 0 8px #fbbf2488' : undefined,
         animation: isMine ? 'forge-glow 2s ease-in-out infinite' : undefined,
       }}>
         <div style={{

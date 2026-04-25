@@ -106,6 +106,14 @@ export function getForgeBuildings(forgeId: number, seedSmelt = 0): ForgeBuilding
     };
     saveStore(store);
   }
+  // Migrate old smeltBalance → ingotBalance if needed
+  const raw = store[key] as ForgeBuildings & { smeltBalance?: number };
+  if (raw.ingotBalance === undefined && raw.smeltBalance !== undefined) {
+    raw.ingotBalance = raw.smeltBalance;
+    store[key] = raw;
+    saveStore(store);
+  }
+
   const { result: fb, dirty } = applyConstruction(store[key]);
   if (dirty) {
     store[key] = fb;

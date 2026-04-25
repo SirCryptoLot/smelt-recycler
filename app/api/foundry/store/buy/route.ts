@@ -97,10 +97,13 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       }
       case 'iron_shield': {
         items.ironShieldsBought += 1;
-        // Arm the shield in the league entry
+        // Ensure entry exists before loading leagueData snapshot
+        getOrCreateLeagueEntry(forgeId, wallet);
         const leagueData = loadLeagueData();
-        const entry = getOrCreateLeagueEntry(forgeId, wallet);
-        leagueData.entries[String(forgeId)] = { ...entry, shieldActive: true };
+        const entry = leagueData.entries[String(forgeId)];
+        if (entry) {
+          entry.shieldActive = true;
+        }
         saveLeagueData(leagueData);
         break;
       }

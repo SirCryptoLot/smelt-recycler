@@ -9,6 +9,7 @@ import { useParams } from 'next/navigation';
 import type { ForgeStateResponse } from '@/app/api/foundry/forge/[id]/route';
 import type { ConstructionSlot } from '@/lib/foundry-buildings';
 import type { TroopCount, TrainingItem } from '@/lib/foundry-troops';
+import type { AttackRecord } from '@/lib/foundry-combat';
 import {
   BUILDING_META, ALL_BUILDINGS, buildCost, BuildingType,
   TROOP_META, ALL_TROOPS, TroopType,
@@ -44,6 +45,11 @@ export default function ForgePage() {
   const [trainQty, setTrainQty] = useState<Record<TroopType, number>>({
     smelters: 1, ash_archers: 1, iron_guards: 1,
   });
+  const [attackTarget, setAttackTarget]   = useState('');
+  const [sendQty, setSendQty]             = useState<Record<TroopType, number>>({
+    smelters: 0, ash_archers: 0, iron_guards: 0,
+  });
+  const [attackMsg, setAttackMsg]         = useState('');
   const [, setTick] = useState(0);
 
   const fetchState = useCallback(async () => {
@@ -71,6 +77,7 @@ export default function ForgePage() {
   }, []);
 
   const isOwner = !!wallet && state?.owner === wallet;
+  const totalSendQty = sendQty.smelters + sendQty.ash_archers + sendQty.iron_guards;
 
   async function handleBuild(buildingType: BuildingType) {
     if (!wallet || !state) return;
@@ -87,6 +94,41 @@ export default function ForgePage() {
         ? `✅ ${BUILDING_META[buildingType].label} upgraded to Lv${d.toLevel}!`
         : `🔨 Upgrading ${BUILDING_META[buildingType].label} to Lv${d.toLevel}…`);
       await fetchState();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleAttack() {
+    if (!wallet) { setAttackMsg('Connect wallet first'); return; }
+    const forgeId = parseInt(id, 10);
+    const targetId = parseInt(attackTarget, 10);
+    if (isNaN(targetId) || targetId < 1 || targetId > 500) {
+      setAttackMsg('Enter a valid target forge ID (1–500)');
+      return;
+    }
+    if (totalSendQty === 0) {
+      setAttackMsg('Select at least 1 troop to send');
+      return;
+    }
+    setBusy(true);
+    setAttackMsg('');
+    try {
+      const res = await fetch('/api/foundry/attack', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          attackerForgeId: forgeId,
+          defenderForgeId: targetId,
+          troops: sendQty,
+          wallet,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setAttackMsg(data.error ?? 'Failed'); return; }
+      setAttackMsg(`⚔️ Attack launched! Arrives in ~${data.travelMins} min`);
+      setSendQty({ smelters: 0, ash_archers: 0, iron_guards: 0 });
+      fetchState();
     } finally {
       setBusy(false);
     }
@@ -130,6 +172,9 @@ export default function ForgePage() {
       {/* ── Header ── */}
       <div className="border-b-2 border-[#5a3e1b] bg-gradient-to-b from-[#1a110a] to-[#110c06] px-5 py-3 flex items-center gap-3 flex-wrap">
         <Link href="/foundry" className="text-amber-600 text-xs hover:text-amber-400">← World Map</Link>
+        <Link href="/foundry/reports" className="text-xs text-red-600 hover:underline ml-3">
+          ⚔️ Battle Reports
+        </Link>
         <div className="text-amber-400 font-bold text-lg">⚒ Forge #{state.forgeId}</div>
         <div className="text-xs text-[#6b4f2a] font-mono truncate max-w-xs">{state.owner}</div>
         <div className="ml-auto flex items-center gap-3">
@@ -273,6 +318,78 @@ export default function ForgePage() {
             </div>
           )}
         </section>
+
+        {/* ── Attack Panel ── */}
+        {state && state.buildings.rally_point >= 1 && (
+          <section className="rounded-2xl border border-red-100 bg-red-50 p-5 space-y-4">
+            <h2 className="font-bold text-red-900 text-sm">⚔️ Send Attack</h2>
+
+            {/* Target input */}
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-gray-500 w-28 flex-shrink-0">Target Forge ID</label>
+              <input
+                type="number"
+                min={1}
+                max={500}
+                value={attackTarget}
+                onChange={e => setAttackTarget(e.target.value)}
+                placeholder="e.g. 42"
+                className="w-24 rounded-lg border border-stone-200 px-2 py-1 text-sm text-center"
+              />
+            </div>
+
+            {/* Troop selectors */}
+            <div className="space-y-2">
+              {ALL_TROOPS.map(t => {
+                const meta = TROOP_META[t];
+                const avail = state.troops[t];
+                return (
+                  <div key={t} className="flex items-center gap-2">
+                    <span className="text-sm w-5">{meta.icon}</span>
+                    <span className="text-xs text-gray-600 flex-1">{meta.label}</span>
+                    <span className="text-xs text-gray-400">{avail} avail</span>
+                    <input
+                      type="number"
+                      min={0}
+                      max={avail}
+                      value={sendQty[t]}
+                      onChange={e => setSendQty(q => ({ ...q, [t]: Math.min(avail, Math.max(0, Number(e.target.value))) }))}
+                      className="w-16 rounded-lg border border-stone-200 px-2 py-1 text-sm text-center"
+                    />
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Attack message */}
+            {attackMsg && (
+              <p className={`text-xs ${attackMsg.startsWith('⚔️') ? 'text-green-700' : 'text-red-600'}`}>
+                {attackMsg}
+              </p>
+            )}
+
+            <button
+              onClick={handleAttack}
+              disabled={busy || totalSendQty === 0 || !attackTarget}
+              className="w-full bg-red-600 hover:bg-red-700 disabled:opacity-40 text-white font-bold rounded-xl py-2 text-sm transition-colors"
+            >
+              {busy ? 'Sending…' : `Send ${totalSendQty > 0 ? totalSendQty : ''} Troops`}
+            </button>
+
+            {/* Outgoing attacks queue */}
+            {state.pendingAttacks.length > 0 && (
+              <div className="border-t border-red-100 pt-3 space-y-1">
+                <p className="text-[10px] text-red-700 font-semibold uppercase tracking-wide">Outgoing Attacks</p>
+                {state.pendingAttacks.map((a: AttackRecord) => (
+                  <div key={a.id} className="flex justify-between text-xs text-gray-600">
+                    <span>→ Forge #{a.defenderForgeId}</span>
+                    <span className="text-red-600 font-mono">{fmtCountdown(a.arrivesAt)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
 
         {/* Inscription */}
         <div className="rounded-xl border border-[#2d1f0a] bg-[#0f0c06] px-4 py-3 text-xs text-[#92724a] italic leading-relaxed">

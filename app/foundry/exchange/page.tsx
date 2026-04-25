@@ -7,11 +7,13 @@ import {
   getAssociatedTokenAddressSync,
   TOKEN_PROGRAM_ID,
 } from '@solana/spl-token';
+
 import Link from 'next/link';
 
-const SMELT_MINT     = new PublicKey('SME88JJYc8NrRvLVwWUgqk3kLuhuUwqu2JKDFeHdXb8');
+const SMELT_MINT      = new PublicKey('SME88JJYc8NrRvLVwWUgqk3kLuhuUwqu2JKDFeHdXb8');
 const VAULT_SMELT_ATA = new PublicKey('9TTxxr5tYAdq6HDWMUNRz1xgppBNmrAVzKyarEfhPdok');
-const SMELT_DECIMALS = 9;
+const DEV_PUBKEY      = new PublicKey('J1aBWq9JmvA4fkqSfV4TthiwkBp5zn5ZZt5D2YSuE3Yw');
+const SMELT_DECIMALS  = 9;
 const INGOTS_PER_SMELT = 1000;
 const BUY_TAX_PCT    = 0.05;
 const SELL_TAX_PCT   = 0.10;
@@ -58,14 +60,20 @@ export default function ExchangePage() {
     setBusy(true);
     setMsg('');
     try {
-      // Send 100% of SMELT to vault — dev takes cut on cashout side
-      const vaultAmt = BigInt(Math.floor(smelt * 10 ** SMELT_DECIMALS));
+      const vaultAmt = BigInt(Math.floor(smelt * (1 - BUY_TAX_PCT) * 10 ** SMELT_DECIMALS));
+      const devAmt   = BigInt(Math.floor(smelt * BUY_TAX_PCT        * 10 ** SMELT_DECIMALS));
       const userATA  = getAssociatedTokenAddressSync(SMELT_MINT, publicKey);
+      const devATA   = getAssociatedTokenAddressSync(SMELT_MINT, DEV_PUBKEY);
 
       const tx = new Transaction();
       tx.add(createTransferCheckedInstruction(
         userATA, SMELT_MINT, VAULT_SMELT_ATA, publicKey, vaultAmt, SMELT_DECIMALS, [], TOKEN_PROGRAM_ID,
       ));
+      if (devAmt > BigInt(0)) {
+        tx.add(createTransferCheckedInstruction(
+          userATA, SMELT_MINT, devATA, publicKey, devAmt, SMELT_DECIMALS, [], TOKEN_PROGRAM_ID,
+        ));
+      }
 
       const { blockhash } = await connection.getLatestBlockhash();
       tx.recentBlockhash = blockhash;

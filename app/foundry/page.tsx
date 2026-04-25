@@ -110,6 +110,7 @@ export default function FoundryWorldMap() {
   const [selected, setSelected]   = useState<MapForge | null>(null);
   const [scale, setScale]         = useState(1);
   const [offset, setOffset]       = useState({ x: 0, y: 0 });
+  const [legendOpen, setLegendOpen] = useState(false);
 
   const wrapRef   = useRef<HTMLDivElement>(null);
   const miniRef   = useRef<HTMLCanvasElement>(null);
@@ -133,13 +134,17 @@ export default function FoundryWorldMap() {
 
   useEffect(() => { fetchMap(); }, [fetchMap]);
 
-  // Responsive scale: fit map width into viewport on initial load
+  // On load: center view on user's forge, or map center
   useEffect(() => {
-    if (!mapData || !wrapRef.current) return;
-    const containerW = wrapRef.current.clientWidth;
-    const mapW = mapData.width * TILE_PX;
-    const fitScale = Math.min(1, containerW / mapW);
-    setScale(fitScale);
+    if (!mapData) return;
+    const mine = mapData.forges.find(f => f.tier === 'mine');
+    if (mine) {
+      setOffset({
+        x: mapData.width  * TILE_PX / 2 - mine.col * TILE_PX - TILE_PX / 2,
+        y: mapData.height * TILE_PX / 2 - mine.row * TILE_PX - TILE_PX / 2,
+      });
+    }
+    // else offset stays {0,0} = map center
   }, [mapData]);
 
   // Draw minimap on canvas whenever map loads
@@ -312,23 +317,33 @@ export default function FoundryWorldMap() {
           )}
         </div>
 
-        {/* Legend */}
-        <div className="absolute top-3 left-3 bg-white/90 border border-stone-200 rounded-lg p-2.5 backdrop-blur-sm text-[10px] text-gray-600 space-y-1">
-          <div className="font-bold text-gray-500 uppercase tracking-wider mb-1.5">Terrain</div>
-          {(['grass', 'water', 'forest', 'hills', 'mountains', 'desert', 'lava'] as TerrainType[]).map(t => (
-            <div key={t} className="flex items-center gap-1.5">
-              <div style={{ width: 10, height: 10, borderRadius: 2, background: TERRAIN_BG[t], border: '1px solid rgba(0,0,0,0.15)', flexShrink: 0 }} />
-              <span className="capitalize">{t}</span>
-            </div>
-          ))}
-          <div className="border-t border-stone-200 pt-1.5 mt-1.5 space-y-1">
-            {([['mine', 'Your forge'], ['neutral', 'Claimed'], ['empty', 'Available']] as const).map(([tier, label]) => (
-              <div key={tier} className="flex items-center gap-1.5">
-                <div style={{ width: 10, height: 10, borderRadius: '50%', background: FORGE_COLOR[tier], border: '1px solid rgba(0,0,0,0.15)', flexShrink: 0 }} />
-                <span>{label}</span>
+        {/* Legend — collapsible */}
+        <div className="absolute top-3 left-3 bg-white/90 border border-stone-200 rounded-lg backdrop-blur-sm text-[10px] text-gray-600 overflow-hidden">
+          <button
+            onClick={() => setLegendOpen(o => !o)}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 w-full hover:bg-stone-50 transition-colors"
+          >
+            <span className="font-bold text-gray-500 uppercase tracking-wider">Legend</span>
+            <span className="ml-auto text-gray-400">{legendOpen ? '▲' : '▼'}</span>
+          </button>
+          {legendOpen && (
+            <div className="px-2.5 pb-2.5 space-y-1">
+              {(['grass', 'water', 'forest', 'hills', 'mountains', 'desert', 'lava'] as TerrainType[]).map(t => (
+                <div key={t} className="flex items-center gap-1.5">
+                  <div style={{ width: 10, height: 10, borderRadius: 2, background: TERRAIN_BG[t], border: '1px solid rgba(0,0,0,0.15)', flexShrink: 0 }} />
+                  <span className="capitalize">{t}</span>
+                </div>
+              ))}
+              <div className="border-t border-stone-200 pt-1.5 mt-1 space-y-1">
+                {([['mine', 'Your forge'], ['neutral', 'Claimed'], ['empty', 'Available']] as const).map(([tier, label]) => (
+                  <div key={tier} className="flex items-center gap-1.5">
+                    <div style={{ width: 10, height: 10, borderRadius: '50%', background: FORGE_COLOR[tier], border: '1px solid rgba(0,0,0,0.15)', flexShrink: 0 }} />
+                    <span>{label}</span>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* Minimap */}

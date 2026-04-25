@@ -62,6 +62,11 @@ export default function StorePage() {
 
   async function handleBuy(itemId: ItemId) {
     if (!wallet || !storeData?.forgeId) return;
+    const needsVal = itemId === 'nameplate' || itemId === 'banner';
+    if (needsVal && !valueInput.trim()) {
+      setMsg(itemId === 'nameplate' ? 'Enter a forge name first' : 'Enter a hex color first (#rrggbb)');
+      return;
+    }
     setBuying(itemId);
     setMsg('');
     try {

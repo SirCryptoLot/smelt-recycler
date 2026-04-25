@@ -148,7 +148,7 @@ export function computeWarScore(forgeId: number, wallet: string, seasonStart: st
   const streakMult   = Math.min(1.0 + entry.consecutiveActiveSeasons * 0.05, 1.50);
 
   const items        = getForgeItems(forgeId);
-  const rodMult      = 1 + items.lightningRods * 0.15;
+  const rodMult      = 1 + Math.min(3, items.lightningRods) * 0.15;
   const hornMult     = warHornActive(items) ? 2 : 1;
 
   return Math.floor(base * warHallMult * streakMult * rodMult * hornMult);

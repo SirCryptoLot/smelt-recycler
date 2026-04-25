@@ -157,11 +157,14 @@ export default function FoundryWorldMap() {
     }
   }, [mapData]);
 
-  // ── Pointer-based drag (works for mouse AND touch) ────────────────────────
+  // ── Pointer-based drag + tap detection ───────────────────────────────────
+  const startPos = useRef({ x: 0, y: 0 });
+
   const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     e.currentTarget.setPointerCapture(e.pointerId);
     dragging.current = true;
     lastPos.current = { x: e.clientX, y: e.clientY };
+    startPos.current = { x: e.clientX, y: e.clientY };
   };
 
   const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -173,7 +176,21 @@ export default function FoundryWorldMap() {
     lastPos.current = { x: e.clientX, y: e.clientY };
   };
 
-  const onPointerUp = () => { dragging.current = false; };
+  const onPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    dragging.current = false;
+    const dx = e.clientX - startPos.current.x;
+    const dy = e.clientY - startPos.current.y;
+    if (Math.abs(dx) < 5 && Math.abs(dy) < 5) {
+      // tap — find forge under pointer
+      const el = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null;
+      const forgeEl = el?.closest('[data-forge-id]');
+      if (forgeEl) {
+        const plotId = Number(forgeEl.getAttribute('data-forge-id'));
+        const forge = mapData?.forges.find(f => f.plotId === plotId && f.tier !== 'empty');
+        if (forge) setSelected(forge);
+      }
+    }
+  };
 
   const zoom = (f: number) => setScale(s => Math.min(Math.max(s * f, 0.3), 3));
 
@@ -269,8 +286,7 @@ export default function FoundryWorldMap() {
               return (
                 <div
                   key={`${r}-${c}`}
-                  data-forge={forge ? forge.plotId : undefined}
-                  onClick={() => forge && forge.tier !== 'empty' ? setSelected(forge) : undefined}
+                  data-forge-id={forge && forge.tier !== 'empty' ? forge.plotId : undefined}
                   title={forge && forge.tier !== 'empty' ? forge.inscription ?? undefined : terrain}
                   style={{
                     width: TILE_PX, height: TILE_PX,

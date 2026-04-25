@@ -49,15 +49,15 @@ export interface LeagueData {
 const POOL_FILE = path.join(DATA_DIR, 'foundry-prize-pool.json');
 
 export interface PrizePool {
-  smeltBalance: number;
+  ingotBalance: number;
 }
 
 export function loadPrizePool(): PrizePool {
   try {
-    if (!fs.existsSync(POOL_FILE)) return { smeltBalance: 0 };
+    if (!fs.existsSync(POOL_FILE)) return { ingotBalance: 0 };
     return JSON.parse(fs.readFileSync(POOL_FILE, 'utf-8')) as PrizePool;
   } catch {
-    return { smeltBalance: 0 };
+    return { ingotBalance: 0 };
   }
 }
 

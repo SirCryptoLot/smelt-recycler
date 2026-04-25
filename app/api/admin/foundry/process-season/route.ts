@@ -83,11 +83,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const amounts = PRIZE_SMELT[tier];
     for (let i = 0; i < Math.min(3, ranked.length); i++) {
       const amount = amounts[i];
-      if (amount > pool.smeltBalance) continue;
+      if (amount > pool.ingotBalance) continue;
       const buildings = getForgeBuildings(ranked[i].forgeId);
-      buildings.smeltBalance += amount;
+      buildings.ingotBalance += amount;
       saveForgeBuildings(buildings);
-      pool.smeltBalance -= amount;
+      pool.ingotBalance -= amount;
     }
   }
 
@@ -146,6 +146,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     season:    result.season,
     promotions: promoted.size,
     relegations: relegated.size,
-    prizePoolRemaining: pool.smeltBalance,
+    prizePoolRemaining: pool.ingotBalance,
   });
 }

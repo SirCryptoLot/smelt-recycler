@@ -14,7 +14,7 @@ export interface ForgeStateResponse {
   forgeId: number;
   owner: string;
   inscription: string;
-  smeltBalance: number;
+  ingotBalance: number;
   buildings: Record<BuildingType, number>;
   construction: ConstructionSlot | null;
   troops: TroopCount;
@@ -64,7 +64,7 @@ export async function GET(
       forgeId,
       owner: plot.owner,
       inscription: plot.inscription,
-      smeltBalance: buildings.smeltBalance,
+      ingotBalance: buildings.ingotBalance,
       buildings: buildings.levels,
       construction: buildings.construction,
       troops: troops.stationed,

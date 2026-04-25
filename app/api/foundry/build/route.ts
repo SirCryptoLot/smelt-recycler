@@ -44,13 +44,13 @@ export async function POST(req: Request): Promise<NextResponse> {
 
     const toLevel = currentLevel + 1;
     const cost = buildCost(type, toLevel);
-    if (fb.smeltBalance < cost) {
+    if (fb.ingotBalance < cost) {
       return NextResponse.json({
-        error: `Not enough SMELT — need ${cost.toLocaleString()}, have ${fb.smeltBalance.toLocaleString()}`,
+        error: `Not enough Ingots — need ${cost.toLocaleString()}, have ${fb.ingotBalance.toLocaleString()}`,
       }, { status: 400 });
     }
 
-    fb.smeltBalance -= cost;
+    fb.ingotBalance -= cost;
 
     const buildMins = BUILD_TIME_MINS[toLevel] ?? 0;
     if (buildMins === 0) {
@@ -69,7 +69,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       toLevel,
       instant: buildMins === 0,
       completesAt: fb.construction?.completesAt ?? null,
-      smeltBalance: fb.smeltBalance,
+      ingotBalance: fb.ingotBalance,
     });
   } catch (err) {
     console.error('[foundry/build]', err);

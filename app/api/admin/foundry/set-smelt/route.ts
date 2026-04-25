@@ -26,8 +26,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   const stats = getWalletStats(wallet);
   const fb = getForgeBuildings(plot.id, stats.allTime.smeltEarned);
-  fb.smeltBalance = amount;
+  fb.ingotBalance = amount;
   saveForgeBuildings(fb);
 
-  return NextResponse.json({ success: true, forgeId: plot.id, smeltBalance: fb.smeltBalance });
+  return NextResponse.json({ success: true, forgeId: plot.id, ingotBalance: fb.ingotBalance });
 }

@@ -64,7 +64,7 @@ function resolveBattle(attack: AttackRecord): AttackRecord {
     // ── Attacker wins ───────────────────────────────────────────────────────
     outcome = 'attacker_wins';
 
-    smeltStolen = Math.floor(Math.max(0, defBuildings.smeltBalance - vaultProtected) * 0.25);
+    smeltStolen = Math.floor(Math.max(0, defBuildings.ingotBalance - vaultProtected) * 0.25);
 
     // Defender loses 100%
     defenderLosses = { ...defTroops.stationed };
@@ -78,9 +78,9 @@ function resolveBattle(attack: AttackRecord): AttackRecord {
     const surviving = subtractTroops(attack.sentTroops, attackerLosses);
     atkTroops.stationed = addTroops(atkTroops.stationed, surviving);
 
-    // Transfer SMELT
-    defBuildings.smeltBalance = Math.max(0, defBuildings.smeltBalance - smeltStolen);
-    atkBuildings.smeltBalance = atkBuildings.smeltBalance + smeltStolen;
+    // Transfer Ingots
+    defBuildings.ingotBalance = Math.max(0, defBuildings.ingotBalance - smeltStolen);
+    atkBuildings.ingotBalance = atkBuildings.ingotBalance + smeltStolen;
 
   } else {
     // ── Defender wins ───────────────────────────────────────────────────────

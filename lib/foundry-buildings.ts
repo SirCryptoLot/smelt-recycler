@@ -48,7 +48,7 @@ export interface ConstructionSlot {
 
 export interface ForgeBuildings {
   forgeId: number;
-  smeltBalance: number;
+  ingotBalance: number;
   levels: Record<BuildingType, number>; // 0–5
   construction: ConstructionSlot | null;
   updatedAt: string;
@@ -99,7 +99,7 @@ export function getForgeBuildings(forgeId: number, seedSmelt = 0): ForgeBuilding
   if (!store[key]) {
     store[key] = {
       forgeId,
-      smeltBalance: seedSmelt,
+      ingotBalance: seedSmelt,
       levels: emptyLevels(),
       construction: null,
       updatedAt: new Date().toISOString(),

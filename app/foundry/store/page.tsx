@@ -32,7 +32,7 @@ export default function StorePage() {
   const wallet = publicKey?.toBase58() ?? '';
 
   const [storeData, setStoreData] = useState<StoreResponse | null>(null);
-  const [smeltBalance, setSmeltBalance] = useState<number | null>(null);
+  const [ingotBalance, setIngotBalance] = useState<number | null>(null);
   const [loading, setLoading]     = useState(true);
   const [buying, setBuying]       = useState<ItemId | null>(null);
   const [msg, setMsg]             = useState('');
@@ -50,7 +50,7 @@ export default function StorePage() {
         const fr = await fetch(`/api/foundry/forge/${json.forgeId}`);
         if (fr.ok) {
           const fd = await fr.json();
-          setSmeltBalance(fd.smeltBalance ?? null);
+          setIngotBalance(fd.ingotBalance ?? null);
         }
       }
     } finally {
@@ -78,7 +78,7 @@ export default function StorePage() {
       const data = await res.json();
       if (!res.ok) { setMsg(data.error ?? 'Failed'); return; }
       setMsg(`✓ ${itemId.replace(/_/g, ' ')} purchased!`);
-      setSmeltBalance(data.smeltBalance);
+      setIngotBalance(data.ingotBalance);
       setValueInput('');
       fetchStore();
     } finally {
@@ -102,7 +102,7 @@ export default function StorePage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-extrabold text-gray-900">⚗️ Forge Store</h1>
-          <p className="text-gray-400 text-sm mt-0.5">Spend SMELT. Burn permanently. Gain power.</p>
+          <p className="text-gray-400 text-sm mt-0.5">Spend Ingots. Burn permanently. Gain power.</p>
         </div>
         <Link href="/foundry" className="text-xs text-gray-400 hover:underline">← Back to map</Link>
       </div>
@@ -123,7 +123,7 @@ export default function StorePage() {
                 </Link>
               </span>
               <span className="text-sm font-bold text-amber-700">
-                {smeltBalance !== null ? `${smeltBalance.toLocaleString()} SMELT` : '…'}
+                {ingotBalance !== null ? `${ingotBalance.toLocaleString()} Ingots` : '…'}
               </span>
             </>
           ) : (
@@ -209,7 +209,7 @@ export default function StorePage() {
                     ? '…'
                     : atCap
                     ? 'Maxed'
-                    : `${item.cost.toLocaleString()} SMELT`}
+                    : `${item.cost.toLocaleString()} Ingots`}
                 </button>
               </div>
             );

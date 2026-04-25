@@ -178,7 +178,7 @@ export default function ForgePage() {
         <div className="text-amber-400 font-bold text-lg">⚒ Forge #{state.forgeId}</div>
         <div className="text-xs text-[#6b4f2a] font-mono truncate max-w-xs">{state.owner}</div>
         <div className="ml-auto flex items-center gap-3">
-          <span className="text-sm text-amber-400 font-bold">💰 {fmtSmelt(state.smeltBalance)} SMELT</span>
+          <span className="text-sm text-amber-400 font-bold">💰 {fmtSmelt(state.ingotBalance)} Ingots</span>
           <WalletMultiButton className="!bg-amber-700 !text-white !font-bold !rounded-lg !px-3 !py-1.5 !h-auto !text-xs" />
         </div>
       </div>
@@ -209,7 +209,7 @@ export default function ForgePage() {
               const toLevel = level + 1;
               const cost = level < 5 ? buildCost(type, toLevel) : 0;
               const isBuilding = state.construction?.buildingType === type;
-              const canUpgrade = isOwner && level < 5 && !state.construction && state.smeltBalance >= cost && !busy;
+              const canUpgrade = isOwner && level < 5 && !state.construction && state.ingotBalance >= cost && !busy;
               return (
                 <div key={type} className={`rounded-xl border p-3 space-y-2 ${isBuilding ? 'border-amber-600 bg-[#2d1805]' : 'border-[#3d2b0f] bg-[#140e04]'}`}>
                   <div className="flex items-center gap-1.5">
@@ -233,7 +233,7 @@ export default function ForgePage() {
                     >
                       {isBuilding
                         ? fmtCountdown(state.construction!.completesAt)
-                        : `Lv${toLevel} — ${fmtSmelt(cost)} SMELT`}
+                        : `Lv${toLevel} — ${fmtSmelt(cost)} Ingots`}
                     </button>
                   )}
                   {level >= 5 && <div className="text-[9px] text-amber-600 font-bold text-center">MAX</div>}
@@ -257,7 +257,7 @@ export default function ForgePage() {
               const meta = TROOP_META[type];
               const qty = trainQty[type];
               const cost = meta.cost * qty;
-              const canTrain = isOwner && state.buildings['barracks'] >= 1 && state.smeltBalance >= cost && !busy;
+              const canTrain = isOwner && state.buildings['barracks'] >= 1 && state.ingotBalance >= cost && !busy;
               return (
                 <div key={type} className="rounded-xl border border-[#3d2b0f] bg-[#140e04] p-3 space-y-2">
                   <div className="flex items-center gap-1.5">
@@ -278,7 +278,7 @@ export default function ForgePage() {
                     </div>
                     <div className="bg-[#0f0c06] rounded p-1">
                       <div className="text-amber-400 font-bold">{meta.cost}</div>
-                      <div className="text-[#6b4f2a]">SMELT</div>
+                      <div className="text-[#6b4f2a]">Ingots</div>
                     </div>
                   </div>
                   {isOwner && (
@@ -296,7 +296,7 @@ export default function ForgePage() {
                         disabled={!canTrain}
                         className="flex-1 text-[10px] font-bold rounded-lg py-1.5 bg-[#1a2e12] border border-[#2d4a1e] text-green-400 hover:border-green-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                       >
-                        Train ×{qty} — {fmtSmelt(cost)} SMELT
+                        Train ×{qty} — {fmtSmelt(cost)} Ingots
                       </button>
                     </div>
                   )}

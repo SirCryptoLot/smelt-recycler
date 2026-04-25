@@ -35,11 +35,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     }
     const forgeId = plot.id;
 
-    // Check SMELT balance
+    // Check Ingot balance
     const buildings = getForgeBuildings(forgeId);
-    if (buildings.smeltBalance < meta.cost) {
+    if (buildings.ingotBalance < meta.cost) {
       return NextResponse.json({
-        error: `Not enough SMELT (need ${meta.cost.toLocaleString()}, have ${buildings.smeltBalance.toLocaleString()})`,
+        error: `Not enough Ingots (need ${meta.cost.toLocaleString()}, have ${buildings.ingotBalance.toLocaleString()})`,
       }, { status: 400 });
     }
 
@@ -68,8 +68,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       }
     }
 
-    // Deduct SMELT
-    buildings.smeltBalance -= meta.cost;
+    // Deduct Ingots
+    buildings.ingotBalance -= meta.cost;
     saveForgeBuildings(buildings);
 
     // Apply item effect
@@ -114,7 +114,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({
       success: true,
       itemId,
-      smeltBalance: buildings.smeltBalance,
+      ingotBalance: buildings.ingotBalance,
       items,
     });
   } catch (err) {

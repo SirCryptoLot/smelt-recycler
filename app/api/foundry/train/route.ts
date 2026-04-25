@@ -50,13 +50,13 @@ export async function POST(req: Request): Promise<NextResponse> {
 
     const type = troopType as TroopType;
     const cost = TROOP_META[type].cost * quantity;
-    if (fb.smeltBalance < cost) {
+    if (fb.ingotBalance < cost) {
       return NextResponse.json({
-        error: `Not enough SMELT — need ${cost.toLocaleString()}, have ${fb.smeltBalance.toLocaleString()}`,
+        error: `Not enough Ingots — need ${cost.toLocaleString()}, have ${fb.ingotBalance.toLocaleString()}`,
       }, { status: 400 });
     }
 
-    fb.smeltBalance -= cost;
+    fb.ingotBalance -= cost;
     saveForgeBuildings(fb);
 
     const minsPerTroop = trainMinsPerTroop(type, barracksLevel);
@@ -73,7 +73,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       troopType: type,
       quantity,
       completesAt,
-      smeltBalance: fb.smeltBalance,
+      ingotBalance: fb.ingotBalance,
       trainingQueue: ft.trainingQueue,
     });
   } catch (err) {

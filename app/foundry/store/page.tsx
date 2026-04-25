@@ -197,7 +197,7 @@ export default function StorePage() {
                     }
                     handleBuy(item.id);
                   }}
-                  disabled={!connected || noForge || atCap || (isBuying && !needsInput)}
+                  disabled={!connected || noForge || atCap || isBuying}
                   className="flex-shrink-0 rounded-xl bg-amber-500 hover:bg-amber-600 disabled:opacity-40 text-white font-bold px-3 py-2 text-xs transition-colors whitespace-nowrap"
                 >
                   {isBuying && !needsInput

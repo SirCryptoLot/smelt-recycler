@@ -58,6 +58,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   // Silver #1 → Gold; bottom 2 → Bronze (shield protects once)
   if (silver.length > 0) promoted.add(silver[0].forgeId);
   for (const r of silver.slice(-2)) {
+    if (promoted.has(r.forgeId)) continue; // top-1 silver already going up
     const entry = leagueData.entries[String(r.forgeId)];
     if (entry?.shieldActive) {
       entry.shieldActive = false;
@@ -68,6 +69,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   // Gold bottom 2 → Silver (shield protects once)
   for (const r of gold.slice(-2)) {
+    if (promoted.has(r.forgeId)) continue; // top-1 gold already going up
     const entry = leagueData.entries[String(r.forgeId)];
     if (entry?.shieldActive) {
       entry.shieldActive = false;
@@ -81,7 +83,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const amounts = PRIZE_SMELT[tier];
     for (let i = 0; i < Math.min(3, ranked.length); i++) {
       const amount = amounts[i];
-      if (amount > pool.smeltBalance) break;
+      if (amount > pool.smeltBalance) continue;
       const buildings = getForgeBuildings(ranked[i].forgeId);
       buildings.smeltBalance += amount;
       saveForgeBuildings(buildings);

@@ -68,7 +68,7 @@ export default function ForgePage() {
     return () => clearInterval(t);
   }, []);
 
-  const isOwner     = !!wallet && state?.owner === wallet;
+  const isOwner      = !!wallet && state?.owner === wallet;
   const totalSendQty = sendQty.smelters + sendQty.ash_archers + sendQty.iron_guards;
 
   async function handleBuild(buildingType: BuildingType) {
@@ -132,39 +132,44 @@ export default function ForgePage() {
   // ── Loading / error states ──────────────────────────────────────────────────
 
   if (loading) return (
-    <div className="flex items-center justify-center h-screen bg-stone-50 text-stone-400 text-sm">
+    <div className="flex items-center justify-center h-screen text-amber-500 text-sm font-bold"
+      style={{ background: '#0d1408' }}>
       Loading forge…
     </div>
   );
   if (error) return (
-    <div className="max-w-lg mx-auto pt-12 px-4 text-red-500 text-sm">
-      <p className="font-bold mb-2">⚠ {error}</p>
-      <Link href="/foundry" className="text-amber-600 underline">← Back to map</Link>
+    <div className="max-w-lg mx-auto pt-12 px-4" style={{ background: '#0d1408', minHeight: '100vh' }}>
+      <p className="text-red-400 text-sm font-bold mb-2">⚠ {error}</p>
+      <Link href="/foundry" className="text-amber-500 underline text-sm">← Back to map</Link>
     </div>
   );
   if (!state) return null;
 
   // ── Derived values ──────────────────────────────────────────────────────────
 
-  const totalStationed  = state.troops.smelters + state.troops.ash_archers + state.troops.iron_guards;
-  const builtCount      = ALL_BUILDINGS.filter(b => (state.buildings[b] ?? 0) > 0).length;
-  const avgLevel        = builtCount === 0 ? 0
+  const totalStationed = state.troops.smelters + state.troops.ash_archers + state.troops.iron_guards;
+  const builtCount     = ALL_BUILDINGS.filter(b => (state.buildings[b] ?? 0) > 0).length;
+  const avgLevel       = builtCount === 0 ? 0
     : Math.round(ALL_BUILDINGS.reduce((s, b) => s + (state.buildings[b] ?? 0), 0) / ALL_BUILDINGS.length * 10) / 10;
 
   // ── Render ──────────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen bg-stone-50 text-stone-800 font-sans pb-24">
+    <div className="min-h-screen pb-20 font-sans" style={{ background: '#0d1408', color: '#e8d5a3' }}>
 
-      {/* ── Top nav bar ── */}
-      <div className="sticky top-0 z-20 bg-white border-b border-stone-200 px-4 py-2 flex items-center gap-3">
-        <Link href="/foundry" className="text-xs text-stone-400 hover:text-stone-600 flex items-center gap-1">
+      {/* ── Top nav ── */}
+      <div className="sticky top-0 z-20 flex items-center gap-3 px-4 py-2.5"
+        style={{ background: 'rgba(0,0,0,0.85)', borderBottom: '1px solid #2a3d1a' }}>
+        <Link href="/foundry"
+          className="text-xs font-semibold"
+          style={{ color: '#6b9e4a' }}>
           ← Map
         </Link>
-        <span className="text-stone-300">|</span>
-        <span className="text-xs font-bold text-stone-700">⚒ Forge #{state.forgeId}</span>
+        <span style={{ color: '#2a3d1a' }}>|</span>
+        <span className="text-xs font-bold" style={{ color: '#d4a438' }}>⚒ Forge #{state.forgeId}</span>
         <div className="ml-auto flex items-center gap-2">
-          <span className="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-3 py-0.5">
+          <span className="text-xs font-bold px-3 py-1 rounded-full"
+            style={{ background: '#1e2d10', border: '1px solid #4a6a2a', color: '#f0c060' }}>
             💰 {fmt(state.ingotBalance)} Ingots
           </span>
         </div>
@@ -172,46 +177,56 @@ export default function ForgePage() {
 
       <div className="max-w-2xl mx-auto px-4 pt-4 space-y-4">
 
-        {/* ── Forge header card ── */}
-        <div className="rounded-2xl overflow-hidden shadow-sm border border-stone-200">
-          <div className="bg-gradient-to-r from-amber-700 to-amber-900 px-5 py-4 flex items-center gap-3">
-            <span className="text-3xl">⚒</span>
+        {/* ── Forge header ── */}
+        <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid #3a5a20', background: '#111a08' }}>
+          {/* Banner */}
+          <div className="px-5 py-4 flex items-center gap-3"
+            style={{ background: 'linear-gradient(135deg, #1e3010 0%, #2d4a18 50%, #1a2a0e 100%)' }}>
+            <div className="flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center text-2xl"
+              style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid #4a7a28' }}>
+              ⚒
+            </div>
             <div className="flex-1 min-w-0">
-              <div className="text-white font-bold text-base leading-tight">Forge #{state.forgeId}</div>
-              <div className="text-amber-200 text-xs truncate">{state.owner}</div>
+              <div className="font-bold text-base leading-tight" style={{ color: '#f5d060' }}>
+                Forge #{state.forgeId}
+              </div>
+              <div className="text-xs truncate mt-0.5" style={{ color: '#5a7a3a' }}>
+                {state.owner}
+              </div>
             </div>
             <Link href="/foundry/reports"
-              className="text-amber-200 hover:text-white text-xs border border-amber-600 rounded-lg px-2 py-1 transition-colors">
+              className="text-xs px-2.5 py-1 rounded-lg transition-colors"
+              style={{ color: '#a0c060', border: '1px solid #3a5a20', background: 'rgba(0,0,0,0.3)' }}>
               Reports
             </Link>
           </div>
 
-          {/* Stat chips */}
-          <div className="bg-white grid grid-cols-3 divide-x divide-stone-100">
-            <div className="px-4 py-3 text-center">
-              <div className="text-lg font-bold text-stone-800">{builtCount}</div>
-              <div className="text-[10px] text-stone-400 uppercase tracking-wide">Buildings</div>
-            </div>
-            <div className="px-4 py-3 text-center">
-              <div className="text-lg font-bold text-stone-800">{totalStationed}</div>
-              <div className="text-[10px] text-stone-400 uppercase tracking-wide">Troops</div>
-            </div>
-            <div className="px-4 py-3 text-center">
-              <div className="text-lg font-bold text-stone-800">Lv {avgLevel}</div>
-              <div className="text-[10px] text-stone-400 uppercase tracking-wide">Avg Level</div>
-            </div>
+          {/* Stat row */}
+          <div className="grid grid-cols-3 divide-x" style={{ divideColor: '#2a3d1a', borderTop: '1px solid #2a3d1a' }}>
+            {[
+              { val: builtCount,     label: 'Buildings' },
+              { val: totalStationed, label: 'Troops' },
+              { val: `Lv ${avgLevel}`, label: 'Avg Level' },
+            ].map(({ val, label }) => (
+              <div key={label} className="py-3 text-center">
+                <div className="text-lg font-bold" style={{ color: '#f5d060' }}>{val}</div>
+                <div className="text-[10px] uppercase tracking-wide mt-0.5" style={{ color: '#4a6a2a' }}>{label}</div>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* ── Status / construction banners ── */}
+        {/* ── Status banners ── */}
         {msg && (
-          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-800">
+          <div className="rounded-xl px-4 py-2.5 text-sm"
+            style={{ background: '#1a2a10', border: '1px solid #4a6a2a', color: '#b0d080' }}>
             {msg}
           </div>
         )}
         {state.construction && (
-          <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-2.5 flex items-center gap-2 text-sm text-amber-800">
-            <span className="text-base">🔨</span>
+          <div className="rounded-xl px-4 py-2.5 flex items-center gap-2 text-sm"
+            style={{ background: '#1e1a08', border: '1px solid #6a4a10', color: '#e8c060' }}>
+            <span>🔨</span>
             <span>
               Upgrading <strong>{BUILDING_META[state.construction.buildingType as BuildingType].label}</strong> to Lv{state.construction.toLevel}
               {' — '}<span className="font-mono font-bold">{fmtCountdown(state.construction.completesAt)}</span> remaining
@@ -221,58 +236,62 @@ export default function ForgePage() {
 
         {/* ── Buildings ── */}
         <section>
-          <h2 className="text-xs font-bold text-stone-400 uppercase tracking-widest mb-3">Buildings</h2>
+          <div className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: '#4a6a2a' }}>
+            Buildings
+          </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
             {ALL_BUILDINGS.map(type => {
-              const meta      = BUILDING_META[type];
-              const level     = state.buildings[type] ?? 0;
-              const toLevel   = level + 1;
-              const cost      = level < 5 ? buildCost(type, toLevel) : 0;
+              const meta       = BUILDING_META[type];
+              const level      = state.buildings[type] ?? 0;
+              const toLevel    = level + 1;
+              const cost       = level < 5 ? buildCost(type, toLevel) : 0;
               const isBuilding = state.construction?.buildingType === type;
               const canUpgrade = isOwner && level < 5 && !state.construction && state.ingotBalance >= cost && !busy;
               const pct        = (level / 5) * 100;
 
               return (
                 <div key={type}
-                  className={`rounded-xl border bg-white p-3 flex flex-col gap-2 shadow-sm transition-colors
-                    ${isBuilding ? 'border-amber-400 bg-amber-50' : 'border-stone-200'}`}>
+                  className="rounded-xl p-3 flex flex-col gap-2 transition-colors"
+                  style={{
+                    background: isBuilding ? '#1e1a08' : '#111a08',
+                    border: `1px solid ${isBuilding ? '#6a4a10' : '#2a3d1a'}`,
+                  }}>
 
-                  {/* Icon + name */}
                   <div className="flex items-center gap-2">
-                    <span className="text-2xl leading-none">{meta.icon}</span>
+                    <span className="text-xl leading-none">{meta.icon}</span>
                     <div className="min-w-0">
-                      <div className="text-[11px] font-bold text-stone-700 leading-tight truncate">{meta.label}</div>
-                      <div className="text-[10px] text-stone-400">Lv {level} / 5</div>
+                      <div className="text-[11px] font-bold leading-tight truncate" style={{ color: '#d4c090' }}>
+                        {meta.label}
+                      </div>
+                      <div className="text-[10px]" style={{ color: '#4a6a2a' }}>Lv {level} / 5</div>
                     </div>
                   </div>
 
-                  {/* Progress bar */}
-                  <div className="h-1.5 bg-stone-100 rounded-full overflow-hidden">
-                    <div
-                      className="h-full rounded-full bg-amber-500 transition-all"
-                      style={{ width: `${pct}%` }}
-                    />
+                  {/* Level bar */}
+                  <div className="h-1 rounded-full" style={{ background: '#1e2d10' }}>
+                    <div className="h-full rounded-full transition-all"
+                      style={{ width: `${pct}%`, background: 'linear-gradient(90deg, #b45309, #f59e0b)' }} />
                   </div>
 
-                  {/* Effect */}
-                  <div className="text-[9px] text-stone-400 leading-tight">{meta.effectLabel}</div>
+                  <div className="text-[9px] leading-tight" style={{ color: '#3a5a20' }}>
+                    {meta.effectLabel}
+                  </div>
 
-                  {/* Button */}
                   {level >= 5 ? (
-                    <div className="text-[10px] font-bold text-amber-600 text-center">MAX</div>
+                    <div className="text-[10px] font-bold text-center" style={{ color: '#d4a438' }}>MAX</div>
                   ) : isBuilding ? (
-                    <div className="text-[10px] font-mono font-bold text-amber-700 text-center bg-amber-100 rounded-lg py-1">
+                    <div className="text-[10px] font-mono font-bold text-center rounded-lg py-1"
+                      style={{ background: '#1a1508', color: '#e8a020' }}>
                       {fmtCountdown(state.construction!.completesAt)}
                     </div>
                   ) : isOwner ? (
                     <button
                       onClick={() => handleBuild(type)}
                       disabled={!canUpgrade}
-                      className={`text-[10px] font-bold rounded-lg py-1.5 w-full transition-colors
-                        ${canUpgrade
-                          ? 'bg-amber-600 hover:bg-amber-700 text-white'
-                          : 'bg-stone-100 text-stone-400 cursor-not-allowed'}`}
-                    >
+                      className="text-[10px] font-bold rounded-lg py-1.5 w-full transition-colors"
+                      style={canUpgrade
+                        ? { background: '#2d4a10', border: '1px solid #4a7a20', color: '#b0d060', cursor: 'pointer' }
+                        : { background: '#141d0a', border: '1px solid #2a3510', color: '#3a4a28', cursor: 'not-allowed' }}>
                       {level === 0 ? 'Build' : 'Upgrade'} — {fmt(cost)}
                     </button>
                   ) : null}
@@ -285,10 +304,12 @@ export default function ForgePage() {
         {/* ── Troops ── */}
         <section>
           <div className="flex items-baseline gap-2 mb-3">
-            <h2 className="text-xs font-bold text-stone-400 uppercase tracking-widest">Troops</h2>
-            <span className="text-[10px] text-stone-400">{totalStationed} / {state.troopCapacity} stationed</span>
+            <div className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#4a6a2a' }}>Troops</div>
+            <span className="text-[10px]" style={{ color: '#3a5a20' }}>
+              {totalStationed} / {state.troopCapacity} stationed
+            </span>
             {state.buildings['barracks'] < 1 && isOwner && (
-              <span className="text-[10px] text-orange-500">— build Barracks first</span>
+              <span className="text-[10px]" style={{ color: '#c07020' }}>— build Barracks first</span>
             )}
           </div>
 
@@ -300,34 +321,34 @@ export default function ForgePage() {
               const canTrain = isOwner && state.buildings['barracks'] >= 1 && state.ingotBalance >= cost && !busy;
 
               return (
-                <div key={type} className="rounded-xl border border-stone-200 bg-white p-3 flex flex-col gap-2.5 shadow-sm">
+                <div key={type} className="rounded-xl p-3 flex flex-col gap-2.5"
+                  style={{ background: '#111a08', border: '1px solid #2a3d1a' }}>
 
-                  {/* Icon + stationed */}
                   <div className="flex items-center gap-2">
-                    <span className="text-2xl leading-none">{meta.icon}</span>
+                    <span className="text-xl leading-none">{meta.icon}</span>
                     <div>
-                      <div className="text-[11px] font-bold text-stone-700">{meta.label}</div>
-                      <div className="text-[10px] text-stone-400">Stationed: <strong className="text-stone-600">{state.troops[type as keyof TroopCount]}</strong></div>
+                      <div className="text-[11px] font-bold" style={{ color: '#d4c090' }}>{meta.label}</div>
+                      <div className="text-[10px]" style={{ color: '#4a6a2a' }}>
+                        Stationed: <strong style={{ color: '#a0c060' }}>{state.troops[type as keyof TroopCount]}</strong>
+                      </div>
                     </div>
                   </div>
 
-                  {/* ATK / DEF / Cost chips */}
                   <div className="grid grid-cols-3 gap-1">
-                    <div className="bg-red-50 border border-red-100 rounded-lg py-1 text-center">
-                      <div className="text-[11px] font-bold text-red-600">{meta.atk}</div>
-                      <div className="text-[8px] text-stone-400">ATK</div>
+                    <div className="rounded-lg py-1 text-center" style={{ background: '#1e0d0d', border: '1px solid #3d1515' }}>
+                      <div className="text-[11px] font-bold" style={{ color: '#e05050' }}>{meta.atk}</div>
+                      <div className="text-[8px]" style={{ color: '#5a3030' }}>ATK</div>
                     </div>
-                    <div className="bg-blue-50 border border-blue-100 rounded-lg py-1 text-center">
-                      <div className="text-[11px] font-bold text-blue-600">{meta.def}</div>
-                      <div className="text-[8px] text-stone-400">DEF</div>
+                    <div className="rounded-lg py-1 text-center" style={{ background: '#0d1520', border: '1px solid #152540' }}>
+                      <div className="text-[11px] font-bold" style={{ color: '#5090d0' }}>{meta.def}</div>
+                      <div className="text-[8px]" style={{ color: '#2a4060' }}>DEF</div>
                     </div>
-                    <div className="bg-amber-50 border border-amber-100 rounded-lg py-1 text-center">
-                      <div className="text-[11px] font-bold text-amber-700">{meta.cost}</div>
-                      <div className="text-[8px] text-stone-400">each</div>
+                    <div className="rounded-lg py-1 text-center" style={{ background: '#1a1408', border: '1px solid #3a2d10' }}>
+                      <div className="text-[11px] font-bold" style={{ color: '#c09030' }}>{meta.cost}</div>
+                      <div className="text-[8px]" style={{ color: '#4a3a18' }}>each</div>
                     </div>
                   </div>
 
-                  {/* Train controls */}
                   {isOwner && (
                     <div className="flex gap-1.5">
                       <input
@@ -335,16 +356,16 @@ export default function ForgePage() {
                         onChange={e => setTrainQty(q => ({
                           ...q, [type]: Math.max(1, Math.min(20, parseInt(e.target.value) || 1)),
                         }))}
-                        className="w-12 border border-stone-200 rounded-lg px-1 py-1 text-[10px] text-center bg-stone-50 text-stone-700"
+                        className="w-12 rounded-lg px-1 py-1 text-[10px] text-center"
+                        style={{ background: '#0d1408', border: '1px solid #2a3d1a', color: '#d4c090' }}
                       />
                       <button
                         onClick={() => handleTrain(type)}
                         disabled={!canTrain}
-                        className={`flex-1 text-[10px] font-bold rounded-lg py-1.5 transition-colors
-                          ${canTrain
-                            ? 'bg-green-600 hover:bg-green-700 text-white'
-                            : 'bg-stone-100 text-stone-400 cursor-not-allowed'}`}
-                      >
+                        className="flex-1 text-[10px] font-bold rounded-lg py-1.5 transition-colors"
+                        style={canTrain
+                          ? { background: '#1a3010', border: '1px solid #3a6020', color: '#90d050', cursor: 'pointer' }
+                          : { background: '#0d1408', border: '1px solid #1e2d10', color: '#2a3d1a', cursor: 'not-allowed' }}>
                         Train ×{qty} — {fmt(cost)}
                       </button>
                     </div>
@@ -356,13 +377,15 @@ export default function ForgePage() {
 
           {/* Training queue */}
           {state.trainingQueue.length > 0 && (
-            <div className="mt-3 rounded-xl border border-stone-200 bg-white p-3 shadow-sm">
-              <div className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-2">Training Queue</div>
+            <div className="mt-2.5 rounded-xl p-3" style={{ background: '#111a08', border: '1px solid #2a3d1a' }}>
+              <div className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: '#4a6a2a' }}>
+                Training Queue
+              </div>
               <div className="space-y-1.5">
-                {state.trainingQueue.map((item, i) => (
-                  <div key={i} className="flex items-center justify-between text-xs text-stone-600">
+                {state.trainingQueue.map((item: TrainingItem, i: number) => (
+                  <div key={i} className="flex items-center justify-between text-xs" style={{ color: '#a0b880' }}>
                     <span>{TROOP_META[item.type as TroopType].icon} {item.quantity}× {TROOP_META[item.type as TroopType].label}</span>
-                    <span className="font-mono font-bold text-amber-700">{fmtCountdown(item.completesAt)}</span>
+                    <span className="font-mono font-bold" style={{ color: '#d4a438' }}>{fmtCountdown(item.completesAt)}</span>
                   </div>
                 ))}
               </div>
@@ -372,16 +395,20 @@ export default function ForgePage() {
 
         {/* ── Attack Panel ── */}
         {state.buildings.rally_point >= 1 && (
-          <section className="rounded-2xl border border-red-100 bg-white shadow-sm p-4 space-y-3">
-            <h2 className="text-xs font-bold text-stone-400 uppercase tracking-widest">⚔️ Send Attack</h2>
+          <section className="rounded-2xl p-4 space-y-3"
+            style={{ background: '#150d0d', border: '1px solid #4a1a1a' }}>
+            <div className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#6a2a2a' }}>
+              ⚔️ Send Attack
+            </div>
 
             <div className="flex items-center gap-2">
-              <label className="text-xs text-stone-500 w-28 flex-shrink-0">Target Forge ID</label>
+              <label className="text-xs flex-shrink-0 w-28" style={{ color: '#806060' }}>Target Forge ID</label>
               <input
                 type="number" min={1} max={500} value={attackTarget}
                 onChange={e => setAttackTarget(e.target.value)}
                 placeholder="e.g. 42"
-                className="w-24 border border-stone-200 rounded-lg px-2 py-1 text-sm text-center bg-stone-50"
+                className="w-24 rounded-lg px-2 py-1 text-sm text-center"
+                style={{ background: '#0d0808', border: '1px solid #3a1a1a', color: '#e8c0c0' }}
               />
             </div>
 
@@ -392,12 +419,13 @@ export default function ForgePage() {
                 return (
                   <div key={t} className="flex items-center gap-2">
                     <span className="text-sm w-5">{meta.icon}</span>
-                    <span className="text-xs text-stone-600 flex-1">{meta.label}</span>
-                    <span className="text-xs text-stone-400">{avail} avail</span>
+                    <span className="text-xs flex-1" style={{ color: '#806060' }}>{meta.label}</span>
+                    <span className="text-xs" style={{ color: '#5a3a3a' }}>{avail} avail</span>
                     <input
                       type="number" min={0} max={avail} value={sendQty[t]}
                       onChange={e => setSendQty(q => ({ ...q, [t]: Math.min(avail, Math.max(0, Number(e.target.value))) }))}
-                      className="w-16 border border-stone-200 rounded-lg px-2 py-1 text-sm text-center bg-stone-50"
+                      className="w-16 rounded-lg px-2 py-1 text-sm text-center"
+                      style={{ background: '#0d0808', border: '1px solid #3a1a1a', color: '#e8c0c0' }}
                     />
                   </div>
                 );
@@ -405,7 +433,8 @@ export default function ForgePage() {
             </div>
 
             {attackMsg && (
-              <p className={`text-xs ${attackMsg.startsWith('⚔️') ? 'text-green-700' : 'text-red-600'}`}>
+              <p className="text-xs"
+                style={{ color: attackMsg.startsWith('⚔️') ? '#80d060' : '#d06060' }}>
                 {attackMsg}
               </p>
             )}
@@ -413,18 +442,20 @@ export default function ForgePage() {
             <button
               onClick={handleAttack}
               disabled={busy || totalSendQty === 0 || !attackTarget}
-              className="w-full bg-red-600 hover:bg-red-700 disabled:opacity-40 text-white font-bold rounded-xl py-2 text-sm transition-colors"
-            >
-              {busy ? 'Sending…' : `Send ${totalSendQty > 0 ? totalSendQty : ''} Troops`}
+              className="w-full font-bold rounded-xl py-2 text-sm transition-colors"
+              style={busy || totalSendQty === 0 || !attackTarget
+                ? { background: '#1a0d0d', border: '1px solid #3a1a1a', color: '#4a2a2a', cursor: 'not-allowed' }
+                : { background: '#3d1010', border: '1px solid #8b1a1a', color: '#ff8080', cursor: 'pointer' }}>
+              {busy ? 'Sending…' : `Send ${totalSendQty > 0 ? totalSendQty + ' ' : ''}Troops`}
             </button>
 
             {state.pendingAttacks.length > 0 && (
-              <div className="border-t border-stone-100 pt-3 space-y-1">
-                <p className="text-[10px] text-stone-400 font-bold uppercase tracking-wide">Outgoing</p>
+              <div className="pt-3 space-y-1" style={{ borderTop: '1px solid #2a1515' }}>
+                <p className="text-[10px] font-bold uppercase tracking-wide" style={{ color: '#4a2a2a' }}>Outgoing</p>
                 {state.pendingAttacks.map((a: AttackRecord) => (
-                  <div key={a.id} className="flex justify-between text-xs text-stone-600">
+                  <div key={a.id} className="flex justify-between text-xs" style={{ color: '#806060' }}>
                     <span>→ Forge #{a.defenderForgeId}</span>
-                    <span className="text-red-600 font-mono font-bold">{fmtCountdown(a.arrivesAt)}</span>
+                    <span className="font-mono font-bold" style={{ color: '#e05050' }}>{fmtCountdown(a.arrivesAt)}</span>
                   </div>
                 ))}
               </div>
@@ -433,7 +464,8 @@ export default function ForgePage() {
         )}
 
         {/* ── Inscription ── */}
-        <div className="rounded-xl border border-stone-200 bg-white px-4 py-3 text-xs text-stone-400 italic leading-relaxed shadow-sm">
+        <div className="rounded-xl px-4 py-3 text-xs italic leading-relaxed"
+          style={{ background: '#0d1008', border: '1px solid #1e2d10', color: '#3a5020' }}>
           {state.inscription}
         </div>
 

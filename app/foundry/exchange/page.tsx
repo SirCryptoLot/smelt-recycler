@@ -14,7 +14,7 @@ import Link from 'next/link';
 const SMELT_MINT     = new PublicKey('SME88JJYc8NrRvLVwWUgqk3kLuhuUwqu2JKDFeHdXb8');
 const VAULT_SMELT_ATA = new PublicKey('9TTxxr5tYAdq6HDWMUNRz1xgppBNmrAVzKyarEfhPdok');
 const DEV_PUBKEY     = new PublicKey('J1aBWq9JmvA4fkqSfV4TthiwkBp5zn5ZZt5D2YSuE3Yw');
-const SMELT_DECIMALS = 6;
+const SMELT_DECIMALS = 9;
 const INGOTS_PER_SMELT = 1000;
 const BUY_TAX_PCT    = 0.05;
 const SELL_TAX_PCT   = 0.10;

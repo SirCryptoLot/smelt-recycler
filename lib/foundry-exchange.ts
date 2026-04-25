@@ -20,7 +20,7 @@ export const SELL_TAX_BPS    = 1000;  // 10%
 const VAULT_PUBKEY    = new PublicKey('DgkyF4YnwVYFqMSMo9WvDz2sVkFJSjsWueFYDrKgu87Z');
 const VAULT_SMELT_ATA = new PublicKey('9TTxxr5tYAdq6HDWMUNRz1xgppBNmrAVzKyarEfhPdok');
 const DEV_PUBKEY      = new PublicKey('J1aBWq9JmvA4fkqSfV4TthiwkBp5zn5ZZt5D2YSuE3Yw');
-const SMELT_DECIMALS  = 6;
+const SMELT_DECIMALS  = 9;
 
 function loadVaultKeypair(): Keypair {
   const raw = JSON.parse(process.env.VAULT_KEYPAIR ?? '[]') as number[];

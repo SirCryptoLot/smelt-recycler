@@ -121,13 +121,8 @@ export default function FoundryWorldMap() {
 
   const zoom = (f: number) => setScale(s => Math.min(Math.max(s * f, 0.3), 3));
 
-  if (loading) return (
-    <div className="flex items-center justify-center h-screen bg-[#0d1117] text-amber-400 text-lg font-bold">
-      Loading world map…
-    </div>
-  );
-
-  const myForge = mapData?.forges.find(f => f.tier === 'mine');
+  // These must be before any early return (Rules of Hooks)
+  const myForge = mapData?.forges.find(f => f.tier === 'mine') ?? null;
 
   // Pre-build forge lookup: "row,col" → MapForge (avoids O(tiles × forges) scan per render)
   const forgeByPos = useMemo(() => {
@@ -135,6 +130,12 @@ export default function FoundryWorldMap() {
     mapData?.forges.forEach(f => m.set(`${f.row},${f.col}`, f));
     return m;
   }, [mapData]);
+
+  if (loading) return (
+    <div className="flex items-center justify-center h-screen bg-[#0d1117] text-amber-400 text-lg font-bold">
+      Loading world map…
+    </div>
+  );
 
   return (
     <div className="flex flex-col h-screen bg-[#0d1117] overflow-hidden">

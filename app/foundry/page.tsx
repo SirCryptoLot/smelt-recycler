@@ -38,11 +38,68 @@ const FORGE_COLOR: Record<string, string> = {
   mine:    '#f59e0b',
   ally:    '#4ade80',
   enemy:   '#ef4444',
-  neutral: '#6b4f2a',
+  neutral: '#3b82f6',
   empty:   'transparent',
 };
 
 const TILE_PX = 36;
+
+// ── Tower marker (rises above tile via overflow:visible) ─────────────────────
+
+function TowerMarker({ tier }: { tier: 'mine' | 'neutral' }) {
+  const isMine = tier === 'mine';
+  return (
+    <div style={{
+      display: 'flex', flexDirection: 'column', alignItems: 'center',
+      position: 'absolute', bottom: 2, left: '50%', transform: 'translateX(-50%)',
+      zIndex: 10, pointerEvents: 'none',
+    }}>
+      {/* Flag on pole */}
+      <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+        <div style={{ width: 2, height: 8, background: isMine ? '#d4a438' : '#93c5fd' }} />
+        <div style={{
+          width: 10, height: 7,
+          background: isMine ? '#ef4444' : '#3b82f6',
+          clipPath: 'polygon(0 0, 100% 35%, 0 70%)',
+        }} />
+      </div>
+      {/* Keep with battlements */}
+      <div style={{
+        width: 20, height: 16,
+        background: isMine
+          ? 'linear-gradient(to bottom, #d97706, #92400e)'
+          : 'linear-gradient(to bottom, #1d4ed8, #1e3a5f)',
+        border: `1.5px solid ${isMine ? '#fbbf24' : '#60a5fa'}`,
+        borderRadius: '2px 2px 0 0',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: 9, color: isMine ? '#fff' : '#bfdbfe',
+        position: 'relative',
+        boxShadow: isMine ? '0 0 8px #fbbf2488' : undefined,
+        animation: isMine ? 'forge-glow 2s ease-in-out infinite' : undefined,
+      }}>
+        <div style={{
+          position: 'absolute', top: -4, left: 0, right: 0,
+          display: 'flex', justifyContent: 'space-around', padding: '0 2px',
+        }}>
+          {[0, 1, 2].map(i => (
+            <div key={i} style={{
+              width: 4, height: 4,
+              background: isMine ? '#fbbf24' : '#60a5fa',
+              borderRadius: '1px 1px 0 0',
+            }} />
+          ))}
+        </div>
+        {isMine ? '⚒' : '?'}
+      </div>
+      {/* Base */}
+      <div style={{
+        width: 24, height: 3,
+        background: isMine ? '#78350f' : '#1e3a5f',
+        borderRadius: '0 0 3px 3px',
+      }} />
+    </div>
+  );
+}
 
 // ── Component ────────────────────────────────────────────────────────────────
 
@@ -95,7 +152,8 @@ export default function FoundryWorldMap() {
       if (f.tier === 'empty') continue;
       ctx.fillStyle = FORGE_COLOR[f.tier];
       ctx.beginPath();
-      ctx.arc(f.col * tw + tw / 2, f.row * th + th / 2, Math.max(tw, 1.5), 0, Math.PI * 2);
+      const r = f.tier === 'mine' ? 3 : 1.5;
+      ctx.arc(f.col * tw + tw / 2, f.row * th + th / 2, r, 0, Math.PI * 2);
       ctx.fill();
     }
   }, [mapData]);
@@ -200,6 +258,7 @@ export default function FoundryWorldMap() {
                     border: '1px solid rgba(0,0,0,0.2)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: 12, position: 'relative',
+                    overflow: forge && forge.tier !== 'empty' ? 'visible' : undefined,
                     cursor: forge && forge.tier !== 'empty' ? 'pointer' : isPassable ? 'default' : 'not-allowed',
                     boxShadow: forge?.tier === 'mine' ? '0 0 8px #f59e0b88 inset' : undefined,
                   }}
@@ -208,24 +267,9 @@ export default function FoundryWorldMap() {
                   {!forge && TERRAIN_ICON[terrain] && (
                     <span style={{ opacity: 0.75, pointerEvents: 'none' }}>{TERRAIN_ICON[terrain]}</span>
                   )}
-                  {/* Forge marker */}
+                  {/* Forge tower */}
                   {forge && forge.tier !== 'empty' && (
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
-                      <div style={{
-                        width: 16, height: 16, borderRadius: 3,
-                        background: FORGE_COLOR[forge.tier],
-                        border: `2px solid ${forge.tier === 'mine' ? '#fbbf24' : 'rgba(255,255,255,0.3)'}`,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: 8, color: '#fff', fontWeight: 700,
-                        boxShadow: forge.tier === 'mine' ? '0 0 6px #fbbf24' : undefined,
-                        animation: forge.tier === 'mine' ? 'pulse 2s ease-in-out infinite' : undefined,
-                      }}>
-                        {forge.tier === 'mine' ? '⚒' : forge.tier === 'ally' ? '🤝' : forge.tier === 'enemy' ? '⚔' : '?'}
-                      </div>
-                      <span style={{ fontSize: 7, color: '#fbbf24', fontFamily: 'monospace', textShadow: '0 1px 2px black' }}>
-                        #{forge.plotId}
-                      </span>
-                    </div>
+                    <TowerMarker tier={forge.tier === 'mine' ? 'mine' : 'neutral'} />
                   )}
                   {/* Empty forge plot marker */}
                   {forge && forge.tier === 'empty' && (
@@ -291,9 +335,9 @@ export default function FoundryWorldMap() {
       </div>
 
       <style>{`
-        @keyframes pulse {
-          0%, 100% { box-shadow: 0 0 4px #fbbf24aa; }
-          50% { box-shadow: 0 0 12px #fbbf24; }
+        @keyframes forge-glow {
+          0%, 100% { box-shadow: 0 0 5px #fbbf2466; }
+          50% { box-shadow: 0 0 14px #fbbf24; }
         }
       `}</style>
     </div>

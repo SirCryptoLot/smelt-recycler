@@ -4,6 +4,7 @@ import { getPlots } from '@/lib/foundry';
 import { getWalletStats } from '@/lib/leaderboard';
 import { getForgeBuildings, BuildingType, ConstructionSlot } from '@/lib/foundry-buildings';
 import { getForgeTroops, TroopCount, TrainingItem, BASE_TROOP_CAPACITY, CAPACITY_PER_BARRACKS } from '@/lib/foundry-troops';
+import { getForgeAttacks, AttackRecord } from '@/lib/foundry-combat';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,6 +18,7 @@ export interface ForgeStateResponse {
   troops: TroopCount;
   troopCapacity: number;
   trainingQueue: TrainingItem[];
+  pendingAttacks: AttackRecord[];
 }
 
 export async function GET(
@@ -43,6 +45,10 @@ export async function GET(
     const barracksLevel = buildings.levels['barracks'];
     const troopCapacity = BASE_TROOP_CAPACITY + barracksLevel * CAPACITY_PER_BARRACKS;
 
+    const pendingAttacks = getForgeAttacks(forgeId).filter(
+      a => a.resolvedAt === null && a.attackerForgeId === forgeId,
+    );
+
     const response: ForgeStateResponse = {
       forgeId,
       owner: plot.owner,
@@ -53,6 +59,7 @@ export async function GET(
       troops: troops.stationed,
       troopCapacity,
       trainingQueue: troops.trainingQueue,
+      pendingAttacks,
     };
 
     return NextResponse.json(response);

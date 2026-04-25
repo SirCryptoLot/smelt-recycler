@@ -4,7 +4,9 @@ import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 import { PublicKey, Transaction } from '@solana/web3.js';
 import {
   createTransferCheckedInstruction,
+  createAssociatedTokenAccountIdempotentInstruction,
   getAssociatedTokenAddressSync,
+  ASSOCIATED_TOKEN_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
 } from '@solana/spl-token';
 import Link from 'next/link';
@@ -69,6 +71,10 @@ export default function ExchangePage() {
         userATA, SMELT_MINT, VAULT_SMELT_ATA, publicKey, vaultAmt, SMELT_DECIMALS, [], TOKEN_PROGRAM_ID,
       ));
       if (devAmt > BigInt(0)) {
+        // Create dev ATA if it doesn't exist yet (idempotent — safe to include always)
+        tx.add(createAssociatedTokenAccountIdempotentInstruction(
+          publicKey, devATA, DEV_PUBKEY, SMELT_MINT, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID,
+        ));
         tx.add(createTransferCheckedInstruction(
           userATA, SMELT_MINT, devATA, publicKey, devAmt, SMELT_DECIMALS, [], TOKEN_PROGRAM_ID,
         ));

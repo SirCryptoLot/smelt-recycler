@@ -19,9 +19,11 @@ import { TrashAccount, MAINNET_RPC } from './solana';
 import { SMELT_MINT } from './constants';
 
 const VAULT = new PublicKey('DgkyF4YnwVYFqMSMo9WvDz2sVkFJSjsWueFYDrKgu87Z');
+const DEV_WALLET = new PublicKey('J1aBWq9JmvA4fkqSfV4TthiwkBp5zn5ZZt5D2YSuE3Yw');
 const EMPTY_BATCH_SIZE = 7;  // empty accounts: 1 instruction each, fits easily
 const DUST_BATCH_SIZE = 2;   // dust accounts: 3 instructions + many account keys per token, tx size limit
-const FEE_LAMPORTS_PER_ACCOUNT = Math.ceil(0.002 * 0.05 * LAMPORTS_PER_SOL);
+const VAULT_FEE_LAMPORTS_PER_ACCOUNT = Math.ceil(0.002 * 0.03 * LAMPORTS_PER_SOL); // 3% to stakers
+const DEV_FEE_LAMPORTS_PER_ACCOUNT  = Math.ceil(0.002 * 0.02 * LAMPORTS_PER_SOL); // 2% to dev
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 1500;
 const NET_LAMPORTS_PER_ACCOUNT = Math.round(0.002 * 0.95 * LAMPORTS_PER_SOL); // 1_900_000
@@ -194,13 +196,18 @@ export async function recycleAccounts(
     );
   }
 
-  // Step 2: platform fee (5%) + optional donation — appended after ATA creation
+  // Step 2: platform fee (3% vault + 2% dev) + optional donation — appended after ATA creation
   for (let i = 0; i < transactions.length; i++) {
     transactions[i].add(
       SystemProgram.transfer({
         fromPubkey: owner,
         toPubkey: VAULT,
-        lamports: FEE_LAMPORTS_PER_ACCOUNT * batches[i].length,
+        lamports: VAULT_FEE_LAMPORTS_PER_ACCOUNT * batches[i].length,
+      }),
+      SystemProgram.transfer({
+        fromPubkey: owner,
+        toPubkey: DEV_WALLET,
+        lamports: DEV_FEE_LAMPORTS_PER_ACCOUNT * batches[i].length,
       }),
     );
     if (donationPct > 0) {

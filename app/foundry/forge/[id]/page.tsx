@@ -27,6 +27,30 @@ function fmtCountdown(isoEnd: string): string {
   return `${s}s`;
 }
 
+// ── Bottom nav ────────────────────────────────────────────────────────────────
+
+function BottomNav({ forgeId }: { forgeId: number }) {
+  const items = [
+    { label: 'Map',      icon: '🗺',  href: '/foundry' },
+    { label: 'Reports',  icon: '📋',  href: '/foundry/reports' },
+    { label: 'Exchange', icon: '⚗️',  href: '/foundry/exchange' },
+    { label: 'Store',    icon: '🏪',  href: '/foundry/store' },
+  ];
+  return (
+    <nav className="fixed bottom-0 left-0 right-0 z-30 flex"
+      style={{ background: 'rgba(5,10,3,0.97)', borderTop: '1px solid #2a3d1a', paddingBottom: 'env(safe-area-inset-bottom)' }}>
+      {items.map(({ label, icon, href }) => (
+        <Link key={label} href={href}
+          className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 transition-opacity active:opacity-60"
+          style={{ textDecoration: 'none' }}>
+          <span style={{ fontSize: 20, lineHeight: 1 }}>{icon}</span>
+          <span style={{ fontSize: 10, color: '#5a7a3a', letterSpacing: '0.05em', fontWeight: 600 }}>{label}</span>
+        </Link>
+      ))}
+    </nav>
+  );
+}
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function ForgePage() {
@@ -132,15 +156,14 @@ export default function ForgePage() {
   // ── Loading / error states ──────────────────────────────────────────────────
 
   if (loading) return (
-    <div className="flex items-center justify-center h-screen text-amber-500 text-sm font-bold"
-      style={{ background: '#0d1408' }}>
-      Loading forge…
+    <div style={{ minHeight: '100vh', background: '#0d1408', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <span style={{ color: '#d4a438', fontSize: 14, fontWeight: 700 }}>Loading forge…</span>
     </div>
   );
   if (error) return (
-    <div className="max-w-lg mx-auto pt-12 px-4" style={{ background: '#0d1408', minHeight: '100vh' }}>
-      <p className="text-red-400 text-sm font-bold mb-2">⚠ {error}</p>
-      <Link href="/foundry" className="text-amber-500 underline text-sm">← Back to map</Link>
+    <div style={{ minHeight: '100vh', background: '#0d1408', padding: '48px 16px' }}>
+      <p style={{ color: '#e05050', fontSize: 14, fontWeight: 700, marginBottom: 8 }}>⚠ {error}</p>
+      <Link href="/foundry" style={{ color: '#d4a438', fontSize: 13 }}>← Back to map</Link>
     </div>
   );
   if (!state) return null;
@@ -155,277 +178,248 @@ export default function ForgePage() {
   // ── Render ──────────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen pb-20 font-sans" style={{ background: '#0d1408', color: '#e8d5a3' }}>
+    <div style={{ minHeight: '100vh', background: '#0d1408', color: '#e8d5a3', fontFamily: 'sans-serif', paddingBottom: 80 }}>
 
-      {/* ── Top nav ── */}
-      <div className="sticky top-0 z-20 flex items-center gap-3 px-4 py-2.5"
-        style={{ background: 'rgba(0,0,0,0.85)', borderBottom: '1px solid #2a3d1a' }}>
-        <Link href="/foundry"
-          className="text-xs font-semibold"
-          style={{ color: '#6b9e4a' }}>
-          ← Map
-        </Link>
-        <span style={{ color: '#2a3d1a' }}>|</span>
-        <span className="text-xs font-bold" style={{ color: '#d4a438' }}>⚒ Forge #{state.forgeId}</span>
-        <div className="ml-auto flex items-center gap-2">
-          <span className="text-xs font-bold px-3 py-1 rounded-full"
-            style={{ background: '#1e2d10', border: '1px solid #4a6a2a', color: '#f0c060' }}>
-            💰 {fmt(state.ingotBalance)} Ingots
-          </span>
+      {/* ── Hero header — white → dark gradient ── */}
+      <div style={{
+        background: 'linear-gradient(to bottom, #ffffff 0%, #f5f0e8 18%, #c8a84a 42%, #6b3d10 62%, #1e2e10 78%, #0d1408 100%)',
+        padding: '24px 20px 32px',
+        textAlign: 'center',
+        position: 'relative',
+      }}>
+        {/* Forge icon circle */}
+        <div style={{
+          width: 64, height: 64, borderRadius: '50%', margin: '0 auto 12px',
+          background: 'linear-gradient(135deg, #2d1a06 0%, #5a3010 50%, #2d1a06 100%)',
+          border: '2px solid #c8a84a',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 28,
+          boxShadow: '0 0 24px rgba(200,168,74,0.35)',
+        }}>
+          ⚒
+        </div>
+
+        <div style={{ fontSize: 20, fontWeight: 800, color: '#f5d060', letterSpacing: '-0.02em', lineHeight: 1.1 }}>
+          Forge #{state.forgeId}
+        </div>
+        <div style={{ fontSize: 11, color: 'rgba(200,168,74,0.6)', marginTop: 4, wordBreak: 'break-all', maxWidth: 280, margin: '4px auto 0' }}>
+          {state.owner.slice(0, 8)}…{state.owner.slice(-4)}
+        </div>
+
+        {/* Stat chips row */}
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 16 }}>
+          {[
+            { val: fmt(state.ingotBalance), label: '💰 Ingots', accent: '#f5d060' },
+            { val: builtCount,             label: '🏗 Built',   accent: '#90c060' },
+            { val: totalStationed,         label: '⚔️ Troops',  accent: '#c07050' },
+          ].map(({ val, label, accent }) => (
+            <div key={label} style={{
+              background: 'rgba(0,0,0,0.55)',
+              border: '1px solid rgba(255,255,255,0.12)',
+              borderRadius: 10,
+              padding: '6px 12px',
+              textAlign: 'center',
+              backdropFilter: 'blur(4px)',
+            }}>
+              <div style={{ fontSize: 15, fontWeight: 800, color: accent, lineHeight: 1 }}>{val}</div>
+              <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.45)', marginTop: 2, letterSpacing: '0.06em' }}>{label}</div>
+            </div>
+          ))}
         </div>
       </div>
 
-      <div className="max-w-2xl mx-auto px-4 pt-4 space-y-4">
+      {/* ── Page content ── */}
+      <div style={{ maxWidth: 672, margin: '0 auto', padding: '16px 16px 8px' }}>
 
-        {/* ── Forge header ── */}
-        <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid #3a5a20', background: '#111a08' }}>
-          {/* Banner */}
-          <div className="px-5 py-4 flex items-center gap-3"
-            style={{ background: 'linear-gradient(135deg, #1e3010 0%, #2d4a18 50%, #1a2a0e 100%)' }}>
-            <div className="flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center text-2xl"
-              style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid #4a7a28' }}>
-              ⚒
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="font-bold text-base leading-tight" style={{ color: '#f5d060' }}>
-                Forge #{state.forgeId}
-              </div>
-              <div className="text-xs truncate mt-0.5" style={{ color: '#5a7a3a' }}>
-                {state.owner}
-              </div>
-            </div>
-            <Link href="/foundry/reports"
-              className="text-xs px-2.5 py-1 rounded-lg transition-colors"
-              style={{ color: '#a0c060', border: '1px solid #3a5a20', background: 'rgba(0,0,0,0.3)' }}>
-              Reports
-            </Link>
-          </div>
-
-          {/* Stat row */}
-          <div className="grid grid-cols-3 divide-x" style={{ divideColor: '#2a3d1a', borderTop: '1px solid #2a3d1a' }}>
-            {[
-              { val: builtCount,     label: 'Buildings' },
-              { val: totalStationed, label: 'Troops' },
-              { val: `Lv ${avgLevel}`, label: 'Avg Level' },
-            ].map(({ val, label }) => (
-              <div key={label} className="py-3 text-center">
-                <div className="text-lg font-bold" style={{ color: '#f5d060' }}>{val}</div>
-                <div className="text-[10px] uppercase tracking-wide mt-0.5" style={{ color: '#4a6a2a' }}>{label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* ── Status banners ── */}
+        {/* Status banners */}
         {msg && (
-          <div className="rounded-xl px-4 py-2.5 text-sm"
-            style={{ background: '#1a2a10', border: '1px solid #4a6a2a', color: '#b0d080' }}>
+          <div style={{ background: '#1a2a10', border: '1px solid #4a6a2a', borderRadius: 12, padding: '10px 16px', fontSize: 13, color: '#b0d080', marginBottom: 12 }}>
             {msg}
           </div>
         )}
         {state.construction && (
-          <div className="rounded-xl px-4 py-2.5 flex items-center gap-2 text-sm"
-            style={{ background: '#1e1a08', border: '1px solid #6a4a10', color: '#e8c060' }}>
+          <div style={{ background: '#1e1a08', border: '1px solid #6a4a10', borderRadius: 12, padding: '10px 16px', fontSize: 13, color: '#e8c060', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
             <span>🔨</span>
             <span>
               Upgrading <strong>{BUILDING_META[state.construction.buildingType as BuildingType].label}</strong> to Lv{state.construction.toLevel}
-              {' — '}<span className="font-mono font-bold">{fmtCountdown(state.construction.completesAt)}</span> remaining
+              {' — '}<span style={{ fontFamily: 'monospace', fontWeight: 700 }}>{fmtCountdown(state.construction.completesAt)}</span> remaining
             </span>
           </div>
         )}
 
         {/* ── Buildings ── */}
-        <section>
-          <div className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: '#4a6a2a' }}>
-            Buildings
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-            {ALL_BUILDINGS.map(type => {
-              const meta       = BUILDING_META[type];
-              const level      = state.buildings[type] ?? 0;
-              const toLevel    = level + 1;
-              const cost       = level < 5 ? buildCost(type, toLevel) : 0;
-              const isBuilding = state.construction?.buildingType === type;
-              const canUpgrade = isOwner && level < 5 && !state.construction && state.ingotBalance >= cost && !busy;
-              const pct        = (level / 5) * 100;
+        <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#4a6a2a', marginBottom: 10 }}>
+          Buildings
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, marginBottom: 20 }}
+          className="sm:grid-cols-4">
+          {ALL_BUILDINGS.map(type => {
+            const meta       = BUILDING_META[type];
+            const level      = state.buildings[type] ?? 0;
+            const toLevel    = level + 1;
+            const cost       = level < 5 ? buildCost(type, toLevel) : 0;
+            const isBuilding = state.construction?.buildingType === type;
+            const canUpgrade = isOwner && level < 5 && !state.construction && state.ingotBalance >= cost && !busy;
+            const pct        = (level / 5) * 100;
 
-              return (
-                <div key={type}
-                  className="rounded-xl p-3 flex flex-col gap-2 transition-colors"
-                  style={{
-                    background: isBuilding ? '#1e1a08' : '#111a08',
-                    border: `1px solid ${isBuilding ? '#6a4a10' : '#2a3d1a'}`,
-                  }}>
-
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl leading-none">{meta.icon}</span>
-                    <div className="min-w-0">
-                      <div className="text-[11px] font-bold leading-tight truncate" style={{ color: '#d4c090' }}>
-                        {meta.label}
-                      </div>
-                      <div className="text-[10px]" style={{ color: '#4a6a2a' }}>Lv {level} / 5</div>
+            return (
+              <div key={type} style={{
+                background: isBuilding ? '#1e1a08' : '#111a08',
+                border: `1px solid ${isBuilding ? '#6a4a10' : '#2a3d1a'}`,
+                borderRadius: 14,
+                padding: 12,
+                display: 'flex', flexDirection: 'column', gap: 8,
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 20, lineHeight: 1 }}>{meta.icon}</span>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#d4c090', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {meta.label}
                     </div>
+                    <div style={{ fontSize: 10, color: '#4a6a2a' }}>Lv {level} / 5</div>
                   </div>
-
-                  {/* Level bar */}
-                  <div className="h-1 rounded-full" style={{ background: '#1e2d10' }}>
-                    <div className="h-full rounded-full transition-all"
-                      style={{ width: `${pct}%`, background: 'linear-gradient(90deg, #b45309, #f59e0b)' }} />
-                  </div>
-
-                  <div className="text-[9px] leading-tight" style={{ color: '#3a5a20' }}>
-                    {meta.effectLabel}
-                  </div>
-
-                  {level >= 5 ? (
-                    <div className="text-[10px] font-bold text-center" style={{ color: '#d4a438' }}>MAX</div>
-                  ) : isBuilding ? (
-                    <div className="text-[10px] font-mono font-bold text-center rounded-lg py-1"
-                      style={{ background: '#1a1508', color: '#e8a020' }}>
-                      {fmtCountdown(state.construction!.completesAt)}
-                    </div>
-                  ) : isOwner ? (
-                    <button
-                      onClick={() => handleBuild(type)}
-                      disabled={!canUpgrade}
-                      className="text-[10px] font-bold rounded-lg py-1.5 w-full transition-colors"
-                      style={canUpgrade
-                        ? { background: '#2d4a10', border: '1px solid #4a7a20', color: '#b0d060', cursor: 'pointer' }
-                        : { background: '#141d0a', border: '1px solid #2a3510', color: '#3a4a28', cursor: 'not-allowed' }}>
-                      {level === 0 ? 'Build' : 'Upgrade'} — {fmt(cost)}
-                    </button>
-                  ) : null}
                 </div>
-              );
-            })}
-          </div>
-        </section>
+
+                <div style={{ height: 3, borderRadius: 2, background: '#1e2d10' }}>
+                  <div style={{ height: '100%', borderRadius: 2, width: `${pct}%`, background: 'linear-gradient(90deg, #b45309, #f59e0b)', transition: 'width 0.4s' }} />
+                </div>
+
+                <div style={{ fontSize: 9, color: '#3a5a20', lineHeight: 1.4 }}>{meta.effectLabel}</div>
+
+                {level >= 5 ? (
+                  <div style={{ fontSize: 10, fontWeight: 700, color: '#d4a438', textAlign: 'center' }}>MAX</div>
+                ) : isBuilding ? (
+                  <div style={{ fontSize: 10, fontFamily: 'monospace', fontWeight: 700, textAlign: 'center', background: '#1a1508', borderRadius: 8, padding: '4px 0', color: '#e8a020' }}>
+                    {fmtCountdown(state.construction!.completesAt)}
+                  </div>
+                ) : isOwner ? (
+                  <button onClick={() => handleBuild(type)} disabled={!canUpgrade}
+                    style={{
+                      fontSize: 10, fontWeight: 700, borderRadius: 8, padding: '6px 0', width: '100%', cursor: canUpgrade ? 'pointer' : 'not-allowed',
+                      background: canUpgrade ? '#2d4a10' : '#141d0a',
+                      border: `1px solid ${canUpgrade ? '#4a7a20' : '#2a3510'}`,
+                      color: canUpgrade ? '#b0d060' : '#3a4a28',
+                      transition: 'background 0.15s',
+                    }}>
+                    {level === 0 ? 'Build' : 'Upgrade'} — {fmt(cost)}
+                  </button>
+                ) : null}
+              </div>
+            );
+          })}
+        </div>
 
         {/* ── Troops ── */}
-        <section>
-          <div className="flex items-baseline gap-2 mb-3">
-            <div className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#4a6a2a' }}>Troops</div>
-            <span className="text-[10px]" style={{ color: '#3a5a20' }}>
-              {totalStationed} / {state.troopCapacity} stationed
-            </span>
-            {state.buildings['barracks'] < 1 && isOwner && (
-              <span className="text-[10px]" style={{ color: '#c07020' }}>— build Barracks first</span>
-            )}
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-            {ALL_TROOPS.map(type => {
-              const meta     = TROOP_META[type];
-              const qty      = trainQty[type];
-              const cost     = meta.cost * qty;
-              const canTrain = isOwner && state.buildings['barracks'] >= 1 && state.ingotBalance >= cost && !busy;
-
-              return (
-                <div key={type} className="rounded-xl p-3 flex flex-col gap-2.5"
-                  style={{ background: '#111a08', border: '1px solid #2a3d1a' }}>
-
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl leading-none">{meta.icon}</span>
-                    <div>
-                      <div className="text-[11px] font-bold" style={{ color: '#d4c090' }}>{meta.label}</div>
-                      <div className="text-[10px]" style={{ color: '#4a6a2a' }}>
-                        Stationed: <strong style={{ color: '#a0c060' }}>{state.troops[type as keyof TroopCount]}</strong>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-1">
-                    <div className="rounded-lg py-1 text-center" style={{ background: '#1e0d0d', border: '1px solid #3d1515' }}>
-                      <div className="text-[11px] font-bold" style={{ color: '#e05050' }}>{meta.atk}</div>
-                      <div className="text-[8px]" style={{ color: '#5a3030' }}>ATK</div>
-                    </div>
-                    <div className="rounded-lg py-1 text-center" style={{ background: '#0d1520', border: '1px solid #152540' }}>
-                      <div className="text-[11px] font-bold" style={{ color: '#5090d0' }}>{meta.def}</div>
-                      <div className="text-[8px]" style={{ color: '#2a4060' }}>DEF</div>
-                    </div>
-                    <div className="rounded-lg py-1 text-center" style={{ background: '#1a1408', border: '1px solid #3a2d10' }}>
-                      <div className="text-[11px] font-bold" style={{ color: '#c09030' }}>{meta.cost}</div>
-                      <div className="text-[8px]" style={{ color: '#4a3a18' }}>each</div>
-                    </div>
-                  </div>
-
-                  {isOwner && (
-                    <div className="flex gap-1.5">
-                      <input
-                        type="number" min={1} max={20} value={qty}
-                        onChange={e => setTrainQty(q => ({
-                          ...q, [type]: Math.max(1, Math.min(20, parseInt(e.target.value) || 1)),
-                        }))}
-                        className="w-12 rounded-lg px-1 py-1 text-[10px] text-center"
-                        style={{ background: '#0d1408', border: '1px solid #2a3d1a', color: '#d4c090' }}
-                      />
-                      <button
-                        onClick={() => handleTrain(type)}
-                        disabled={!canTrain}
-                        className="flex-1 text-[10px] font-bold rounded-lg py-1.5 transition-colors"
-                        style={canTrain
-                          ? { background: '#1a3010', border: '1px solid #3a6020', color: '#90d050', cursor: 'pointer' }
-                          : { background: '#0d1408', border: '1px solid #1e2d10', color: '#2a3d1a', cursor: 'not-allowed' }}>
-                        Train ×{qty} — {fmt(cost)}
-                      </button>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Training queue */}
-          {state.trainingQueue.length > 0 && (
-            <div className="mt-2.5 rounded-xl p-3" style={{ background: '#111a08', border: '1px solid #2a3d1a' }}>
-              <div className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: '#4a6a2a' }}>
-                Training Queue
-              </div>
-              <div className="space-y-1.5">
-                {state.trainingQueue.map((item: TrainingItem, i: number) => (
-                  <div key={i} className="flex items-center justify-between text-xs" style={{ color: '#a0b880' }}>
-                    <span>{TROOP_META[item.type as TroopType].icon} {item.quantity}× {TROOP_META[item.type as TroopType].label}</span>
-                    <span className="font-mono font-bold" style={{ color: '#d4a438' }}>{fmtCountdown(item.completesAt)}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 10 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#4a6a2a' }}>Troops</div>
+          <span style={{ fontSize: 10, color: '#3a5a20' }}>{totalStationed} / {state.troopCapacity} stationed</span>
+          {state.buildings['barracks'] < 1 && isOwner && (
+            <span style={{ fontSize: 10, color: '#c07020' }}>— build Barracks first</span>
           )}
-        </section>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(1, 1fr)', gap: 10, marginBottom: 20 }}
+          className="sm:grid-cols-3">
+          {ALL_TROOPS.map(type => {
+            const meta     = TROOP_META[type];
+            const qty      = trainQty[type];
+            const cost     = meta.cost * qty;
+            const canTrain = isOwner && state.buildings['barracks'] >= 1 && state.ingotBalance >= cost && !busy;
+
+            return (
+              <div key={type} style={{ background: '#111a08', border: '1px solid #2a3d1a', borderRadius: 14, padding: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 20, lineHeight: 1 }}>{meta.icon}</span>
+                  <div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#d4c090' }}>{meta.label}</div>
+                    <div style={{ fontSize: 10, color: '#4a6a2a' }}>
+                      Stationed: <strong style={{ color: '#a0c060' }}>{state.troops[type as keyof TroopCount]}</strong>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4 }}>
+                  <div style={{ background: '#1e0d0d', border: '1px solid #3d1515', borderRadius: 8, padding: '4px 0', textAlign: 'center' }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#e05050' }}>{meta.atk}</div>
+                    <div style={{ fontSize: 8, color: '#5a3030' }}>ATK</div>
+                  </div>
+                  <div style={{ background: '#0d1520', border: '1px solid #152540', borderRadius: 8, padding: '4px 0', textAlign: 'center' }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#5090d0' }}>{meta.def}</div>
+                    <div style={{ fontSize: 8, color: '#2a4060' }}>DEF</div>
+                  </div>
+                  <div style={{ background: '#1a1408', border: '1px solid #3a2d10', borderRadius: 8, padding: '4px 0', textAlign: 'center' }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#c09030' }}>{meta.cost}</div>
+                    <div style={{ fontSize: 8, color: '#4a3a18' }}>each</div>
+                  </div>
+                </div>
+
+                {isOwner && (
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <input type="number" min={1} max={20} value={qty}
+                      onChange={e => setTrainQty(q => ({ ...q, [type]: Math.max(1, Math.min(20, parseInt(e.target.value) || 1)) }))}
+                      style={{ width: 44, background: '#0d1408', border: '1px solid #2a3d1a', borderRadius: 8, padding: '4px 0', fontSize: 10, textAlign: 'center', color: '#d4c090' }}
+                    />
+                    <button onClick={() => handleTrain(type)} disabled={!canTrain}
+                      style={{
+                        flex: 1, fontSize: 10, fontWeight: 700, borderRadius: 8, padding: '6px 0', cursor: canTrain ? 'pointer' : 'not-allowed',
+                        background: canTrain ? '#1a3010' : '#0d1408',
+                        border: `1px solid ${canTrain ? '#3a6020' : '#1e2d10'}`,
+                        color: canTrain ? '#90d050' : '#2a3d1a',
+                      }}>
+                      Train ×{qty} — {fmt(cost)}
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Training queue */}
+        {state.trainingQueue.length > 0 && (
+          <div style={{ background: '#111a08', border: '1px solid #2a3d1a', borderRadius: 14, padding: 12, marginBottom: 20 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#4a6a2a', marginBottom: 8 }}>
+              Training Queue
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {state.trainingQueue.map((item: TrainingItem, i: number) => (
+                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#a0b880' }}>
+                  <span>{TROOP_META[item.type as TroopType].icon} {item.quantity}× {TROOP_META[item.type as TroopType].label}</span>
+                  <span style={{ fontFamily: 'monospace', fontWeight: 700, color: '#d4a438' }}>{fmtCountdown(item.completesAt)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* ── Attack Panel ── */}
         {state.buildings.rally_point >= 1 && (
-          <section className="rounded-2xl p-4 space-y-3"
-            style={{ background: '#150d0d', border: '1px solid #4a1a1a' }}>
-            <div className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#6a2a2a' }}>
+          <div style={{ background: '#150d0d', border: '1px solid #4a1a1a', borderRadius: 16, padding: 16, marginBottom: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#6a2a2a' }}>
               ⚔️ Send Attack
             </div>
 
-            <div className="flex items-center gap-2">
-              <label className="text-xs flex-shrink-0 w-28" style={{ color: '#806060' }}>Target Forge ID</label>
-              <input
-                type="number" min={1} max={500} value={attackTarget}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <label style={{ fontSize: 12, color: '#806060', width: 110, flexShrink: 0 }}>Target Forge ID</label>
+              <input type="number" min={1} max={500} value={attackTarget}
                 onChange={e => setAttackTarget(e.target.value)}
                 placeholder="e.g. 42"
-                className="w-24 rounded-lg px-2 py-1 text-sm text-center"
-                style={{ background: '#0d0808', border: '1px solid #3a1a1a', color: '#e8c0c0' }}
+                style={{ width: 80, background: '#0d0808', border: '1px solid #3a1a1a', borderRadius: 8, padding: '4px 8px', fontSize: 13, textAlign: 'center', color: '#e8c0c0' }}
               />
             </div>
 
-            <div className="space-y-2">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {ALL_TROOPS.map(t => {
                 const meta  = TROOP_META[t];
                 const avail = state.troops[t];
                 return (
-                  <div key={t} className="flex items-center gap-2">
-                    <span className="text-sm w-5">{meta.icon}</span>
-                    <span className="text-xs flex-1" style={{ color: '#806060' }}>{meta.label}</span>
-                    <span className="text-xs" style={{ color: '#5a3a3a' }}>{avail} avail</span>
-                    <input
-                      type="number" min={0} max={avail} value={sendQty[t]}
+                  <div key={t} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: 14, width: 20 }}>{meta.icon}</span>
+                    <span style={{ fontSize: 12, flex: 1, color: '#806060' }}>{meta.label}</span>
+                    <span style={{ fontSize: 11, color: '#5a3a3a' }}>{avail} avail</span>
+                    <input type="number" min={0} max={avail} value={sendQty[t]}
                       onChange={e => setSendQty(q => ({ ...q, [t]: Math.min(avail, Math.max(0, Number(e.target.value))) }))}
-                      className="w-16 rounded-lg px-2 py-1 text-sm text-center"
-                      style={{ background: '#0d0808', border: '1px solid #3a1a1a', color: '#e8c0c0' }}
+                      style={{ width: 56, background: '#0d0808', border: '1px solid #3a1a1a', borderRadius: 8, padding: '4px 6px', fontSize: 13, textAlign: 'center', color: '#e8c0c0' }}
                     />
                   </div>
                 );
@@ -433,43 +427,43 @@ export default function ForgePage() {
             </div>
 
             {attackMsg && (
-              <p className="text-xs"
-                style={{ color: attackMsg.startsWith('⚔️') ? '#80d060' : '#d06060' }}>
+              <p style={{ fontSize: 12, color: attackMsg.startsWith('⚔️') ? '#80d060' : '#d06060', margin: 0 }}>
                 {attackMsg}
               </p>
             )}
 
-            <button
-              onClick={handleAttack}
-              disabled={busy || totalSendQty === 0 || !attackTarget}
-              className="w-full font-bold rounded-xl py-2 text-sm transition-colors"
-              style={busy || totalSendQty === 0 || !attackTarget
-                ? { background: '#1a0d0d', border: '1px solid #3a1a1a', color: '#4a2a2a', cursor: 'not-allowed' }
-                : { background: '#3d1010', border: '1px solid #8b1a1a', color: '#ff8080', cursor: 'pointer' }}>
+            <button onClick={handleAttack} disabled={busy || totalSendQty === 0 || !attackTarget}
+              style={{
+                fontWeight: 700, borderRadius: 12, padding: '10px 0', fontSize: 13, cursor: (busy || totalSendQty === 0 || !attackTarget) ? 'not-allowed' : 'pointer',
+                background: (busy || totalSendQty === 0 || !attackTarget) ? '#1a0d0d' : '#3d1010',
+                border: `1px solid ${(busy || totalSendQty === 0 || !attackTarget) ? '#3a1a1a' : '#8b1a1a'}`,
+                color: (busy || totalSendQty === 0 || !attackTarget) ? '#4a2a2a' : '#ff8080',
+              }}>
               {busy ? 'Sending…' : `Send ${totalSendQty > 0 ? totalSendQty + ' ' : ''}Troops`}
             </button>
 
             {state.pendingAttacks.length > 0 && (
-              <div className="pt-3 space-y-1" style={{ borderTop: '1px solid #2a1515' }}>
-                <p className="text-[10px] font-bold uppercase tracking-wide" style={{ color: '#4a2a2a' }}>Outgoing</p>
+              <div style={{ borderTop: '1px solid #2a1515', paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#4a2a2a', margin: 0 }}>Outgoing</p>
                 {state.pendingAttacks.map((a: AttackRecord) => (
-                  <div key={a.id} className="flex justify-between text-xs" style={{ color: '#806060' }}>
+                  <div key={a.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#806060' }}>
                     <span>→ Forge #{a.defenderForgeId}</span>
-                    <span className="font-mono font-bold" style={{ color: '#e05050' }}>{fmtCountdown(a.arrivesAt)}</span>
+                    <span style={{ fontFamily: 'monospace', fontWeight: 700, color: '#e05050' }}>{fmtCountdown(a.arrivesAt)}</span>
                   </div>
                 ))}
               </div>
             )}
-          </section>
+          </div>
         )}
 
         {/* ── Inscription ── */}
-        <div className="rounded-xl px-4 py-3 text-xs italic leading-relaxed"
-          style={{ background: '#0d1008', border: '1px solid #1e2d10', color: '#3a5020' }}>
+        <div style={{ background: '#0d1008', border: '1px solid #1e2d10', borderRadius: 12, padding: '12px 16px', fontSize: 12, fontStyle: 'italic', lineHeight: 1.6, color: '#3a5020' }}>
           {state.inscription}
         </div>
 
       </div>
+
+      <BottomNav forgeId={state.forgeId} />
     </div>
   );
 }

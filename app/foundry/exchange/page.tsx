@@ -4,16 +4,13 @@ import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 import { PublicKey, Transaction } from '@solana/web3.js';
 import {
   createTransferCheckedInstruction,
-  createAssociatedTokenAccountIdempotentInstruction,
   getAssociatedTokenAddressSync,
-  ASSOCIATED_TOKEN_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
 } from '@solana/spl-token';
 import Link from 'next/link';
 
 const SMELT_MINT     = new PublicKey('SME88JJYc8NrRvLVwWUgqk3kLuhuUwqu2JKDFeHdXb8');
 const VAULT_SMELT_ATA = new PublicKey('9TTxxr5tYAdq6HDWMUNRz1xgppBNmrAVzKyarEfhPdok');
-const DEV_PUBKEY     = new PublicKey('J1aBWq9JmvA4fkqSfV4TthiwkBp5zn5ZZt5D2YSuE3Yw');
 const SMELT_DECIMALS = 9;
 const INGOTS_PER_SMELT = 1000;
 const BUY_TAX_PCT    = 0.05;
@@ -61,24 +58,14 @@ export default function ExchangePage() {
     setBusy(true);
     setMsg('');
     try {
-      const vaultAmt = BigInt(Math.floor(smelt * (1 - BUY_TAX_PCT) * 10 ** SMELT_DECIMALS));
-      const devAmt   = BigInt(Math.floor(smelt * BUY_TAX_PCT        * 10 ** SMELT_DECIMALS));
+      // Send 100% of SMELT to vault — dev takes cut on cashout side
+      const vaultAmt = BigInt(Math.floor(smelt * 10 ** SMELT_DECIMALS));
       const userATA  = getAssociatedTokenAddressSync(SMELT_MINT, publicKey);
-      const devATA   = getAssociatedTokenAddressSync(SMELT_MINT, DEV_PUBKEY);
 
       const tx = new Transaction();
       tx.add(createTransferCheckedInstruction(
         userATA, SMELT_MINT, VAULT_SMELT_ATA, publicKey, vaultAmt, SMELT_DECIMALS, [], TOKEN_PROGRAM_ID,
       ));
-      if (devAmt > BigInt(0)) {
-        // Create dev ATA if it doesn't exist yet (idempotent — safe to include always)
-        tx.add(createAssociatedTokenAccountIdempotentInstruction(
-          publicKey, devATA, DEV_PUBKEY, SMELT_MINT, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID,
-        ));
-        tx.add(createTransferCheckedInstruction(
-          userATA, SMELT_MINT, devATA, publicKey, devAmt, SMELT_DECIMALS, [], TOKEN_PROGRAM_ID,
-        ));
-      }
 
       const { blockhash } = await connection.getLatestBlockhash();
       tx.recentBlockhash = blockhash;
@@ -142,8 +129,8 @@ export default function ExchangePage() {
     }
   }
 
-  const buyIngots   = parseFloat(buyAmount) > 0
-    ? Math.floor(parseFloat(buyAmount) * INGOTS_PER_SMELT)
+  const buyIngots = parseFloat(buyAmount) > 0
+    ? Math.floor(parseFloat(buyAmount) * INGOTS_PER_SMELT * (1 - BUY_TAX_PCT))
     : 0;
   const cashoutSmelt = parseInt(cashoutAmount, 10) > 0
     ? (parseInt(cashoutAmount, 10) / INGOTS_PER_SMELT) * (1 - SELL_TAX_PCT)

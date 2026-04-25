@@ -27,27 +27,118 @@ function fmtCountdown(isoEnd: string): string {
   return `${s}s`;
 }
 
-// ── Bottom nav ────────────────────────────────────────────────────────────────
+type Tab = 'buildings' | 'troops' | 'attack';
 
-function BottomNav({ forgeId }: { forgeId: number }) {
-  const items = [
-    { label: 'Map',      icon: '🗺',  href: '/foundry' },
-    { label: 'Reports',  icon: '📋',  href: '/foundry/reports' },
-    { label: 'Exchange', icon: '⚗️',  href: '/foundry/exchange' },
-    { label: 'Store',    icon: '🏪',  href: '/foundry/store' },
-  ];
+const SIDEBAR_ITEMS: { id: Tab | string; icon: string; label: string; href?: string }[] = [
+  { id: 'buildings', icon: '🏗️', label: 'Buildings' },
+  { id: 'troops',    icon: '⚔️', label: 'Troops' },
+  { id: 'attack',    icon: '🗡️', label: 'Attack' },
+  { id: 'sep', icon: '', label: '' },
+  { id: 'map',      icon: '🗺️', label: 'Map',      href: '/foundry' },
+  { id: 'exchange', icon: '⚗️', label: 'Exchange', href: '/foundry/exchange' },
+  { id: 'reports',  icon: '📜', label: 'Reports',  href: '/foundry/reports' },
+  { id: 'store',    icon: '🛒', label: 'Store',    href: '/foundry/store' },
+];
+
+// ── Sidebar ───────────────────────────────────────────────────────────────────
+
+function Sidebar({ active, onTab }: { active: Tab; onTab: (t: Tab) => void }) {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-30 flex"
-      style={{ background: 'rgba(5,10,3,0.97)', borderTop: '1px solid #2a3d1a', paddingBottom: 'env(safe-area-inset-bottom)' }}>
-      {items.map(({ label, icon, href }) => (
-        <Link key={label} href={href}
-          className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 transition-opacity active:opacity-60"
-          style={{ textDecoration: 'none' }}>
-          <span style={{ fontSize: 20, lineHeight: 1 }}>{icon}</span>
-          <span style={{ fontSize: 10, color: '#5a7a3a', letterSpacing: '0.05em', fontWeight: 600 }}>{label}</span>
-        </Link>
-      ))}
-    </nav>
+    <aside style={{
+      width: 72, flexShrink: 0,
+      background: '#080c05',
+      borderRight: '1px solid #1e2d10',
+      display: 'flex', flexDirection: 'column',
+      paddingTop: 12, paddingBottom: 12,
+    }}>
+      {SIDEBAR_ITEMS.map(item => {
+        if (item.id === 'sep') return (
+          <div key="sep" style={{ height: 1, background: '#1e2d10', margin: '8px 10px' }} />
+        );
+
+        const isActive = item.id === active;
+        const inner = (
+          <div style={{
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+            padding: '8px 4px', margin: '1px 6px', borderRadius: 8,
+            background: isActive ? 'rgba(180,130,30,0.15)' : 'transparent',
+            borderLeft: isActive ? '2px solid #d4a438' : '2px solid transparent',
+            cursor: 'pointer', transition: 'background 0.15s',
+          }}>
+            <span style={{ fontSize: 18, lineHeight: 1 }}>{item.icon}</span>
+            <span style={{
+              fontSize: 8, fontWeight: 700, letterSpacing: '0.04em', textAlign: 'center',
+              color: isActive ? '#f5d060' : '#3a5a20',
+              textTransform: 'uppercase',
+            }}>
+              {item.label}
+            </span>
+          </div>
+        );
+
+        if (item.href) return (
+          <Link key={item.id} href={item.href} style={{ textDecoration: 'none' }}>
+            {inner}
+          </Link>
+        );
+
+        return (
+          <div key={item.id} onClick={() => onTab(item.id as Tab)}>
+            {inner}
+          </div>
+        );
+      })}
+    </aside>
+  );
+}
+
+// ── Mobile tab bar ────────────────────────────────────────────────────────────
+
+function MobileTabs({ active, onTab }: { active: Tab; onTab: (t: Tab) => void }) {
+  return (
+    <div style={{
+      display: 'flex', overflowX: 'auto',
+      background: '#080c05',
+      borderBottom: '1px solid #1e2d10',
+      scrollbarWidth: 'none',
+    }}>
+      {SIDEBAR_ITEMS.map(item => {
+        if (item.id === 'sep') return (
+          <div key="sep" style={{ width: 1, background: '#1e2d10', flexShrink: 0, margin: '6px 0' }} />
+        );
+
+        const isActive = item.id === active;
+        const inner = (
+          <div style={{
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
+            padding: '8px 12px', flexShrink: 0, cursor: 'pointer',
+            borderBottom: isActive ? '2px solid #d4a438' : '2px solid transparent',
+            transition: 'border-color 0.15s',
+          }}>
+            <span style={{ fontSize: 16, lineHeight: 1 }}>{item.icon}</span>
+            <span style={{
+              fontSize: 8, fontWeight: 700, letterSpacing: '0.04em', whiteSpace: 'nowrap',
+              color: isActive ? '#f5d060' : '#3a5a20',
+              textTransform: 'uppercase',
+            }}>
+              {item.label}
+            </span>
+          </div>
+        );
+
+        if (item.href) return (
+          <Link key={item.id} href={item.href} style={{ textDecoration: 'none' }}>
+            {inner}
+          </Link>
+        );
+
+        return (
+          <div key={item.id} onClick={() => onTab(item.id as Tab)}>
+            {inner}
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
@@ -58,16 +149,17 @@ export default function ForgePage() {
   const { publicKey } = useWallet();
   const wallet = publicKey?.toBase58() ?? '';
 
-  const [state, setState]       = useState<ForgeStateResponse | null>(null);
-  const [loading, setLoading]   = useState(true);
-  const [error, setError]       = useState('');
-  const [busy, setBusy]         = useState(false);
-  const [msg, setMsg]           = useState('');
+  const [state, setState]   = useState<ForgeStateResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError]   = useState('');
+  const [busy, setBusy]     = useState(false);
+  const [msg, setMsg]       = useState('');
+  const [tab, setTab]       = useState<Tab>('buildings');
   const [trainQty, setTrainQty] = useState<Record<TroopType, number>>({
     smelters: 1, ash_archers: 1, iron_guards: 1,
   });
   const [attackTarget, setAttackTarget] = useState('');
-  const [sendQty, setSendQty]           = useState<Record<TroopType, number>>({
+  const [sendQty, setSendQty] = useState<Record<TroopType, number>>({
     smelters: 0, ash_archers: 0, iron_guards: 0,
   });
   const [attackMsg, setAttackMsg] = useState('');
@@ -107,7 +199,7 @@ export default function ForgePage() {
       const d = await res.json();
       if (!res.ok) { setMsg(`❌ ${d.error}`); return; }
       setMsg(d.instant
-        ? `✅ ${BUILDING_META[buildingType].label} upgraded to Lv${d.toLevel}!`
+        ? `✅ ${BUILDING_META[buildingType].label} → Lv${d.toLevel}`
         : `🔨 Upgrading ${BUILDING_META[buildingType].label} to Lv${d.toLevel}…`);
       await fetchState();
     } finally { setBusy(false); }
@@ -147,323 +239,332 @@ export default function ForgePage() {
       });
       const data = await res.json();
       if (!res.ok) { setAttackMsg(data.error ?? 'Failed'); return; }
-      setAttackMsg(`⚔️ Attack launched! Arrives in ~${data.travelMins} min`);
+      setAttackMsg(`⚔️ Launched! Arrives in ~${data.travelMins} min`);
       setSendQty({ smelters: 0, ash_archers: 0, iron_guards: 0 });
       fetchState();
     } finally { setBusy(false); }
   }
 
-  // ── Loading / error states ──────────────────────────────────────────────────
+  // ── Loading / error ─────────────────────────────────────────────────────────
 
   if (loading) return (
-    <div style={{ minHeight: '100vh', background: '#0d1408', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <div style={{ minHeight: '100vh', background: '#0a0e06', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <span style={{ color: '#d4a438', fontSize: 14, fontWeight: 700 }}>Loading forge…</span>
     </div>
   );
   if (error) return (
-    <div style={{ minHeight: '100vh', background: '#0d1408', padding: '48px 16px' }}>
+    <div style={{ minHeight: '100vh', background: '#0a0e06', padding: '48px 16px' }}>
       <p style={{ color: '#e05050', fontSize: 14, fontWeight: 700, marginBottom: 8 }}>⚠ {error}</p>
       <Link href="/foundry" style={{ color: '#d4a438', fontSize: 13 }}>← Back to map</Link>
     </div>
   );
   if (!state) return null;
 
-  // ── Derived values ──────────────────────────────────────────────────────────
+  // ── Derived ─────────────────────────────────────────────────────────────────
 
   const totalStationed = state.troops.smelters + state.troops.ash_archers + state.troops.iron_guards;
-  const builtCount     = ALL_BUILDINGS.filter(b => (state.buildings[b] ?? 0) > 0).length;
-  const avgLevel       = builtCount === 0 ? 0
-    : Math.round(ALL_BUILDINGS.reduce((s, b) => s + (state.buildings[b] ?? 0), 0) / ALL_BUILDINGS.length * 10) / 10;
 
-  // ── Render ──────────────────────────────────────────────────────────────────
+  // ── Panels ──────────────────────────────────────────────────────────────────
 
-  return (
-    <div style={{ minHeight: '100vh', background: '#0d1408', color: '#e8d5a3', fontFamily: 'sans-serif', paddingBottom: 80 }}>
-
-      {/* ── Hero header — white → dark gradient ── */}
-      <div style={{
-        background: 'linear-gradient(to bottom, #ffffff 0%, #f5f0e8 18%, #c8a84a 42%, #6b3d10 62%, #1e2e10 78%, #0d1408 100%)',
-        padding: '24px 20px 32px',
-        textAlign: 'center',
-        position: 'relative',
-      }}>
-        {/* Forge icon circle */}
-        <div style={{
-          width: 64, height: 64, borderRadius: '50%', margin: '0 auto 12px',
-          background: 'linear-gradient(135deg, #2d1a06 0%, #5a3010 50%, #2d1a06 100%)',
-          border: '2px solid #c8a84a',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 28,
-          boxShadow: '0 0 24px rgba(200,168,74,0.35)',
-        }}>
-          ⚒
-        </div>
-
-        <div style={{ fontSize: 20, fontWeight: 800, color: '#f5d060', letterSpacing: '-0.02em', lineHeight: 1.1 }}>
-          Forge #{state.forgeId}
-        </div>
-        <div style={{ fontSize: 11, color: 'rgba(200,168,74,0.6)', marginTop: 4, wordBreak: 'break-all', maxWidth: 280, margin: '4px auto 0' }}>
-          {state.owner.slice(0, 8)}…{state.owner.slice(-4)}
-        </div>
-
-        {/* Stat chips row */}
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 16 }}>
-          {[
-            { val: fmt(state.ingotBalance), label: '💰 Ingots', accent: '#f5d060' },
-            { val: builtCount,             label: '🏗 Built',   accent: '#90c060' },
-            { val: totalStationed,         label: '⚔️ Troops',  accent: '#c07050' },
-          ].map(({ val, label, accent }) => (
-            <div key={label} style={{
-              background: 'rgba(0,0,0,0.55)',
-              border: '1px solid rgba(255,255,255,0.12)',
-              borderRadius: 10,
-              padding: '6px 12px',
-              textAlign: 'center',
-              backdropFilter: 'blur(4px)',
-            }}>
-              <div style={{ fontSize: 15, fontWeight: 800, color: accent, lineHeight: 1 }}>{val}</div>
-              <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.45)', marginTop: 2, letterSpacing: '0.06em' }}>{label}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* ── Page content ── */}
-      <div style={{ maxWidth: 672, margin: '0 auto', padding: '16px 16px 8px' }}>
-
-        {/* Status banners */}
-        {msg && (
-          <div style={{ background: '#1a2a10', border: '1px solid #4a6a2a', borderRadius: 12, padding: '10px 16px', fontSize: 13, color: '#b0d080', marginBottom: 12 }}>
-            {msg}
-          </div>
-        )}
+  function BuildingsPanel() {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         {state.construction && (
-          <div style={{ background: '#1e1a08', border: '1px solid #6a4a10', borderRadius: 12, padding: '10px 16px', fontSize: 13, color: '#e8c060', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ background: '#1e1a08', border: '1px solid #6a4a10', borderRadius: 10, padding: '8px 12px', fontSize: 12, color: '#e8c060', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
             <span>🔨</span>
             <span>
-              Upgrading <strong>{BUILDING_META[state.construction.buildingType as BuildingType].label}</strong> to Lv{state.construction.toLevel}
-              {' — '}<span style={{ fontFamily: 'monospace', fontWeight: 700 }}>{fmtCountdown(state.construction.completesAt)}</span> remaining
+              <strong>{BUILDING_META[state.construction.buildingType as BuildingType].label}</strong>
+              {' → '}Lv{state.construction.toLevel}
+              {' · '}<span style={{ fontFamily: 'monospace', fontWeight: 700 }}>{fmtCountdown(state.construction.completesAt)}</span>
             </span>
           </div>
         )}
 
-        {/* ── Buildings ── */}
-        <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#4a6a2a', marginBottom: 10 }}>
-          Buildings
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, marginBottom: 20 }}
-          className="sm:grid-cols-4">
-          {ALL_BUILDINGS.map(type => {
-            const meta       = BUILDING_META[type];
-            const level      = state.buildings[type] ?? 0;
-            const toLevel    = level + 1;
-            const cost       = level < 5 ? buildCost(type, toLevel) : 0;
-            const isBuilding = state.construction?.buildingType === type;
-            const canUpgrade = isOwner && level < 5 && !state.construction && state.ingotBalance >= cost && !busy;
-            const pct        = (level / 5) * 100;
+        {ALL_BUILDINGS.map(type => {
+          const meta       = BUILDING_META[type];
+          const level      = state!.buildings[type] ?? 0;
+          const toLevel    = level + 1;
+          const cost       = level < 5 ? buildCost(type, toLevel) : 0;
+          const isBuilding = state!.construction?.buildingType === type;
+          const canUpgrade = isOwner && level < 5 && !state!.construction && state!.ingotBalance >= cost && !busy;
+          const pct        = (level / 5) * 100;
 
-            return (
-              <div key={type} style={{
-                background: isBuilding ? '#1e1a08' : '#111a08',
-                border: `1px solid ${isBuilding ? '#6a4a10' : '#2a3d1a'}`,
-                borderRadius: 14,
-                padding: 12,
-                display: 'flex', flexDirection: 'column', gap: 8,
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontSize: 20, lineHeight: 1 }}>{meta.icon}</span>
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: '#d4c090', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {meta.label}
-                    </div>
-                    <div style={{ fontSize: 10, color: '#4a6a2a' }}>Lv {level} / 5</div>
-                  </div>
+          return (
+            <div key={type} style={{
+              background: isBuilding ? '#181410' : '#0e1509',
+              border: `1px solid ${isBuilding ? '#6a4a10' : '#1e2d10'}`,
+              borderRadius: 10,
+              padding: '10px 12px',
+              display: 'flex', alignItems: 'center', gap: 10,
+            }}>
+              <span style={{ fontSize: 22, flexShrink: 0, width: 28, textAlign: 'center' }}>{meta.icon}</span>
+
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 4 }}>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: '#d4c090' }}>{meta.label}</span>
+                  <span style={{ fontSize: 10, color: '#4a6a2a' }}>Lv {level}/5</span>
                 </div>
-
-                <div style={{ height: 3, borderRadius: 2, background: '#1e2d10' }}>
-                  <div style={{ height: '100%', borderRadius: 2, width: `${pct}%`, background: 'linear-gradient(90deg, #b45309, #f59e0b)', transition: 'width 0.4s' }} />
+                <div style={{ height: 3, background: '#1e2d10', borderRadius: 2 }}>
+                  <div style={{ height: '100%', width: `${pct}%`, background: 'linear-gradient(90deg, #b45309, #f59e0b)', borderRadius: 2, transition: 'width 0.4s' }} />
                 </div>
+              </div>
 
-                <div style={{ fontSize: 9, color: '#3a5a20', lineHeight: 1.4 }}>{meta.effectLabel}</div>
-
+              <div style={{ flexShrink: 0, minWidth: 68, textAlign: 'right' }}>
                 {level >= 5 ? (
-                  <div style={{ fontSize: 10, fontWeight: 700, color: '#d4a438', textAlign: 'center' }}>MAX</div>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: '#d4a438' }}>MAX</span>
                 ) : isBuilding ? (
-                  <div style={{ fontSize: 10, fontFamily: 'monospace', fontWeight: 700, textAlign: 'center', background: '#1a1508', borderRadius: 8, padding: '4px 0', color: '#e8a020' }}>
-                    {fmtCountdown(state.construction!.completesAt)}
-                  </div>
+                  <span style={{ fontSize: 10, fontFamily: 'monospace', fontWeight: 700, color: '#e8a020' }}>
+                    {fmtCountdown(state!.construction!.completesAt)}
+                  </span>
                 ) : isOwner ? (
                   <button onClick={() => handleBuild(type)} disabled={!canUpgrade}
                     style={{
-                      fontSize: 10, fontWeight: 700, borderRadius: 8, padding: '6px 0', width: '100%', cursor: canUpgrade ? 'pointer' : 'not-allowed',
-                      background: canUpgrade ? '#2d4a10' : '#141d0a',
-                      border: `1px solid ${canUpgrade ? '#4a7a20' : '#2a3510'}`,
-                      color: canUpgrade ? '#b0d060' : '#3a4a28',
-                      transition: 'background 0.15s',
+                      fontSize: 10, fontWeight: 700, borderRadius: 6, padding: '4px 8px', cursor: canUpgrade ? 'pointer' : 'not-allowed',
+                      background: canUpgrade ? '#243d10' : '#101808',
+                      border: `1px solid ${canUpgrade ? '#4a7a20' : '#1e2a10'}`,
+                      color: canUpgrade ? '#a0d050' : '#2a3d1a',
+                      whiteSpace: 'nowrap',
                     }}>
-                    {level === 0 ? 'Build' : 'Upgrade'} — {fmt(cost)}
+                    {level === 0 ? 'Build' : 'Upgrade'}
+                    <span style={{ display: 'block', fontSize: 9, color: canUpgrade ? '#6a9a30' : '#243018' }}>
+                      {fmt(cost)} ⚙
+                    </span>
                   </button>
                 ) : null}
               </div>
-            );
-          })}
-        </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
 
-        {/* ── Troops ── */}
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 10 }}>
-          <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#4a6a2a' }}>Troops</div>
-          <span style={{ fontSize: 10, color: '#3a5a20' }}>{totalStationed} / {state.troopCapacity} stationed</span>
-          {state.buildings['barracks'] < 1 && isOwner && (
-            <span style={{ fontSize: 10, color: '#c07020' }}>— build Barracks first</span>
+  function TroopsPanel() {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ fontSize: 11, color: '#4a6a2a', marginBottom: 2 }}>
+          {totalStationed} / {state!.troopCapacity} stationed
+          {state!.buildings['barracks'] < 1 && isOwner && (
+            <span style={{ color: '#c07020', marginLeft: 8 }}>— build Barracks first</span>
           )}
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(1, 1fr)', gap: 10, marginBottom: 20 }}
-          className="sm:grid-cols-3">
-          {ALL_TROOPS.map(type => {
-            const meta     = TROOP_META[type];
-            const qty      = trainQty[type];
-            const cost     = meta.cost * qty;
-            const canTrain = isOwner && state.buildings['barracks'] >= 1 && state.ingotBalance >= cost && !busy;
+        {ALL_TROOPS.map(type => {
+          const meta     = TROOP_META[type];
+          const qty      = trainQty[type];
+          const cost     = meta.cost * qty;
+          const canTrain = isOwner && state!.buildings['barracks'] >= 1 && state!.ingotBalance >= cost && !busy;
+          const stationed = state!.troops[type as keyof TroopCount];
 
-            return (
-              <div key={type} style={{ background: '#111a08', border: '1px solid #2a3d1a', borderRadius: 14, padding: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontSize: 20, lineHeight: 1 }}>{meta.icon}</span>
-                  <div>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: '#d4c090' }}>{meta.label}</div>
-                    <div style={{ fontSize: 10, color: '#4a6a2a' }}>
-                      Stationed: <strong style={{ color: '#a0c060' }}>{state.troops[type as keyof TroopCount]}</strong>
-                    </div>
+          return (
+            <div key={type} style={{ background: '#0e1509', border: '1px solid #1e2d10', borderRadius: 10, padding: 12 }}>
+              {/* Header row */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                <span style={{ fontSize: 24, lineHeight: 1 }}>{meta.icon}</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#d4c090' }}>{meta.label}</div>
+                  <div style={{ fontSize: 10, color: '#4a6a2a' }}>
+                    <strong style={{ color: '#a0c060' }}>{stationed}</strong> stationed
                   </div>
                 </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4 }}>
-                  <div style={{ background: '#1e0d0d', border: '1px solid #3d1515', borderRadius: 8, padding: '4px 0', textAlign: 'center' }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: '#e05050' }}>{meta.atk}</div>
-                    <div style={{ fontSize: 8, color: '#5a3030' }}>ATK</div>
+                {/* ATK/DEF badges */}
+                <div style={{ display: 'flex', gap: 4 }}>
+                  <div style={{ background: '#1e0d0d', border: '1px solid #3d1515', borderRadius: 6, padding: '3px 7px', textAlign: 'center' }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#e05050', lineHeight: 1 }}>{meta.atk}</div>
+                    <div style={{ fontSize: 7, color: '#5a3030' }}>ATK</div>
                   </div>
-                  <div style={{ background: '#0d1520', border: '1px solid #152540', borderRadius: 8, padding: '4px 0', textAlign: 'center' }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: '#5090d0' }}>{meta.def}</div>
-                    <div style={{ fontSize: 8, color: '#2a4060' }}>DEF</div>
-                  </div>
-                  <div style={{ background: '#1a1408', border: '1px solid #3a2d10', borderRadius: 8, padding: '4px 0', textAlign: 'center' }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: '#c09030' }}>{meta.cost}</div>
-                    <div style={{ fontSize: 8, color: '#4a3a18' }}>each</div>
+                  <div style={{ background: '#0d1520', border: '1px solid #152540', borderRadius: 6, padding: '3px 7px', textAlign: 'center' }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#5090d0', lineHeight: 1 }}>{meta.def}</div>
+                    <div style={{ fontSize: 7, color: '#2a4060' }}>DEF</div>
                   </div>
                 </div>
-
-                {isOwner && (
-                  <div style={{ display: 'flex', gap: 6 }}>
-                    <input type="number" min={1} max={20} value={qty}
-                      onChange={e => setTrainQty(q => ({ ...q, [type]: Math.max(1, Math.min(20, parseInt(e.target.value) || 1)) }))}
-                      style={{ width: 44, background: '#0d1408', border: '1px solid #2a3d1a', borderRadius: 8, padding: '4px 0', fontSize: 10, textAlign: 'center', color: '#d4c090' }}
-                    />
-                    <button onClick={() => handleTrain(type)} disabled={!canTrain}
-                      style={{
-                        flex: 1, fontSize: 10, fontWeight: 700, borderRadius: 8, padding: '6px 0', cursor: canTrain ? 'pointer' : 'not-allowed',
-                        background: canTrain ? '#1a3010' : '#0d1408',
-                        border: `1px solid ${canTrain ? '#3a6020' : '#1e2d10'}`,
-                        color: canTrain ? '#90d050' : '#2a3d1a',
-                      }}>
-                      Train ×{qty} — {fmt(cost)}
-                    </button>
-                  </div>
-                )}
               </div>
-            );
-          })}
-        </div>
+
+              {/* Train row */}
+              {isOwner && (
+                <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                  <div style={{ fontSize: 10, color: '#4a6a2a', marginRight: 2 }}>Train:</div>
+                  <button onClick={() => setTrainQty(q => ({ ...q, [type]: Math.max(1, q[type] - 1) }))}
+                    style={{ width: 24, height: 24, background: '#1a2a10', border: '1px solid #2a3d1a', borderRadius: 5, color: '#a0c060', fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>−</button>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: '#d4c090', width: 24, textAlign: 'center' }}>{qty}</span>
+                  <button onClick={() => setTrainQty(q => ({ ...q, [type]: Math.min(20, q[type] + 1) }))}
+                    style={{ width: 24, height: 24, background: '#1a2a10', border: '1px solid #2a3d1a', borderRadius: 5, color: '#a0c060', fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
+                  <button onClick={() => handleTrain(type)} disabled={!canTrain}
+                    style={{
+                      flex: 1, fontSize: 11, fontWeight: 700, borderRadius: 7, padding: '5px 0', cursor: canTrain ? 'pointer' : 'not-allowed',
+                      background: canTrain ? '#1a3010' : '#0d1408',
+                      border: `1px solid ${canTrain ? '#3a6020' : '#1a2410'}`,
+                      color: canTrain ? '#90d050' : '#2a3d1a',
+                    }}>
+                    {fmt(cost)} ⚙
+                  </button>
+                </div>
+              )}
+            </div>
+          );
+        })}
 
         {/* Training queue */}
-        {state.trainingQueue.length > 0 && (
-          <div style={{ background: '#111a08', border: '1px solid #2a3d1a', borderRadius: 14, padding: 12, marginBottom: 20 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#4a6a2a', marginBottom: 8 }}>
+        {state!.trainingQueue.length > 0 && (
+          <div style={{ background: '#0e1509', border: '1px solid #1e2d10', borderRadius: 10, padding: 12 }}>
+            <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#3a5020', marginBottom: 8 }}>
               Training Queue
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {state.trainingQueue.map((item: TrainingItem, i: number) => (
-                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#a0b880' }}>
-                  <span>{TROOP_META[item.type as TroopType].icon} {item.quantity}× {TROOP_META[item.type as TroopType].label}</span>
-                  <span style={{ fontFamily: 'monospace', fontWeight: 700, color: '#d4a438' }}>{fmtCountdown(item.completesAt)}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ── Attack Panel ── */}
-        {state.buildings.rally_point >= 1 && (
-          <div style={{ background: '#150d0d', border: '1px solid #4a1a1a', borderRadius: 16, padding: 16, marginBottom: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#6a2a2a' }}>
-              ⚔️ Send Attack
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <label style={{ fontSize: 12, color: '#806060', width: 110, flexShrink: 0 }}>Target Forge ID</label>
-              <input type="number" min={1} max={500} value={attackTarget}
-                onChange={e => setAttackTarget(e.target.value)}
-                placeholder="e.g. 42"
-                style={{ width: 80, background: '#0d0808', border: '1px solid #3a1a1a', borderRadius: 8, padding: '4px 8px', fontSize: 13, textAlign: 'center', color: '#e8c0c0' }}
-              />
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {ALL_TROOPS.map(t => {
-                const meta  = TROOP_META[t];
-                const avail = state.troops[t];
-                return (
-                  <div key={t} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ fontSize: 14, width: 20 }}>{meta.icon}</span>
-                    <span style={{ fontSize: 12, flex: 1, color: '#806060' }}>{meta.label}</span>
-                    <span style={{ fontSize: 11, color: '#5a3a3a' }}>{avail} avail</span>
-                    <input type="number" min={0} max={avail} value={sendQty[t]}
-                      onChange={e => setSendQty(q => ({ ...q, [t]: Math.min(avail, Math.max(0, Number(e.target.value))) }))}
-                      style={{ width: 56, background: '#0d0808', border: '1px solid #3a1a1a', borderRadius: 8, padding: '4px 6px', fontSize: 13, textAlign: 'center', color: '#e8c0c0' }}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-
-            {attackMsg && (
-              <p style={{ fontSize: 12, color: attackMsg.startsWith('⚔️') ? '#80d060' : '#d06060', margin: 0 }}>
-                {attackMsg}
-              </p>
-            )}
-
-            <button onClick={handleAttack} disabled={busy || totalSendQty === 0 || !attackTarget}
-              style={{
-                fontWeight: 700, borderRadius: 12, padding: '10px 0', fontSize: 13, cursor: (busy || totalSendQty === 0 || !attackTarget) ? 'not-allowed' : 'pointer',
-                background: (busy || totalSendQty === 0 || !attackTarget) ? '#1a0d0d' : '#3d1010',
-                border: `1px solid ${(busy || totalSendQty === 0 || !attackTarget) ? '#3a1a1a' : '#8b1a1a'}`,
-                color: (busy || totalSendQty === 0 || !attackTarget) ? '#4a2a2a' : '#ff8080',
-              }}>
-              {busy ? 'Sending…' : `Send ${totalSendQty > 0 ? totalSendQty + ' ' : ''}Troops`}
-            </button>
-
-            {state.pendingAttacks.length > 0 && (
-              <div style={{ borderTop: '1px solid #2a1515', paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#4a2a2a', margin: 0 }}>Outgoing</p>
-                {state.pendingAttacks.map((a: AttackRecord) => (
-                  <div key={a.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#806060' }}>
-                    <span>→ Forge #{a.defenderForgeId}</span>
-                    <span style={{ fontFamily: 'monospace', fontWeight: 700, color: '#e05050' }}>{fmtCountdown(a.arrivesAt)}</span>
-                  </div>
-                ))}
+            {state!.trainingQueue.map((item: TrainingItem, i: number) => (
+              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#a0b880', marginBottom: 4 }}>
+                <span>{TROOP_META[item.type as TroopType].icon} {item.quantity}× {TROOP_META[item.type as TroopType].label}</span>
+                <span style={{ fontFamily: 'monospace', fontWeight: 700, color: '#d4a438' }}>{fmtCountdown(item.completesAt)}</span>
               </div>
-            )}
+            ))}
           </div>
         )}
+      </div>
+    );
+  }
 
-        {/* ── Inscription ── */}
-        <div style={{ background: '#0d1008', border: '1px solid #1e2d10', borderRadius: 12, padding: '12px 16px', fontSize: 12, fontStyle: 'italic', lineHeight: 1.6, color: '#3a5020' }}>
-          {state.inscription}
+  function AttackPanel() {
+    if (state!.buildings.rally_point < 1) return (
+      <div style={{ textAlign: 'center', padding: '40px 16px', color: '#3a5020', fontSize: 13 }}>
+        🗺️ Build a <strong style={{ color: '#6a8a40' }}>Rally Point</strong> to unlock attacks.
+      </div>
+    );
+
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div>
+          <div style={{ fontSize: 10, color: '#4a6a2a', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Target Forge</div>
+          <input type="number" min={1} max={500} value={attackTarget}
+            onChange={e => setAttackTarget(e.target.value)}
+            placeholder="Forge ID (1–500)"
+            style={{ width: '100%', background: '#0a0e06', border: '1px solid #2a3d1a', borderRadius: 8, padding: '8px 12px', fontSize: 14, color: '#e8d5a3', outline: 'none' }}
+          />
         </div>
 
+        <div>
+          <div style={{ fontSize: 10, color: '#4a6a2a', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Select Troops</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {ALL_TROOPS.map(t => {
+              const meta  = TROOP_META[t];
+              const avail = state!.troops[t];
+              return (
+                <div key={t} style={{ background: '#0e1509', border: '1px solid #1e2d10', borderRadius: 8, padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 16 }}>{meta.icon}</span>
+                  <span style={{ fontSize: 12, flex: 1, color: '#a0b880' }}>{meta.label}</span>
+                  <span style={{ fontSize: 10, color: '#3a5020' }}>{avail} avail</span>
+                  <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                    <button onClick={() => setSendQty(q => ({ ...q, [t]: Math.max(0, q[t] - 1) }))}
+                      style={{ width: 22, height: 22, background: '#1a2a10', border: '1px solid #2a3d1a', borderRadius: 4, color: '#a0c060', cursor: 'pointer', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>−</button>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: '#d4c090', width: 24, textAlign: 'center' }}>{sendQty[t]}</span>
+                    <button onClick={() => setSendQty(q => ({ ...q, [t]: Math.min(avail, q[t] + 1) }))}
+                      style={{ width: 22, height: 22, background: '#1a2a10', border: '1px solid #2a3d1a', borderRadius: 4, color: '#a0c060', cursor: 'pointer', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {attackMsg && (
+          <p style={{ fontSize: 12, color: attackMsg.startsWith('⚔️') ? '#80d060' : '#d06060', margin: 0 }}>{attackMsg}</p>
+        )}
+
+        <button onClick={handleAttack} disabled={busy || totalSendQty === 0 || !attackTarget}
+          style={{
+            fontWeight: 700, borderRadius: 10, padding: '12px 0', fontSize: 13, cursor: (busy || totalSendQty === 0 || !attackTarget) ? 'not-allowed' : 'pointer',
+            background: (busy || totalSendQty === 0 || !attackTarget) ? '#120808' : '#3d1010',
+            border: `1px solid ${(busy || totalSendQty === 0 || !attackTarget) ? '#2a1010' : '#8b1a1a'}`,
+            color: (busy || totalSendQty === 0 || !attackTarget) ? '#3a1818' : '#ff8080',
+          }}>
+          {busy ? 'Sending…' : totalSendQty > 0 ? `⚔️ Send ${totalSendQty} Troops` : '⚔️ Send Attack'}
+        </button>
+
+        {state!.pendingAttacks.length > 0 && (
+          <div style={{ background: '#0e1509', border: '1px solid #1e2d10', borderRadius: 10, padding: 12 }}>
+            <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#3a5020', marginBottom: 8 }}>Outgoing</div>
+            {state!.pendingAttacks.map((a: AttackRecord) => (
+              <div key={a.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#806060', marginBottom: 4 }}>
+                <span>→ Forge #{a.defenderForgeId}</span>
+                <span style={{ fontFamily: 'monospace', fontWeight: 700, color: '#e05050' }}>{fmtCountdown(a.arrivesAt)}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ── Render ──────────────────────────────────────────────────────────────────
+
+  return (
+    <div style={{ minHeight: '100vh', background: '#0a0e06', color: '#e8d5a3', fontFamily: 'sans-serif', display: 'flex', flexDirection: 'column' }}>
+
+      {/* ── Hero header: white → dark gradient ── */}
+      <div style={{
+        background: 'linear-gradient(to bottom, #ffffff 0%, #f0e8d0 20%, #c8a030 45%, #5a3010 65%, #1a2810 82%, #0a0e06 100%)',
+        padding: '20px 20px 28px',
+        textAlign: 'center',
+        flexShrink: 0,
+      }}>
+        <div style={{
+          width: 60, height: 60, borderRadius: '50%', margin: '0 auto 10px',
+          background: 'radial-gradient(circle at 35% 35%, #5a3a10, #1e1008)',
+          border: '2px solid #c8a030',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 26,
+          boxShadow: '0 0 20px rgba(200,160,48,0.4)',
+        }}>⚒</div>
+
+        <div style={{ fontSize: 19, fontWeight: 800, color: '#f5d060', letterSpacing: '-0.02em' }}>
+          Forge #{state.forgeId}
+        </div>
+        <div style={{ fontSize: 10, color: 'rgba(210,170,60,0.55)', marginTop: 3 }}>
+          {state.owner.slice(0, 6)}…{state.owner.slice(-4)}
+        </div>
+
+        {/* Chips */}
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 6, marginTop: 14, flexWrap: 'wrap' }}>
+          {[
+            { val: fmt(state.ingotBalance), label: '💰 Ingots' },
+            { val: String(totalStationed),  label: '⚔️ Troops' },
+          ].map(({ val, label }) => (
+            <div key={label} style={{
+              background: 'rgba(0,0,0,0.6)', border: '1px solid rgba(200,160,48,0.25)',
+              borderRadius: 8, padding: '5px 12px', textAlign: 'center',
+              backdropFilter: 'blur(4px)',
+            }}>
+              <div style={{ fontSize: 14, fontWeight: 800, color: '#f5d060', lineHeight: 1 }}>{val}</div>
+              <div style={{ fontSize: 9, color: 'rgba(200,170,80,0.5)', marginTop: 2 }}>{label}</div>
+            </div>
+          ))}
+        </div>
+
+        {msg && (
+          <div style={{ marginTop: 12, fontSize: 12, color: '#b0d080', background: 'rgba(0,0,0,0.5)', borderRadius: 8, padding: '6px 14px', display: 'inline-block' }}>
+            {msg}
+          </div>
+        )}
       </div>
 
-      <BottomNav forgeId={state.forgeId} />
+      {/* ── Mobile tabs (visible on small screens) ── */}
+      <div className="sm:hidden">
+        <MobileTabs active={tab} onTab={setTab} />
+      </div>
+
+      {/* ── Body: sidebar + content (desktop) ── */}
+      <div style={{ display: 'flex', flex: 1 }}>
+
+        {/* Sidebar (hidden on mobile) */}
+        <div className="hidden sm:block">
+          <Sidebar active={tab} onTab={setTab} />
+        </div>
+
+        {/* Content panel */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: 16 }}>
+          {tab === 'buildings' && <BuildingsPanel />}
+          {tab === 'troops'    && <TroopsPanel />}
+          {tab === 'attack'    && <AttackPanel />}
+        </div>
+      </div>
     </div>
   );
 }

@@ -3,7 +3,6 @@
 
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import Link from 'next/link';
 import type { MapResponse, MapForge } from '@/app/api/foundry/map/route';
 import type { TerrainType } from '@/lib/foundry-map';
@@ -116,6 +115,8 @@ export default function FoundryWorldMap() {
   const miniRef   = useRef<HTMLCanvasElement>(null);
   const dragging  = useRef(false);
   const lastPos   = useRef({ x: 0, y: 0 });
+  const touchStartPos = useRef({ x: 0, y: 0 });
+  const isTouching = useRef(false);
 
   // Fetch map (re-fetch when wallet changes so tier 'mine' highlights correctly)
   const fetchMap = useCallback(async () => {
@@ -131,6 +132,15 @@ export default function FoundryWorldMap() {
   }, [wallet]);
 
   useEffect(() => { fetchMap(); }, [fetchMap]);
+
+  // Responsive scale: fit map width into viewport on initial load
+  useEffect(() => {
+    if (!mapData || !wrapRef.current) return;
+    const containerW = wrapRef.current.clientWidth;
+    const mapW = mapData.width * TILE_PX;
+    const fitScale = Math.min(1, containerW / mapW);
+    setScale(fitScale);
+  }, [mapData]);
 
   // Draw minimap on canvas whenever map loads
   useEffect(() => {
@@ -157,7 +167,7 @@ export default function FoundryWorldMap() {
     }
   }, [mapData]);
 
-  // Drag-to-pan
+  // Drag-to-pan (mouse)
   const onMouseDown = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('[data-forge]')) return;
     dragging.current = true;
@@ -176,6 +186,26 @@ export default function FoundryWorldMap() {
     return () => { window.removeEventListener('mousemove', onMouseMove); window.removeEventListener('mouseup', onMouseUp); };
   }, [onMouseMove]);
 
+  // Drag-to-pan (touch)
+  const onTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      isTouching.current = true;
+      touchStartPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      lastPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    }
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    if (!isTouching.current || e.touches.length !== 1) return;
+    e.preventDefault();
+    const dx = e.touches[0].clientX - lastPos.current.x;
+    const dy = e.touches[0].clientY - lastPos.current.y;
+    setOffset(o => ({ x: o.x + dx, y: o.y + dy }));
+    lastPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  };
+
+  const onTouchEnd = () => { isTouching.current = false; };
+
   const zoom = (f: number) => setScale(s => Math.min(Math.max(s * f, 0.3), 3));
 
   // These must be before any early return (Rules of Hooks)
@@ -189,36 +219,35 @@ export default function FoundryWorldMap() {
   }, [mapData]);
 
   if (loading) return (
-    <div className="flex items-center justify-center h-screen bg-[#0d1117] text-amber-400 text-lg font-bold">
+    <div className="flex items-center justify-center h-screen bg-stone-50 text-amber-600 text-lg font-bold">
       Loading world map…
     </div>
   );
 
   return (
-    <div className="flex flex-col h-screen bg-[#0d1117] overflow-hidden">
+    <div className="flex flex-col h-screen bg-stone-50 overflow-hidden">
 
       {/* ── HUD ── */}
-      <div className="flex-shrink-0 flex items-center gap-3 px-4 py-2 bg-gradient-to-b from-[#1a110a] to-[#110c06] border-b-2 border-[#5a3e1b] flex-wrap">
-        <WalletMultiButton className="!bg-amber-700 !text-white !font-bold !rounded-lg !px-3 !py-1.5 !h-auto !text-xs" />
+      <div className="flex-shrink-0 flex items-center gap-3 px-4 py-2 bg-white border-b border-stone-200 shadow-sm flex-wrap">
         {myForge ? (
           <Link href={`/foundry/forge/${myForge.plotId}`}
-            className="bg-[#2d1805] border border-[#92400e] rounded-full px-3 py-1 text-xs font-bold text-amber-400 hover:border-amber-400 transition-colors">
+            className="bg-amber-50 border border-amber-200 rounded-full px-3 py-1 text-xs font-bold text-amber-700 hover:bg-amber-100 transition-colors">
             ⚒ Forge #{myForge.plotId} — manage
           </Link>
         ) : wallet ? (
           <Link href="/foundry/claim"
-            className="bg-[#1a2e12] border border-[#2d4a1e] rounded-full px-3 py-1 text-xs font-bold text-green-400 hover:border-green-400 transition-colors">
+            className="bg-green-50 border border-green-200 rounded-full px-3 py-1 text-xs font-bold text-green-600 hover:bg-green-100 transition-colors">
             + Claim a Forge
           </Link>
         ) : null}
         <div className="ml-auto flex items-center gap-2">
-          <span className="text-xs text-[#6b4f2a]">
+          <span className="text-xs text-gray-700">
             {mapData?.forges.filter(f => f.tier !== 'empty').length ?? 0} / 500 forges claimed
           </span>
-          <button onClick={() => zoom(1.2)} className="w-7 h-7 bg-[#1f1208] border border-[#3d2b0f] rounded text-amber-400 text-sm hover:border-[#78350f]">+</button>
-          <button onClick={() => zoom(0.833)} className="w-7 h-7 bg-[#1f1208] border border-[#3d2b0f] rounded text-amber-400 text-sm hover:border-[#78350f]">−</button>
+          <button onClick={() => zoom(1.2)} className="w-7 h-7 bg-stone-100 border border-stone-300 rounded text-gray-600 text-sm hover:bg-stone-200 transition-colors">+</button>
+          <button onClick={() => zoom(0.833)} className="w-7 h-7 bg-stone-100 border border-stone-300 rounded text-gray-600 text-sm hover:bg-stone-200 transition-colors">−</button>
           <button onClick={() => { setScale(1); setOffset({ x: 0, y: 0 }); }}
-            className="w-7 h-7 bg-[#1f1208] border border-[#3d2b0f] rounded text-amber-400 text-xs hover:border-[#78350f]">⊙</button>
+            className="w-7 h-7 bg-stone-100 border border-stone-300 rounded text-gray-600 text-xs hover:bg-stone-200 transition-colors">⊙</button>
         </div>
       </div>
 
@@ -226,8 +255,11 @@ export default function FoundryWorldMap() {
       <div
         ref={wrapRef}
         className="flex-1 relative overflow-hidden cursor-grab active:cursor-grabbing select-none"
-        style={{ background: '#1a3a5c' }}
+        style={{ background: '#c8dff0', touchAction: 'none' }}
         onMouseDown={onMouseDown}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
       >
         {/* Terrain + forge grid */}
         <div
@@ -281,18 +313,18 @@ export default function FoundryWorldMap() {
         </div>
 
         {/* Legend */}
-        <div className="absolute top-3 left-3 bg-[#0f0c06cc] border border-[#3d2b0f] rounded-lg p-2.5 backdrop-blur-sm text-[10px] text-[#92724a] space-y-1">
-          <div className="font-bold text-[#6b4f2a] uppercase tracking-wider mb-1.5">Terrain</div>
+        <div className="absolute top-3 left-3 bg-white/90 border border-stone-200 rounded-lg p-2.5 backdrop-blur-sm text-[10px] text-gray-600 space-y-1">
+          <div className="font-bold text-gray-500 uppercase tracking-wider mb-1.5">Terrain</div>
           {(['grass', 'water', 'forest', 'hills', 'mountains', 'desert', 'lava'] as TerrainType[]).map(t => (
             <div key={t} className="flex items-center gap-1.5">
-              <div style={{ width: 10, height: 10, borderRadius: 2, background: TERRAIN_BG[t], border: '1px solid rgba(255,255,255,0.1)', flexShrink: 0 }} />
+              <div style={{ width: 10, height: 10, borderRadius: 2, background: TERRAIN_BG[t], border: '1px solid rgba(0,0,0,0.15)', flexShrink: 0 }} />
               <span className="capitalize">{t}</span>
             </div>
           ))}
-          <div className="border-t border-[#2d1f0a] pt-1.5 mt-1.5 space-y-1">
+          <div className="border-t border-stone-200 pt-1.5 mt-1.5 space-y-1">
             {([['mine', 'Your forge'], ['neutral', 'Claimed'], ['empty', 'Available']] as const).map(([tier, label]) => (
               <div key={tier} className="flex items-center gap-1.5">
-                <div style={{ width: 10, height: 10, borderRadius: '50%', background: FORGE_COLOR[tier], border: '1px solid rgba(255,255,255,0.2)', flexShrink: 0 }} />
+                <div style={{ width: 10, height: 10, borderRadius: '50%', background: FORGE_COLOR[tier], border: '1px solid rgba(0,0,0,0.15)', flexShrink: 0 }} />
                 <span>{label}</span>
               </div>
             ))}
@@ -300,7 +332,7 @@ export default function FoundryWorldMap() {
         </div>
 
         {/* Minimap */}
-        <div className="absolute bottom-3 right-3 border-2 border-[#5a3e1b] rounded-md overflow-hidden shadow-lg">
+        <div className="absolute bottom-3 right-3 hidden sm:block border border-stone-300 rounded-md overflow-hidden shadow-lg">
           <canvas ref={miniRef} width={140} height={116} />
         </div>
 
@@ -308,23 +340,23 @@ export default function FoundryWorldMap() {
         {selected && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
             <div
-              className="bg-[#1a1208] border-2 border-[#78350f] rounded-2xl p-5 max-w-xs w-full shadow-2xl pointer-events-auto"
+              className="bg-white border border-stone-200 rounded-2xl p-5 max-w-xs w-full shadow-2xl pointer-events-auto"
               onClick={e => e.stopPropagation()}
             >
-              <div className="text-amber-400 font-extrabold text-lg mb-0.5">⚒ Forge #{selected.plotId}</div>
-              <div className="text-[10px] text-[#6b4f2a] font-mono mb-3">{selected.owner}</div>
+              <div className="text-amber-600 font-extrabold text-lg mb-0.5">⚒ Forge #{selected.plotId}</div>
+              <div className="text-[10px] text-gray-400 font-mono mb-3">{selected.owner}</div>
               {selected.inscription && (
-                <div className="bg-[#0f0c06] border border-[#2d1f0a] rounded-xl px-3 py-2.5 text-xs text-amber-200 italic leading-relaxed mb-3">
+                <div className="bg-stone-50 border border-stone-100 rounded-xl px-3 py-2.5 text-xs text-gray-700 italic leading-relaxed mb-3">
                   {selected.inscription}
                 </div>
               )}
               <div className="flex gap-2 mt-1">
                 <Link href={`/foundry/forge/${selected.plotId}`}
-                  className="flex-1 text-center bg-[#2d1805] border border-[#78350f] text-amber-400 text-xs font-bold rounded-lg py-2 hover:border-amber-500 transition-colors">
+                  className="flex-1 text-center bg-amber-50 border border-amber-200 text-amber-700 text-xs font-bold rounded-lg py-2 hover:bg-amber-100 transition-colors">
                   View Forge
                 </Link>
                 <button onClick={() => setSelected(null)}
-                  className="flex-1 bg-[#140e04] border border-[#2d1f0a] text-[#6b4f2a] text-xs rounded-lg py-2 hover:text-amber-400 transition-colors">
+                  className="flex-1 bg-stone-50 border border-stone-200 text-gray-500 text-xs rounded-lg py-2 hover:bg-stone-100 transition-colors">
                   Close
                 </button>
               </div>

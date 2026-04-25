@@ -23,12 +23,12 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const now = new Date();
   const arrived = getPendingAttacks().filter(r => new Date(r.arrivesAt) <= now);
 
-  const results: { id: string; outcome: string; smeltStolen: number }[] = [];
+  const results: { id: string; outcome: string; ingotStolen: number }[] = [];
   for (const attack of arrived) {
     try {
       const resolved = resolveBattle(attack);
       saveAttack(resolved);
-      results.push({ id: resolved.id, outcome: resolved.outcome!, smeltStolen: resolved.smeltStolen });
+      results.push({ id: resolved.id, outcome: resolved.outcome!, ingotStolen: resolved.ingotStolen });
     } catch (err) {
       console.error('[process-attacks] failed to resolve', attack.id, err);
     }
@@ -55,7 +55,7 @@ function resolveBattle(attack: AttackRecord): AttackRecord {
   const atkPower = calcAttackPower(attack.sentTroops);
   const defPower = calcDefPower(defTroops.stationed, rampartLevel, terrain);
 
-  let smeltStolen = 0;
+  let ingotStolen = 0;
   let outcome: 'attacker_wins' | 'defender_wins';
   let attackerLosses = emptyTroopCount();
   let defenderLosses = emptyTroopCount();
@@ -64,7 +64,7 @@ function resolveBattle(attack: AttackRecord): AttackRecord {
     // ── Attacker wins ───────────────────────────────────────────────────────
     outcome = 'attacker_wins';
 
-    smeltStolen = Math.floor(Math.max(0, defBuildings.ingotBalance - vaultProtected) * 0.25);
+    ingotStolen = Math.floor(Math.max(0, defBuildings.ingotBalance - vaultProtected) * 0.25);
 
     // Defender loses 100%
     defenderLosses = { ...defTroops.stationed };
@@ -79,8 +79,8 @@ function resolveBattle(attack: AttackRecord): AttackRecord {
     atkTroops.stationed = addTroops(atkTroops.stationed, surviving);
 
     // Transfer Ingots
-    defBuildings.ingotBalance = Math.max(0, defBuildings.ingotBalance - smeltStolen);
-    atkBuildings.ingotBalance = atkBuildings.ingotBalance + smeltStolen;
+    defBuildings.ingotBalance = Math.max(0, defBuildings.ingotBalance - ingotStolen);
+    atkBuildings.ingotBalance = atkBuildings.ingotBalance + ingotStolen;
 
   } else {
     // ── Defender wins ───────────────────────────────────────────────────────
@@ -105,7 +105,7 @@ function resolveBattle(attack: AttackRecord): AttackRecord {
     ...attack,
     resolvedAt: new Date().toISOString(),
     outcome,
-    smeltStolen,
+    ingotStolen,
     attackerLosses,
     defenderLosses,
   };

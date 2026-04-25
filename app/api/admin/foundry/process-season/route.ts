@@ -6,7 +6,7 @@ import { getForgeBuildings, saveForgeBuildings } from '@/lib/foundry-buildings';
 import {
   loadLeagueData, saveLeagueData, loadPrizePool, savePrizePool,
   computeWarScore, getOrCreateLeagueEntry,
-  PRIZE_SMELT, SeasonResult, SeasonRankRow, LeagueTier,
+  PRIZE_INGOTS, SeasonResult, SeasonRankRow, LeagueTier,
 } from '@/lib/foundry-leagues';
 
 export const dynamic = 'force-dynamic';
@@ -80,7 +80,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   // ── 4. Credit prizes from pool ────────────────────────────────────────────
   function creditPrizes(tier: LeagueTier, ranked: typeof scored): void {
-    const amounts = PRIZE_SMELT[tier];
+    const amounts = PRIZE_INGOTS[tier];
     for (let i = 0; i < Math.min(3, ranked.length); i++) {
       const amount = amounts[i];
       if (amount > pool.ingotBalance) continue;

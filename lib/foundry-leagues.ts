@@ -156,7 +156,7 @@ export function computeWarScore(forgeId: number, wallet: string, seasonStart: st
 
 // ── Prize amounts by league (top 3 positions) ─────────────────────────────────
 
-export const PRIZE_SMELT: Record<LeagueTier, [number, number, number]> = {
+export const PRIZE_INGOTS: Record<LeagueTier, [number, number, number]> = {
   bronze: [8_000,  4_000,  3_000],
   silver: [18_000, 10_000, 7_000],
   gold:   [40_000, 24_000, 16_000],

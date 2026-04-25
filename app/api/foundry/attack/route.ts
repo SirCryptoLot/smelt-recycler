@@ -101,7 +101,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       createdAt: new Date().toISOString(),
       resolvedAt: null,
       outcome: null,
-      smeltStolen: 0,
+      ingotStolen: 0,
       attackerLosses: emptyTroopCount(),
       defenderLosses: emptyTroopCount(),
     };

@@ -18,7 +18,7 @@ export interface AttackRecord {
   createdAt: string;
   resolvedAt: string | null;   // null = still in flight
   outcome: AttackOutcome | null;
-  smeltStolen: number;
+  ingotStolen: number;
   attackerLosses: TroopCount;
   defenderLosses: TroopCount;
 }

@@ -158,11 +158,11 @@ export default function ReportsPage() {
                   </div>
                 )}
 
-                {!isPending && r.smeltStolen > 0 && (
+                {!isPending && r.ingotStolen > 0 && (
                   <p className={`text-xs mt-2 font-semibold ${isAttacker ? 'text-green-700' : 'text-red-700'}`}>
                     {isAttacker
-                      ? `+${r.smeltStolen.toLocaleString()} SMELT stolen`
-                      : `−${r.smeltStolen.toLocaleString()} SMELT raided`}
+                      ? `+${r.ingotStolen.toLocaleString()} Ingots stolen`
+                      : `−${r.ingotStolen.toLocaleString()} Ingots raided`}
                   </p>
                 )}
 

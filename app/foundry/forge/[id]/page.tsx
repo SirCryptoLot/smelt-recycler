@@ -8,11 +8,10 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import type { ForgeStateResponse } from '@/app/api/foundry/forge/[id]/route';
 import type { ConstructionSlot } from '@/lib/foundry-buildings';
-import type { TroopCount, TrainingItem } from '@/lib/foundry-troops';
-import type { AttackRecord } from '@/lib/foundry-combat';
 import {
   BUILDING_META, ALL_BUILDINGS, buildCost, BuildingType,
   TROOP_META, ALL_TROOPS, TroopType,
+  TroopCount, TrainingItem, AttackRecord,
 } from '@/lib/foundry-constants';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

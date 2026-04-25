@@ -5,6 +5,7 @@ import { DATA_DIR } from './paths';
 import { getWalletStats } from './leaderboard';
 import { getForgeBuildings } from './foundry-buildings';
 import { getForgeAttacks } from './foundry-combat';
+import { getForgeItems, warHornActive } from './foundry-items';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -146,7 +147,11 @@ export function computeWarScore(forgeId: number, wallet: string, seasonStart: st
   const entry        = getOrCreateLeagueEntry(forgeId, wallet);
   const streakMult   = Math.min(1.0 + entry.consecutiveActiveSeasons * 0.05, 1.50);
 
-  return Math.floor(base * warHallMult * streakMult);
+  const items        = getForgeItems(forgeId);
+  const rodMult      = 1 + items.lightningRods * 0.15;
+  const hornMult     = warHornActive(items) ? 2 : 1;
+
+  return Math.floor(base * warHallMult * streakMult * rodMult * hornMult);
 }
 
 // ── Prize amounts by league (top 3 positions) ─────────────────────────────────

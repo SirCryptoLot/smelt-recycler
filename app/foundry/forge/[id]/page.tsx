@@ -3,11 +3,9 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import type { ForgeStateResponse } from '@/app/api/foundry/forge/[id]/route';
-import type { ConstructionSlot } from '@/lib/foundry-buildings';
 import {
   BUILDING_META, ALL_BUILDINGS, buildCost, BuildingType,
   TROOP_META, ALL_TROOPS, TroopType,
@@ -16,7 +14,7 @@ import {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function fmtSmelt(n: number) { return n.toLocaleString('en-US'); }
+function fmt(n: number) { return n.toLocaleString('en-US'); }
 
 function fmtCountdown(isoEnd: string): string {
   const secs = Math.max(0, Math.floor((new Date(isoEnd).getTime() - Date.now()) / 1000));
@@ -44,16 +42,15 @@ export default function ForgePage() {
   const [trainQty, setTrainQty] = useState<Record<TroopType, number>>({
     smelters: 1, ash_archers: 1, iron_guards: 1,
   });
-  const [attackTarget, setAttackTarget]   = useState('');
-  const [sendQty, setSendQty]             = useState<Record<TroopType, number>>({
+  const [attackTarget, setAttackTarget] = useState('');
+  const [sendQty, setSendQty]           = useState<Record<TroopType, number>>({
     smelters: 0, ash_archers: 0, iron_guards: 0,
   });
-  const [attackMsg, setAttackMsg]         = useState('');
+  const [attackMsg, setAttackMsg] = useState('');
   const [, setTick] = useState(0);
 
   const fetchState = useCallback(async () => {
-    setLoading(true);
-    setError('');
+    setLoading(true); setError('');
     try {
       const res = await fetch(`/api/foundry/forge/${id}`, { cache: 'no-store' });
       if (!res.ok) {
@@ -62,20 +59,16 @@ export default function ForgePage() {
       } else {
         setState(await res.json());
       }
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   }, [id]);
 
   useEffect(() => { fetchState(); }, [fetchState]);
-
-  // Countdown re-render every second
   useEffect(() => {
     const t = setInterval(() => setTick(n => n + 1), 1000);
     return () => clearInterval(t);
   }, []);
 
-  const isOwner = !!wallet && state?.owner === wallet;
+  const isOwner     = !!wallet && state?.owner === wallet;
   const totalSendQty = sendQty.smelters + sendQty.ash_archers + sendQty.iron_guards;
 
   async function handleBuild(buildingType: BuildingType) {
@@ -93,44 +86,7 @@ export default function ForgePage() {
         ? `✅ ${BUILDING_META[buildingType].label} upgraded to Lv${d.toLevel}!`
         : `🔨 Upgrading ${BUILDING_META[buildingType].label} to Lv${d.toLevel}…`);
       await fetchState();
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function handleAttack() {
-    if (!wallet) { setAttackMsg('Connect wallet first'); return; }
-    const forgeId = parseInt(id, 10);
-    const targetId = parseInt(attackTarget, 10);
-    if (isNaN(targetId) || targetId < 1 || targetId > 500) {
-      setAttackMsg('Enter a valid target forge ID (1–500)');
-      return;
-    }
-    if (totalSendQty === 0) {
-      setAttackMsg('Select at least 1 troop to send');
-      return;
-    }
-    setBusy(true);
-    setAttackMsg('');
-    try {
-      const res = await fetch('/api/foundry/attack', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          attackerForgeId: forgeId,
-          defenderForgeId: targetId,
-          troops: sendQty,
-          wallet,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) { setAttackMsg(data.error ?? 'Failed'); return; }
-      setAttackMsg(`⚔️ Attack launched! Arrives in ~${data.travelMins} min`);
-      setSendQty({ smelters: 0, ash_archers: 0, iron_guards: 0 });
-      fetchState();
-    } finally {
-      setBusy(false);
-    }
+    } finally { setBusy(false); }
   }
 
   async function handleTrain(troopType: TroopType) {
@@ -147,95 +103,179 @@ export default function ForgePage() {
       if (!res.ok) { setMsg(`❌ ${d.error}`); return; }
       setMsg(`⚔️ Training ${quantity}× ${TROOP_META[troopType].label}…`);
       await fetchState();
-    } finally {
-      setBusy(false);
-    }
+    } finally { setBusy(false); }
   }
 
+  async function handleAttack() {
+    if (!wallet) { setAttackMsg('Connect wallet first'); return; }
+    const forgeId  = parseInt(id, 10);
+    const targetId = parseInt(attackTarget, 10);
+    if (isNaN(targetId) || targetId < 1 || targetId > 500) {
+      setAttackMsg('Enter a valid target forge ID (1–500)'); return;
+    }
+    if (totalSendQty === 0) { setAttackMsg('Select at least 1 troop'); return; }
+    setBusy(true); setAttackMsg('');
+    try {
+      const res = await fetch('/api/foundry/attack', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ attackerForgeId: forgeId, defenderForgeId: targetId, troops: sendQty, wallet }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setAttackMsg(data.error ?? 'Failed'); return; }
+      setAttackMsg(`⚔️ Attack launched! Arrives in ~${data.travelMins} min`);
+      setSendQty({ smelters: 0, ash_archers: 0, iron_guards: 0 });
+      fetchState();
+    } finally { setBusy(false); }
+  }
+
+  // ── Loading / error states ──────────────────────────────────────────────────
+
   if (loading) return (
-    <div className="flex items-center justify-center h-screen bg-[#0d1117] text-amber-400">Loading forge…</div>
+    <div className="flex items-center justify-center h-screen bg-stone-50 text-stone-400 text-sm">
+      Loading forge…
+    </div>
   );
   if (error) return (
-    <div className="max-w-lg mx-auto pt-12 px-4 text-red-400">
+    <div className="max-w-lg mx-auto pt-12 px-4 text-red-500 text-sm">
       <p className="font-bold mb-2">⚠ {error}</p>
-      <Link href="/foundry" className="text-amber-400 underline text-sm">← Back to map</Link>
+      <Link href="/foundry" className="text-amber-600 underline">← Back to map</Link>
     </div>
   );
   if (!state) return null;
 
-  const totalStationed = state.troops.smelters + state.troops.ash_archers + state.troops.iron_guards;
+  // ── Derived values ──────────────────────────────────────────────────────────
+
+  const totalStationed  = state.troops.smelters + state.troops.ash_archers + state.troops.iron_guards;
+  const builtCount      = ALL_BUILDINGS.filter(b => (state.buildings[b] ?? 0) > 0).length;
+  const avgLevel        = builtCount === 0 ? 0
+    : Math.round(ALL_BUILDINGS.reduce((s, b) => s + (state.buildings[b] ?? 0), 0) / ALL_BUILDINGS.length * 10) / 10;
+
+  // ── Render ──────────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen bg-[#0d1117] text-[#e8d5a3] font-serif">
+    <div className="min-h-screen bg-stone-50 text-stone-800 font-sans pb-24">
 
-      {/* ── Header ── */}
-      <div className="border-b-2 border-[#5a3e1b] bg-gradient-to-b from-[#1a110a] to-[#110c06] px-5 py-3 flex items-center gap-3 flex-wrap">
-        <Link href="/foundry" className="text-amber-600 text-xs hover:text-amber-400">← World Map</Link>
-        <Link href="/foundry/reports" className="text-xs text-red-600 hover:underline ml-3">
-          ⚔️ Battle Reports
+      {/* ── Top nav bar ── */}
+      <div className="sticky top-0 z-20 bg-white border-b border-stone-200 px-4 py-2 flex items-center gap-3">
+        <Link href="/foundry" className="text-xs text-stone-400 hover:text-stone-600 flex items-center gap-1">
+          ← Map
         </Link>
-        <div className="text-amber-400 font-bold text-lg">⚒ Forge #{state.forgeId}</div>
-        <div className="text-xs text-[#6b4f2a] font-mono truncate max-w-xs">{state.owner}</div>
-        <div className="ml-auto flex items-center gap-3">
-          <span className="text-sm text-amber-400 font-bold">💰 {fmtSmelt(state.ingotBalance)} Ingots</span>
-          <WalletMultiButton className="!bg-amber-700 !text-white !font-bold !rounded-lg !px-3 !py-1.5 !h-auto !text-xs" />
+        <span className="text-stone-300">|</span>
+        <span className="text-xs font-bold text-stone-700">⚒ Forge #{state.forgeId}</span>
+        <div className="ml-auto flex items-center gap-2">
+          <span className="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-3 py-0.5">
+            💰 {fmt(state.ingotBalance)} Ingots
+          </span>
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 py-6 space-y-8">
+      <div className="max-w-2xl mx-auto px-4 pt-4 space-y-4">
 
-        {/* Status message */}
+        {/* ── Forge header card ── */}
+        <div className="rounded-2xl overflow-hidden shadow-sm border border-stone-200">
+          <div className="bg-gradient-to-r from-amber-700 to-amber-900 px-5 py-4 flex items-center gap-3">
+            <span className="text-3xl">⚒</span>
+            <div className="flex-1 min-w-0">
+              <div className="text-white font-bold text-base leading-tight">Forge #{state.forgeId}</div>
+              <div className="text-amber-200 text-xs truncate">{state.owner}</div>
+            </div>
+            <Link href="/foundry/reports"
+              className="text-amber-200 hover:text-white text-xs border border-amber-600 rounded-lg px-2 py-1 transition-colors">
+              Reports
+            </Link>
+          </div>
+
+          {/* Stat chips */}
+          <div className="bg-white grid grid-cols-3 divide-x divide-stone-100">
+            <div className="px-4 py-3 text-center">
+              <div className="text-lg font-bold text-stone-800">{builtCount}</div>
+              <div className="text-[10px] text-stone-400 uppercase tracking-wide">Buildings</div>
+            </div>
+            <div className="px-4 py-3 text-center">
+              <div className="text-lg font-bold text-stone-800">{totalStationed}</div>
+              <div className="text-[10px] text-stone-400 uppercase tracking-wide">Troops</div>
+            </div>
+            <div className="px-4 py-3 text-center">
+              <div className="text-lg font-bold text-stone-800">Lv {avgLevel}</div>
+              <div className="text-[10px] text-stone-400 uppercase tracking-wide">Avg Level</div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Status / construction banners ── */}
         {msg && (
-          <div className="rounded-xl border border-[#3d2b0f] bg-[#1a1208] px-4 py-3 text-sm text-amber-300">
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-800">
             {msg}
           </div>
         )}
-
-        {/* Construction banner */}
         {state.construction && (
-          <div className="rounded-xl border border-amber-700 bg-[#2d1805] px-4 py-3 text-sm text-amber-300">
-            🔨 Upgrading {BUILDING_META[state.construction.buildingType as BuildingType].label} to Lv{state.construction.toLevel} — {fmtCountdown(state.construction.completesAt)} remaining
+          <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-2.5 flex items-center gap-2 text-sm text-amber-800">
+            <span className="text-base">🔨</span>
+            <span>
+              Upgrading <strong>{BUILDING_META[state.construction.buildingType as BuildingType].label}</strong> to Lv{state.construction.toLevel}
+              {' — '}<span className="font-mono font-bold">{fmtCountdown(state.construction.completesAt)}</span> remaining
+            </span>
           </div>
         )}
 
         {/* ── Buildings ── */}
         <section>
-          <h2 className="text-amber-400 font-bold text-base uppercase tracking-wider mb-3">Buildings</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <h2 className="text-xs font-bold text-stone-400 uppercase tracking-widest mb-3">Buildings</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
             {ALL_BUILDINGS.map(type => {
-              const meta = BUILDING_META[type];
-              const level = state.buildings[type] ?? 0;
-              const toLevel = level + 1;
-              const cost = level < 5 ? buildCost(type, toLevel) : 0;
+              const meta      = BUILDING_META[type];
+              const level     = state.buildings[type] ?? 0;
+              const toLevel   = level + 1;
+              const cost      = level < 5 ? buildCost(type, toLevel) : 0;
               const isBuilding = state.construction?.buildingType === type;
               const canUpgrade = isOwner && level < 5 && !state.construction && state.ingotBalance >= cost && !busy;
+              const pct        = (level / 5) * 100;
+
               return (
-                <div key={type} className={`rounded-xl border p-3 space-y-2 ${isBuilding ? 'border-amber-600 bg-[#2d1805]' : 'border-[#3d2b0f] bg-[#140e04]'}`}>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-lg">{meta.icon}</span>
-                    <div>
-                      <div className="text-[11px] font-bold text-amber-300">{meta.label}</div>
-                      <div className="text-[9px] text-[#6b4f2a]">Lv {level} / 5</div>
+                <div key={type}
+                  className={`rounded-xl border bg-white p-3 flex flex-col gap-2 shadow-sm transition-colors
+                    ${isBuilding ? 'border-amber-400 bg-amber-50' : 'border-stone-200'}`}>
+
+                  {/* Icon + name */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl leading-none">{meta.icon}</span>
+                    <div className="min-w-0">
+                      <div className="text-[11px] font-bold text-stone-700 leading-tight truncate">{meta.label}</div>
+                      <div className="text-[10px] text-stone-400">Lv {level} / 5</div>
                     </div>
                   </div>
-                  <div className="flex gap-0.5">
-                    {[1,2,3,4,5].map(i => (
-                      <div key={i} className={`h-1.5 flex-1 rounded-full ${i <= level ? 'bg-amber-500' : 'bg-[#2d1f0a]'}`} />
-                    ))}
+
+                  {/* Progress bar */}
+                  <div className="h-1.5 bg-stone-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-amber-500 transition-all"
+                      style={{ width: `${pct}%` }}
+                    />
                   </div>
-                  <div className="text-[9px] text-[#92724a] leading-tight">{meta.effectLabel}</div>
-                  {level < 5 && isOwner && (
+
+                  {/* Effect */}
+                  <div className="text-[9px] text-stone-400 leading-tight">{meta.effectLabel}</div>
+
+                  {/* Button */}
+                  {level >= 5 ? (
+                    <div className="text-[10px] font-bold text-amber-600 text-center">MAX</div>
+                  ) : isBuilding ? (
+                    <div className="text-[10px] font-mono font-bold text-amber-700 text-center bg-amber-100 rounded-lg py-1">
+                      {fmtCountdown(state.construction!.completesAt)}
+                    </div>
+                  ) : isOwner ? (
                     <button
                       onClick={() => handleBuild(type)}
                       disabled={!canUpgrade}
-                      className="w-full text-[10px] font-bold rounded-lg py-1.5 transition-colors disabled:opacity-40 bg-[#2d1f0a] border border-[#78350f] text-amber-400 hover:border-amber-500 disabled:cursor-not-allowed"
+                      className={`text-[10px] font-bold rounded-lg py-1.5 w-full transition-colors
+                        ${canUpgrade
+                          ? 'bg-amber-600 hover:bg-amber-700 text-white'
+                          : 'bg-stone-100 text-stone-400 cursor-not-allowed'}`}
                     >
-                      {isBuilding
-                        ? fmtCountdown(state.construction!.completesAt)
-                        : `Lv${toLevel} — ${fmtSmelt(cost)} Ingots`}
+                      {level === 0 ? 'Build' : 'Upgrade'} — {fmt(cost)}
                     </button>
-                  )}
-                  {level >= 5 && <div className="text-[9px] text-amber-600 font-bold text-center">MAX</div>}
+                  ) : null}
                 </div>
               );
             })}
@@ -244,58 +284,68 @@ export default function ForgePage() {
 
         {/* ── Troops ── */}
         <section>
-          <h2 className="text-amber-400 font-bold text-base uppercase tracking-wider mb-1">Troops</h2>
-          <p className="text-[11px] text-[#6b4f2a] mb-3">
-            {totalStationed} / {state.troopCapacity} stationed
+          <div className="flex items-baseline gap-2 mb-3">
+            <h2 className="text-xs font-bold text-stone-400 uppercase tracking-widest">Troops</h2>
+            <span className="text-[10px] text-stone-400">{totalStationed} / {state.troopCapacity} stationed</span>
             {state.buildings['barracks'] < 1 && isOwner && (
-              <span className="text-orange-400"> — build Barracks to train troops</span>
+              <span className="text-[10px] text-orange-500">— build Barracks first</span>
             )}
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
             {ALL_TROOPS.map(type => {
-              const meta = TROOP_META[type];
-              const qty = trainQty[type];
-              const cost = meta.cost * qty;
+              const meta     = TROOP_META[type];
+              const qty      = trainQty[type];
+              const cost     = meta.cost * qty;
               const canTrain = isOwner && state.buildings['barracks'] >= 1 && state.ingotBalance >= cost && !busy;
+
               return (
-                <div key={type} className="rounded-xl border border-[#3d2b0f] bg-[#140e04] p-3 space-y-2">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xl">{meta.icon}</span>
+                <div key={type} className="rounded-xl border border-stone-200 bg-white p-3 flex flex-col gap-2.5 shadow-sm">
+
+                  {/* Icon + stationed */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl leading-none">{meta.icon}</span>
                     <div>
-                      <div className="text-[11px] font-bold text-amber-300">{meta.label}</div>
-                      <div className="text-[9px] text-[#6b4f2a]">Stationed: {state.troops[type as keyof TroopCount]}</div>
+                      <div className="text-[11px] font-bold text-stone-700">{meta.label}</div>
+                      <div className="text-[10px] text-stone-400">Stationed: <strong className="text-stone-600">{state.troops[type as keyof TroopCount]}</strong></div>
                     </div>
                   </div>
-                  <div className="grid grid-cols-3 gap-1 text-[9px] text-center">
-                    <div className="bg-[#0f0c06] rounded p-1">
-                      <div className="text-red-400 font-bold">{meta.atk}</div>
-                      <div className="text-[#6b4f2a]">ATK</div>
+
+                  {/* ATK / DEF / Cost chips */}
+                  <div className="grid grid-cols-3 gap-1">
+                    <div className="bg-red-50 border border-red-100 rounded-lg py-1 text-center">
+                      <div className="text-[11px] font-bold text-red-600">{meta.atk}</div>
+                      <div className="text-[8px] text-stone-400">ATK</div>
                     </div>
-                    <div className="bg-[#0f0c06] rounded p-1">
-                      <div className="text-blue-400 font-bold">{meta.def}</div>
-                      <div className="text-[#6b4f2a]">DEF</div>
+                    <div className="bg-blue-50 border border-blue-100 rounded-lg py-1 text-center">
+                      <div className="text-[11px] font-bold text-blue-600">{meta.def}</div>
+                      <div className="text-[8px] text-stone-400">DEF</div>
                     </div>
-                    <div className="bg-[#0f0c06] rounded p-1">
-                      <div className="text-amber-400 font-bold">{meta.cost}</div>
-                      <div className="text-[#6b4f2a]">Ingots</div>
+                    <div className="bg-amber-50 border border-amber-100 rounded-lg py-1 text-center">
+                      <div className="text-[11px] font-bold text-amber-700">{meta.cost}</div>
+                      <div className="text-[8px] text-stone-400">each</div>
                     </div>
                   </div>
+
+                  {/* Train controls */}
                   {isOwner && (
-                    <div className="flex gap-1">
+                    <div className="flex gap-1.5">
                       <input
                         type="number" min={1} max={20} value={qty}
                         onChange={e => setTrainQty(q => ({
-                          ...q,
-                          [type]: Math.max(1, Math.min(20, parseInt(e.target.value) || 1)),
+                          ...q, [type]: Math.max(1, Math.min(20, parseInt(e.target.value) || 1)),
                         }))}
-                        className="w-12 bg-[#0f0c06] border border-[#3d2b0f] rounded px-1 text-[10px] text-amber-300 text-center"
+                        className="w-12 border border-stone-200 rounded-lg px-1 py-1 text-[10px] text-center bg-stone-50 text-stone-700"
                       />
                       <button
                         onClick={() => handleTrain(type)}
                         disabled={!canTrain}
-                        className="flex-1 text-[10px] font-bold rounded-lg py-1.5 bg-[#1a2e12] border border-[#2d4a1e] text-green-400 hover:border-green-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                        className={`flex-1 text-[10px] font-bold rounded-lg py-1.5 transition-colors
+                          ${canTrain
+                            ? 'bg-green-600 hover:bg-green-700 text-white'
+                            : 'bg-stone-100 text-stone-400 cursor-not-allowed'}`}
                       >
-                        Train ×{qty} — {fmtSmelt(cost)} Ingots
+                        Train ×{qty} — {fmt(cost)}
                       </button>
                     </div>
                   )}
@@ -306,61 +356,54 @@ export default function ForgePage() {
 
           {/* Training queue */}
           {state.trainingQueue.length > 0 && (
-            <div className="mt-4 rounded-xl border border-[#3d2b0f] bg-[#0f0c06] p-3 space-y-1.5">
-              <div className="text-[10px] font-bold text-amber-500 uppercase tracking-wider mb-2">Training Queue</div>
-              {state.trainingQueue.map((item, i) => (
-                <div key={i} className="flex items-center justify-between text-[10px] text-[#92724a]">
-                  <span>{TROOP_META[item.type as TroopType].icon} {item.quantity}× {TROOP_META[item.type as TroopType].label}</span>
-                  <span className="text-amber-400 font-bold">{fmtCountdown(item.completesAt)}</span>
-                </div>
-              ))}
+            <div className="mt-3 rounded-xl border border-stone-200 bg-white p-3 shadow-sm">
+              <div className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-2">Training Queue</div>
+              <div className="space-y-1.5">
+                {state.trainingQueue.map((item, i) => (
+                  <div key={i} className="flex items-center justify-between text-xs text-stone-600">
+                    <span>{TROOP_META[item.type as TroopType].icon} {item.quantity}× {TROOP_META[item.type as TroopType].label}</span>
+                    <span className="font-mono font-bold text-amber-700">{fmtCountdown(item.completesAt)}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </section>
 
         {/* ── Attack Panel ── */}
-        {state && state.buildings.rally_point >= 1 && (
-          <section className="rounded-2xl border border-red-100 bg-red-50 p-5 space-y-4">
-            <h2 className="font-bold text-red-900 text-sm">⚔️ Send Attack</h2>
+        {state.buildings.rally_point >= 1 && (
+          <section className="rounded-2xl border border-red-100 bg-white shadow-sm p-4 space-y-3">
+            <h2 className="text-xs font-bold text-stone-400 uppercase tracking-widest">⚔️ Send Attack</h2>
 
-            {/* Target input */}
             <div className="flex items-center gap-2">
-              <label className="text-xs text-gray-500 w-28 flex-shrink-0">Target Forge ID</label>
+              <label className="text-xs text-stone-500 w-28 flex-shrink-0">Target Forge ID</label>
               <input
-                type="number"
-                min={1}
-                max={500}
-                value={attackTarget}
+                type="number" min={1} max={500} value={attackTarget}
                 onChange={e => setAttackTarget(e.target.value)}
                 placeholder="e.g. 42"
-                className="w-24 rounded-lg border border-stone-200 px-2 py-1 text-sm text-center"
+                className="w-24 border border-stone-200 rounded-lg px-2 py-1 text-sm text-center bg-stone-50"
               />
             </div>
 
-            {/* Troop selectors */}
             <div className="space-y-2">
               {ALL_TROOPS.map(t => {
-                const meta = TROOP_META[t];
+                const meta  = TROOP_META[t];
                 const avail = state.troops[t];
                 return (
                   <div key={t} className="flex items-center gap-2">
                     <span className="text-sm w-5">{meta.icon}</span>
-                    <span className="text-xs text-gray-600 flex-1">{meta.label}</span>
-                    <span className="text-xs text-gray-400">{avail} avail</span>
+                    <span className="text-xs text-stone-600 flex-1">{meta.label}</span>
+                    <span className="text-xs text-stone-400">{avail} avail</span>
                     <input
-                      type="number"
-                      min={0}
-                      max={avail}
-                      value={sendQty[t]}
+                      type="number" min={0} max={avail} value={sendQty[t]}
                       onChange={e => setSendQty(q => ({ ...q, [t]: Math.min(avail, Math.max(0, Number(e.target.value))) }))}
-                      className="w-16 rounded-lg border border-stone-200 px-2 py-1 text-sm text-center"
+                      className="w-16 border border-stone-200 rounded-lg px-2 py-1 text-sm text-center bg-stone-50"
                     />
                   </div>
                 );
               })}
             </div>
 
-            {/* Attack message */}
             {attackMsg && (
               <p className={`text-xs ${attackMsg.startsWith('⚔️') ? 'text-green-700' : 'text-red-600'}`}>
                 {attackMsg}
@@ -375,14 +418,13 @@ export default function ForgePage() {
               {busy ? 'Sending…' : `Send ${totalSendQty > 0 ? totalSendQty : ''} Troops`}
             </button>
 
-            {/* Outgoing attacks queue */}
             {state.pendingAttacks.length > 0 && (
-              <div className="border-t border-red-100 pt-3 space-y-1">
-                <p className="text-[10px] text-red-700 font-semibold uppercase tracking-wide">Outgoing Attacks</p>
+              <div className="border-t border-stone-100 pt-3 space-y-1">
+                <p className="text-[10px] text-stone-400 font-bold uppercase tracking-wide">Outgoing</p>
                 {state.pendingAttacks.map((a: AttackRecord) => (
-                  <div key={a.id} className="flex justify-between text-xs text-gray-600">
+                  <div key={a.id} className="flex justify-between text-xs text-stone-600">
                     <span>→ Forge #{a.defenderForgeId}</span>
-                    <span className="text-red-600 font-mono">{fmtCountdown(a.arrivesAt)}</span>
+                    <span className="text-red-600 font-mono font-bold">{fmtCountdown(a.arrivesAt)}</span>
                   </div>
                 ))}
               </div>
@@ -390,10 +432,11 @@ export default function ForgePage() {
           </section>
         )}
 
-        {/* Inscription */}
-        <div className="rounded-xl border border-[#2d1f0a] bg-[#0f0c06] px-4 py-3 text-xs text-[#92724a] italic leading-relaxed">
+        {/* ── Inscription ── */}
+        <div className="rounded-xl border border-stone-200 bg-white px-4 py-3 text-xs text-stone-400 italic leading-relaxed shadow-sm">
           {state.inscription}
         </div>
+
       </div>
     </div>
   );

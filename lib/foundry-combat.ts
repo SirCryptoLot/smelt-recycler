@@ -2,7 +2,7 @@
 import path from 'path';
 import fs from 'fs';
 import { DATA_DIR } from './paths';
-import { TroopCount, TROOP_META, emptyTroopCount } from './foundry-troops';
+import { TroopCount, TROOP_META } from './foundry-troops';
 import { TerrainType } from './foundry-map';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -59,8 +59,8 @@ export function calcDefPower(
 
 // ── Troop arithmetic ──────────────────────────────────────────────────────────
 
-/** Apply a fractional loss (floor, never below 0). */
-export function applyLossFraction(troops: TroopCount, fraction: number): TroopCount {
+/** Calculate troop losses as a fraction of the force (floor, never below 0). Returns the NUMBER of troops lost. */
+export function calcTroopLosses(troops: TroopCount, fraction: number): TroopCount {
   return {
     smelters:    Math.min(troops.smelters,    Math.floor(troops.smelters    * fraction)),
     ash_archers: Math.min(troops.ash_archers, Math.floor(troops.ash_archers * fraction)),
@@ -91,7 +91,7 @@ export function totalTroops(t: TroopCount): number {
 // ── ID generation ─────────────────────────────────────────────────────────────
 
 export function makeAttackId(): string {
-  return `${Date.now()}-${Math.floor(Math.random() * 0xffffff).toString(16)}`;
+  return crypto.randomUUID();
 }
 
 // ── Persistence ───────────────────────────────────────────────────────────────

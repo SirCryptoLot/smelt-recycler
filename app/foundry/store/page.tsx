@@ -8,6 +8,14 @@ import Link from 'next/link';
 import type { StoreResponse } from '@/app/api/foundry/store/route';
 import type { ItemId } from '@/lib/foundry-items';
 
+const BG     = '#0d1409';
+const CARD   = '#111a09';
+const BORDER = '#1e2d10';
+const GOLD   = '#d4a438';
+const DIM    = '#4a6a2a';
+const TEXT   = '#d8c89a';
+const MUTED  = '#3a5020';
+
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
 function fmtExpiry(iso: string): string {
@@ -96,126 +104,174 @@ export default function StorePage() {
     return 0;
   }
 
+  const forgeHref = storeData?.forgeId ? `/foundry/forge/${storeData.forgeId}` : '/foundry';
+
+  const NAV_LINKS = [
+    { icon: '🗺️', label: 'Map',      href: '/foundry' },
+    { icon: '🏗️', label: 'Forge',    href: forgeHref },
+    { icon: '⚗️', label: 'Exchange', href: '/foundry/exchange' },
+    { icon: '📜', label: 'Reports',  href: '/foundry/reports' },
+    { icon: '🛒', label: 'Store',    href: '/foundry/store', active: true },
+  ];
+
   return (
-    <div className="max-w-2xl mx-auto w-full px-4 sm:px-6 pt-6 pb-16">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-extrabold text-gray-900">⚗️ Forge Store</h1>
-          <p className="text-gray-400 text-sm mt-0.5">Spend Ingots. Burn permanently. Gain power.</p>
+    <div style={{ minHeight: '100vh', background: BG, color: TEXT, fontFamily: 'inherit' }}>
+      {/* Dark header */}
+      <div style={{ background: 'rgba(0,0,0,0.85)', borderBottom: `1px solid ${BORDER}`, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
+        <span style={{ fontSize: 20 }}>🛒</span>
+        <span style={{ fontSize: 15, fontWeight: 800, color: GOLD }}>Forge Store</span>
+        <div style={{ marginLeft: 'auto' }}>
+          <div style={{ background: '#1e2d10', border: `1px solid ${BORDER}`, borderRadius: 9999, padding: '3px 10px', fontSize: 12, color: GOLD }}>
+            {ingotBalance !== null ? `${ingotBalance.toLocaleString()} Ingots` : '…'}
+          </div>
         </div>
-        <Link href="/foundry" className="text-xs text-gray-400 hover:underline">← Back to map</Link>
       </div>
 
-      {/* Wallet / balance bar */}
-      {!connected ? (
-        <div className="rounded-2xl border border-stone-200 bg-stone-50 px-5 py-6 text-center space-y-3 mb-6">
-          <p className="text-gray-500 text-sm">Connect your wallet to purchase items</p>
-          <WalletMultiButton className="!bg-green-600 !text-white !font-bold !rounded-xl !px-4 !py-2 !h-auto !text-sm" />
-        </div>
-      ) : (
-        <div className="flex items-center justify-between rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 mb-6">
-          {storeData?.forgeId ? (
-            <>
-              <span className="text-sm text-amber-800">
-                ⚒ <Link href={`/foundry/forge/${storeData.forgeId}`} className="font-bold hover:underline">
-                  Forge #{storeData.forgeId}
-                </Link>
-              </span>
-              <span className="text-sm font-bold text-amber-700">
-                {ingotBalance !== null ? `${ingotBalance.toLocaleString()} Ingots` : '…'}
-              </span>
-            </>
-          ) : (
-            <span className="text-sm text-amber-700">No forge — <Link href="/foundry" className="underline">claim one</Link> to buy items</span>
-          )}
-        </div>
-      )}
+      {/* Nav tab bar */}
+      <div style={{ background: '#080c05', borderBottom: `1px solid ${BORDER}`, display: 'flex' }}>
+        {NAV_LINKS.map(n => (
+          <Link key={n.label} href={n.href} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, padding: '7px 4px', textDecoration: 'none', borderBottom: n.active ? `2px solid ${GOLD}` : '2px solid transparent' }}>
+            <span style={{ fontSize: 17 }}>{n.icon}</span>
+            <span style={{ fontSize: 9, fontWeight: 700, color: n.active ? GOLD : MUTED, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{n.label}</span>
+          </Link>
+        ))}
+      </div>
 
-      {msg && (
-        <div className={`rounded-xl px-4 py-2 text-sm mb-4 ${msg.startsWith('✓') ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-600 border border-red-100'}`}>
-          {msg}
-        </div>
-      )}
+      {/* Content */}
+      <div style={{ maxWidth: 480, margin: '0 auto', padding: '16px' }}>
 
-      {/* Item grid */}
-      {loading ? (
-        <div className="space-y-3">
-          {[1,2,3,4,5,6].map(i => <div key={i} className="h-24 rounded-2xl bg-gray-100 animate-pulse" />)}
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {storeData?.items.map(item => {
-            const isWH      = item.id === 'war_horn';
-            const isNP      = item.id === 'nameplate';
-            const isBN      = item.id === 'banner';
-            const hornOn    = isWH && owned && isHornActive(owned.warHornExpiresAt);
-            const atCap     = item.cap !== null && ownedCount(item.id) >= item.cap;
-            const noForge   = !storeData.forgeId;
-            const isBuying  = buying === item.id;
-            const needsInput = isNP || isBN;
+        {/* Not connected */}
+        {!connected && (
+          <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 14, padding: '32px 20px', textAlign: 'center', marginBottom: 16 }}>
+            <p style={{ color: DIM, fontSize: 14, marginBottom: 16 }}>Connect your wallet to purchase items</p>
+            <WalletMultiButton className="!bg-green-600 !text-white !font-bold !rounded-xl !px-4 !py-2 !h-auto !text-sm" />
+          </div>
+        )}
 
-            return (
-              <div key={item.id} className="rounded-2xl border border-stone-100 bg-white p-4 flex gap-4 items-start">
-                <span className="text-2xl flex-shrink-0">{item.icon}</span>
+        {/* Connected but no forge */}
+        {connected && !loading && storeData && !storeData.forgeId && (
+          <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 14, padding: '28px 20px', textAlign: 'center', marginBottom: 16 }}>
+            <p style={{ color: DIM, fontSize: 14 }}>
+              No forge —{' '}
+              <Link href="/foundry" style={{ color: GOLD, textDecoration: 'underline' }}>claim one</Link>
+              {' '}first
+            </p>
+          </div>
+        )}
 
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <span className="font-bold text-gray-900 text-sm">{item.label}</span>
-                    {item.cap !== null && (
-                      <span className="text-[10px] text-gray-400">{ownedCount(item.id)}/{item.cap}</span>
-                    )}
-                    {isWH && hornOn && owned?.warHornExpiresAt && (
-                      <span className="text-[10px] bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-semibold">
-                        Active · {fmtExpiry(owned.warHornExpiresAt)}
-                      </span>
-                    )}
-                    {item.id === 'iron_shield' && owned && storeData?.forgeId && (
-                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${
-                        ownedCount('iron_shield') > 0 ? 'bg-blue-50 text-blue-700' : ''
-                      }`}>
-                        {ownedCount('iron_shield') > 0 ? `${ownedCount('iron_shield')} bought` : ''}
-                      </span>
+        {/* Message banner */}
+        {msg && (
+          <div style={{
+            background: msg.startsWith('✓') ? '#0e1e0e' : '#1a0e0e',
+            border: `1px solid ${msg.startsWith('✓') ? '#2a5a2a' : '#5a2a2a'}`,
+            borderRadius: 10, padding: '10px 14px', fontSize: 13,
+            color: msg.startsWith('✓') ? '#70c070' : '#e06060',
+            marginBottom: 12,
+          }}>
+            {msg}
+          </div>
+        )}
+
+        {/* Loading skeletons */}
+        {loading && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="animate-pulse" style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 12, height: 64, opacity: 0.5 }} />
+            ))}
+          </div>
+        )}
+
+        {/* Items list */}
+        {!loading && storeData?.items && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {storeData.items.map(item => {
+              const isWH      = item.id === 'war_horn';
+              const isNP      = item.id === 'nameplate';
+              const isBN      = item.id === 'banner';
+              const hornOn    = isWH && owned && isHornActive(owned.warHornExpiresAt);
+              const atCap     = item.cap !== null && ownedCount(item.id) >= item.cap;
+              const noForge   = !storeData.forgeId;
+              const isBuying  = buying === item.id;
+              const needsInput = isNP || isBN;
+              const btnDisabled = !connected || noForge || atCap || isBuying;
+
+              return (
+                <div
+                  key={item.id}
+                  style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 12, padding: '12px 14px', display: 'flex', alignItems: 'flex-start', gap: 12 }}
+                >
+                  {/* Icon */}
+                  <span style={{ fontSize: 22, flexShrink: 0 }}>{item.icon}</span>
+
+                  {/* Info */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 2 }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: TEXT }}>{item.label}</span>
+                      {item.cap !== null && (
+                        <span style={{ fontSize: 10, color: DIM }}>{ownedCount(item.id)}/{item.cap}</span>
+                      )}
+                      {isWH && hornOn && owned?.warHornExpiresAt && (
+                        <span style={{ background: '#3d2808', color: '#e8a020', borderRadius: 20, padding: '2px 8px', fontSize: 10, fontWeight: 700 }}>
+                          Active · {fmtExpiry(owned.warHornExpiresAt)}
+                        </span>
+                      )}
+                      {item.id === 'iron_shield' && owned && storeData?.forgeId && ownedCount('iron_shield') > 0 && (
+                        <span style={{ background: '#0a1a2a', color: '#60a0d0', borderRadius: 20, padding: '2px 8px', fontSize: 10, fontWeight: 700 }}>
+                          {ownedCount('iron_shield')} bought
+                        </span>
+                      )}
+                    </div>
+                    <p style={{ fontSize: 11, color: MUTED, marginTop: 2, marginBottom: needsInput && buying === item.id ? 6 : 0 }}>{item.description}</p>
+
+                    {/* Value input for nameplate/banner */}
+                    {needsInput && buying === item.id && (
+                      <input
+                        type="text"
+                        value={valueInput}
+                        onChange={e => setValueInput(e.target.value)}
+                        placeholder={isNP ? 'Forge name (max 20 chars)' : '#rrggbb'}
+                        maxLength={isNP ? 20 : 7}
+                        autoFocus
+                        style={{
+                          background: '#080c05', border: `1px solid ${BORDER}`, borderRadius: 8,
+                          padding: '7px 10px', fontSize: 13, color: TEXT, outline: 'none',
+                          width: '100%', boxSizing: 'border-box',
+                        }}
+                      />
                     )}
                   </div>
-                  <p className="text-xs text-gray-500 mb-2">{item.description}</p>
 
-                  {/* Value inputs for nameplate/banner */}
-                  {needsInput && buying === item.id && (
-                    <input
-                      type="text"
-                      value={valueInput}
-                      onChange={e => setValueInput(e.target.value)}
-                      placeholder={isNP ? 'Forge name (max 20 chars)' : '#rrggbb'}
-                      maxLength={isNP ? 20 : 7}
-                      className="w-full rounded-lg border border-stone-200 px-3 py-1.5 text-sm mb-2"
-                      autoFocus
-                    />
-                  )}
+                  {/* Buy button */}
+                  <button
+                    onClick={() => {
+                      if (needsInput && buying !== item.id) {
+                        setBuying(item.id);
+                        return;
+                      }
+                      handleBuy(item.id);
+                    }}
+                    disabled={btnDisabled}
+                    style={{
+                      flexShrink: 0, borderRadius: 10, padding: '6px 12px', fontSize: 11, fontWeight: 700,
+                      cursor: btnDisabled ? 'not-allowed' : 'pointer',
+                      background: atCap || !connected || noForge ? '#0e1408' : '#2d4a10',
+                      border: `1px solid ${atCap || !connected || noForge ? '#1a2810' : '#4a7a20'}`,
+                      color: atCap || !connected || noForge ? '#2a3d18' : '#90d050',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {isBuying && !needsInput
+                      ? '…'
+                      : atCap
+                      ? 'Maxed'
+                      : `${item.cost.toLocaleString()} Ingots`}
+                  </button>
                 </div>
-
-                <button
-                  onClick={() => {
-                    if (needsInput && buying !== item.id) {
-                      setBuying(item.id); // show input first
-                      return;
-                    }
-                    handleBuy(item.id);
-                  }}
-                  disabled={!connected || noForge || atCap || isBuying}
-                  className="flex-shrink-0 rounded-xl bg-amber-500 hover:bg-amber-600 disabled:opacity-40 text-white font-bold px-3 py-2 text-xs transition-colors whitespace-nowrap"
-                >
-                  {isBuying && !needsInput
-                    ? '…'
-                    : atCap
-                    ? 'Maxed'
-                    : `${item.cost.toLocaleString()} Ingots`}
-                </button>
-              </div>
-            );
-          })}
-        </div>
-      )}
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -18,9 +18,25 @@ const INGOTS_PER_SMELT = 1000;
 const BUY_TAX_PCT    = 0.05;
 const SELL_TAX_PCT   = 0.10;
 
+const BG     = '#0d1409';
+const CARD   = '#111a09';
+const BORDER = '#1e2d10';
+const GOLD   = '#d4a438';
+const DIM    = '#4a6a2a';
+const TEXT   = '#d8c89a';
+const MUTED  = '#3a5020';
+
 function fmtNum(n: number) {
   return n.toLocaleString('en-US', { maximumFractionDigits: 4 });
 }
+
+const NAV_LINKS = [
+  { icon: '🗺️', label: 'Map',      href: '/foundry' },
+  { icon: '🏗️', label: 'Forge',    href: '/foundry' },
+  { icon: '⚗️', label: 'Exchange', href: '/foundry/exchange', active: true },
+  { icon: '📜', label: 'Reports',  href: '/foundry/reports' },
+  { icon: '🛒', label: 'Store',    href: '/foundry/store' },
+];
 
 export default function ExchangePage() {
   const { publicKey, sendTransaction } = useWallet();
@@ -32,6 +48,7 @@ export default function ExchangePage() {
   const [cashoutAmount, setCashoutAmount] = useState('');
   const [busy, setBusy]                   = useState(false);
   const [msg, setMsg]                     = useState('');
+  const [dir, setDir]                     = useState<'buy' | 'cashout'>('buy');
 
   const load = useCallback(async () => {
     if (!publicKey) return;
@@ -144,104 +161,164 @@ export default function ExchangePage() {
     ? (parseInt(cashoutAmount, 10) / INGOTS_PER_SMELT) * (1 - SELL_TAX_PCT)
     : 0;
 
+  const isBuyDisabled  = busy || !publicKey || !(parseFloat(buyAmount) > 0);
+  const isCashDisabled = busy || !publicKey || !(parseInt(cashoutAmount, 10) > 0);
+
   return (
-    <div className="min-h-screen bg-[#0d0a04] text-amber-100 p-4 max-w-md mx-auto">
-      <Link href="/foundry" className="text-amber-400 underline text-sm">← World Map</Link>
+    <div style={{ minHeight: '100vh', background: BG, color: TEXT, fontFamily: 'inherit' }}>
+      {/* Dark header */}
+      <div style={{ background: 'rgba(0,0,0,0.85)', borderBottom: `1px solid ${BORDER}`, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
+        <span style={{ fontSize: 20 }}>⚗️</span>
+        <span style={{ fontSize: 15, fontWeight: 800, color: GOLD }}>Ingot Exchange</span>
+        <div style={{ marginLeft: 'auto' }}>
+          <div style={{ background: '#1e2d10', border: `1px solid ${BORDER}`, borderRadius: 9999, padding: '3px 10px', fontSize: 12, color: GOLD }}>
+            {ingotBalance !== null ? `${ingotBalance.toLocaleString()} Ingots` : '…'}
+          </div>
+        </div>
+      </div>
 
-      <h1 className="text-xl font-bold text-amber-300 mt-4 mb-1">⚗️ Ingot Exchange</h1>
-      <p className="text-xs text-[#6b4f2a] mb-6">Convert SMELT tokens ↔ Ingots (in-game currency)</p>
+      {/* Nav tab bar */}
+      <div style={{ background: '#080c05', borderBottom: `1px solid ${BORDER}`, display: 'flex' }}>
+        {NAV_LINKS.map(n => (
+          <Link key={n.label} href={n.href} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, padding: '7px 4px', textDecoration: 'none', borderBottom: n.active ? `2px solid ${GOLD}` : '2px solid transparent' }}>
+            <span style={{ fontSize: 17 }}>{n.icon}</span>
+            <span style={{ fontSize: 9, fontWeight: 700, color: n.active ? GOLD : MUTED, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{n.label}</span>
+          </Link>
+        ))}
+      </div>
 
-      {/* Rate info */}
-      <div className="rounded-xl border border-[#3d2b0f] bg-[#1a1208] p-4 mb-4 text-sm">
-        <div className="flex justify-between mb-1">
-          <span className="text-[#92724a]">Rate</span>
+      {/* Content */}
+      <div style={{ maxWidth: 480, margin: '0 auto', padding: '16px' }}>
+
+        {/* Balance chips row */}
+        <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
+          <div style={{ flex: 1, background: CARD, border: `1px solid ${BORDER}`, borderRadius: 12, padding: '10px 14px', textAlign: 'center' }}>
+            <div style={{ fontSize: 10, color: DIM, marginBottom: 3, textTransform: 'uppercase', letterSpacing: '0.05em' }}>SMELT</div>
+            <div style={{ fontSize: 18, fontWeight: 800, color: GOLD }}>
+              {smeltBalance !== null ? fmtNum(smeltBalance) : '…'}
+            </div>
+          </div>
+          <div style={{ flex: 1, background: CARD, border: `1px solid ${BORDER}`, borderRadius: 12, padding: '10px 14px', textAlign: 'center' }}>
+            <div style={{ fontSize: 10, color: DIM, marginBottom: 3, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Ingots</div>
+            <div style={{ fontSize: 18, fontWeight: 800, color: GOLD }}>
+              {ingotBalance !== null ? ingotBalance.toLocaleString() : '…'}
+            </div>
+          </div>
+        </div>
+
+        {/* Swap card */}
+        <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 16, overflow: 'hidden', marginBottom: 14 }}>
+
+          {/* Direction tabs */}
+          <div style={{ display: 'flex', border: `1px solid ${BORDER}`, borderRadius: 12, margin: '14px 14px 0 14px', overflow: 'hidden' }}>
+            <button
+              onClick={() => setDir('buy')}
+              style={{
+                flex: 1, padding: '10px 0', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                background: dir === 'buy' ? CARD : 'transparent',
+                border: 'none',
+                borderRight: `1px solid ${BORDER}`,
+                color: dir === 'buy' ? GOLD : MUTED,
+                borderRadius: 0,
+              }}
+            >
+              SMELT → Ingots
+            </button>
+            <button
+              onClick={() => setDir('cashout')}
+              style={{
+                flex: 1, padding: '10px 0', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                background: dir === 'cashout' ? CARD : 'transparent',
+                border: 'none',
+                color: dir === 'cashout' ? GOLD : MUTED,
+                borderRadius: 0,
+              }}
+            >
+              Ingots → SMELT
+            </button>
+          </div>
+
+          <div style={{ padding: '14px' }}>
+            {dir === 'buy' ? (
+              <>
+                <input
+                  type="number" min="0" step="0.01"
+                  value={buyAmount}
+                  onChange={e => setBuyAmount(e.target.value)}
+                  placeholder="SMELT amount"
+                  style={{ background: '#080c05', border: `1px solid ${BORDER}`, borderRadius: 10, padding: '14px 16px', fontSize: 20, color: TEXT, width: '100%', outline: 'none', boxSizing: 'border-box' }}
+                />
+                <div style={{ fontSize: 13, color: DIM, marginTop: 8, minHeight: 20 }}>
+                  {buyIngots > 0 && (
+                    <>→ You receive <span style={{ color: GOLD, fontWeight: 700 }}>{buyIngots.toLocaleString()} Ingots</span> <span style={{ color: MUTED }}>(5% tax)</span></>
+                  )}
+                </div>
+                <button
+                  onClick={handleBuy}
+                  disabled={isBuyDisabled}
+                  style={{
+                    marginTop: 10, width: '100%', padding: '13px 0', borderRadius: 12, fontSize: 14, fontWeight: 800, cursor: isBuyDisabled ? 'not-allowed' : 'pointer',
+                    background: isBuyDisabled ? '#0e1408' : '#2d4a10',
+                    border: `1px solid ${isBuyDisabled ? '#1a2810' : '#4a7a20'}`,
+                    color: isBuyDisabled ? '#2a3d18' : '#90d050',
+                  }}
+                >
+                  {busy ? 'Processing…' : 'Buy Ingots'}
+                </button>
+                {!publicKey && <p style={{ fontSize: 11, color: MUTED, textAlign: 'center', marginTop: 8 }}>Connect wallet to buy</p>}
+              </>
+            ) : (
+              <>
+                <input
+                  type="number" min="0" step="1"
+                  value={cashoutAmount}
+                  onChange={e => setCashoutAmount(e.target.value)}
+                  placeholder="Ingots to redeem"
+                  style={{ background: '#080c05', border: `1px solid ${BORDER}`, borderRadius: 10, padding: '14px 16px', fontSize: 20, color: TEXT, width: '100%', outline: 'none', boxSizing: 'border-box' }}
+                />
+                <div style={{ fontSize: 13, color: DIM, marginTop: 8, minHeight: 20 }}>
+                  {cashoutSmelt > 0 && (
+                    <>→ You receive <span style={{ color: GOLD, fontWeight: 700 }}>{fmtNum(cashoutSmelt)} SMELT</span> <span style={{ color: MUTED }}>(10% tax)</span></>
+                  )}
+                </div>
+                <button
+                  onClick={handleCashout}
+                  disabled={isCashDisabled}
+                  style={{
+                    marginTop: 10, width: '100%', padding: '13px 0', borderRadius: 12, fontSize: 14, fontWeight: 800, cursor: isCashDisabled ? 'not-allowed' : 'pointer',
+                    background: isCashDisabled ? '#0e1408' : '#1a3a10',
+                    border: `1px solid ${isCashDisabled ? '#1a2810' : '#2a6010'}`,
+                    color: isCashDisabled ? '#2a3d18' : '#70c030',
+                  }}
+                >
+                  {busy ? 'Processing…' : 'Cash Out SMELT'}
+                </button>
+                {!publicKey && <p style={{ fontSize: 11, color: MUTED, textAlign: 'center', marginTop: 8 }}>Connect wallet to cash out</p>}
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Rate info */}
+        <div style={{ display: 'flex', gap: 6, justifyContent: 'center', flexWrap: 'wrap', fontSize: 11, color: DIM, marginBottom: 16 }}>
           <span>1 SMELT = {INGOTS_PER_SMELT.toLocaleString()} Ingots</span>
+          <span style={{ color: MUTED }}>·</span>
+          <span>{BUY_TAX_PCT * 100}% buy tax</span>
+          <span style={{ color: MUTED }}>·</span>
+          <span>{SELL_TAX_PCT * 100}% cashout tax</span>
         </div>
-        <div className="flex justify-between mb-1">
-          <span className="text-[#92724a]">Buy-in tax</span>
-          <span>{BUY_TAX_PCT * 100}%</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-[#92724a]">Cashout tax</span>
-          <span>{SELL_TAX_PCT * 100}%</span>
-        </div>
-      </div>
 
-      {/* Balances */}
-      <div className="flex gap-3 mb-6">
-        <div className="flex-1 rounded-xl border border-[#3d2b0f] bg-[#1a1208] p-3 text-center">
-          <div className="text-xs text-[#6b4f2a] mb-1">Your Ingots</div>
-          <div className="text-lg font-bold text-amber-300">
-            {ingotBalance !== null ? ingotBalance.toLocaleString() : '…'}
+        {/* Status banner */}
+        {msg && (
+          <div style={{
+            background: msg.startsWith('✅') ? '#0e1e0e' : '#1a0e0e',
+            border: `1px solid ${msg.startsWith('✅') ? '#2a5a2a' : '#5a2a2a'}`,
+            borderRadius: 10, padding: '10px 14px', fontSize: 13, color: msg.startsWith('✅') ? '#70c070' : '#e06060', textAlign: 'center',
+          }}>
+            {msg}
           </div>
-        </div>
-        <div className="flex-1 rounded-xl border border-[#3d2b0f] bg-[#1a1208] p-3 text-center">
-          <div className="text-xs text-[#6b4f2a] mb-1">Your SMELT</div>
-          <div className="text-lg font-bold text-amber-300">
-            {smeltBalance !== null ? fmtNum(smeltBalance) : '…'}
-          </div>
-        </div>
-      </div>
-
-      {/* Buy section */}
-      <div className="rounded-xl border border-amber-700 bg-[#1a1208] p-4 mb-4">
-        <h2 className="font-bold text-amber-300 mb-3">🔁 Buy Ingots with SMELT</h2>
-        <input
-          type="number" min="0" step="0.01"
-          value={buyAmount}
-          onChange={e => setBuyAmount(e.target.value)}
-          placeholder="SMELT amount"
-          className="w-full bg-[#0f0c06] border border-[#3d2b0f] rounded px-3 py-2 text-sm text-amber-100 mb-2"
-        />
-        {buyIngots > 0 && (
-          <p className="text-xs text-[#92724a] mb-3">
-            → You receive: <span className="text-amber-300 font-bold">{buyIngots.toLocaleString()} Ingots</span>
-            <span className="ml-1">(5% tax)</span>
-          </p>
-        )}
-        <button
-          onClick={handleBuy}
-          disabled={busy || !publicKey || parseFloat(buyAmount) <= 0}
-          className="w-full py-2 rounded-lg bg-amber-700 hover:bg-amber-600 text-white font-bold text-sm disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-        >
-          {busy ? 'Processing…' : 'Buy Ingots'}
-        </button>
-        {!publicKey && (
-          <p className="text-xs text-[#6b4f2a] mt-2 text-center">Connect wallet to buy</p>
         )}
       </div>
-
-      {/* Cashout section */}
-      <div className="rounded-xl border border-[#3d2b0f] bg-[#1a1208] p-4 mb-4">
-        <h2 className="font-bold text-amber-300 mb-3">💰 Cash Out Ingots for SMELT</h2>
-        <input
-          type="number" min="0" step="1"
-          value={cashoutAmount}
-          onChange={e => setCashoutAmount(e.target.value)}
-          placeholder="Ingots to redeem"
-          className="w-full bg-[#0f0c06] border border-[#3d2b0f] rounded px-3 py-2 text-sm text-amber-100 mb-2"
-        />
-        {cashoutSmelt > 0 && (
-          <p className="text-xs text-[#92724a] mb-3">
-            → You receive: <span className="text-amber-300 font-bold">{fmtNum(cashoutSmelt)} SMELT</span>
-            <span className="ml-1">(10% tax)</span>
-          </p>
-        )}
-        <button
-          onClick={handleCashout}
-          disabled={busy || !publicKey || parseInt(cashoutAmount, 10) <= 0}
-          className="w-full py-2 rounded-lg bg-[#2d1805] hover:bg-[#3d2508] border border-amber-700 text-amber-400 font-bold text-sm disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-        >
-          {busy ? 'Processing…' : 'Cash Out SMELT'}
-        </button>
-        {!publicKey && (
-          <p className="text-xs text-[#6b4f2a] mt-2 text-center">Connect wallet to cash out</p>
-        )}
-      </div>
-
-      {msg && (
-        <p className="text-sm text-center mt-2 px-2">{msg}</p>
-      )}
     </div>
   );
 }

@@ -55,7 +55,8 @@ function loadStore(): Store {
   try {
     if (!fs.existsSync(FILE)) return {};
     return JSON.parse(fs.readFileSync(FILE, 'utf-8')) as Store;
-  } catch {
+  } catch (err) {
+    console.error('[foundry-items] Failed to load store:', err);
     return {};
   }
 }

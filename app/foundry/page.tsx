@@ -159,7 +159,6 @@ export default function FoundryWorldMap() {
 
   // ── Pointer-based drag (works for mouse AND touch) ────────────────────────
   const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    if ((e.target as HTMLElement).closest('[data-forge]')) return;
     e.currentTarget.setPointerCapture(e.pointerId);
     dragging.current = true;
     lastPos.current = { x: e.clientX, y: e.clientY };
@@ -339,10 +338,11 @@ export default function FoundryWorldMap() {
 
         {/* Forge popup */}
         {selected && (
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none', zIndex: 20 }}>
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: 16, paddingLeft: 16, paddingRight: 16, pointerEvents: 'none', zIndex: 20 }}>
             <div
-              style={{ background: '#0f1a0f', border: '1px solid #3d6231', borderRadius: 16, padding: 20, maxWidth: 280, width: '100%', boxShadow: '0 20px 60px rgba(0,0,0,0.8)', pointerEvents: 'auto' }}
+              style={{ background: '#0f1a0f', border: '1px solid #3d6231', borderRadius: 16, padding: 20, maxWidth: 320, width: '100%', boxShadow: '0 20px 60px rgba(0,0,0,0.8)', pointerEvents: 'auto' }}
               onClick={e => e.stopPropagation()}
+              onPointerDown={e => e.stopPropagation()}
             >
               <div style={{ color: '#fbbf24', fontWeight: 800, fontSize: 18, marginBottom: 2 }}>⚒ Forge #{selected.plotId}</div>
               <div style={{ color: '#4a6a4a', fontSize: 10, fontFamily: 'monospace', marginBottom: 12, wordBreak: 'break-all' }}>{selected.owner}</div>

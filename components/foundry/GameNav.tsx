@@ -27,9 +27,9 @@ function buildItems(forgeId: number | null | undefined): Item[] {
     },
     {
       icon: '⚒️',
-      label: 'Forge',
-      href: forgeId ? `/foundry/forge/${forgeId}` : '/foundry',
-      match: p => p.startsWith('/foundry/forge'),
+      label: forgeId ? 'Forge' : 'Claim',
+      href: forgeId ? `/foundry/forge/${forgeId}` : '/foundry/claim',
+      match: p => p.startsWith('/foundry/forge') || p.startsWith('/foundry/claim'),
     },
     {
       icon: '⚗️',
@@ -90,8 +90,8 @@ export function GameNav({ forgeId }: GameNavProps) {
               alignItems: 'center',
               justifyContent: 'center',
               gap: 6,
-              minWidth: 44,
-              height: 40,
+              minWidth: 48,
+              height: 44,
               padding: active ? '0 14px 0 12px' : '0 12px',
               borderRadius: 999,
               textDecoration: 'none',

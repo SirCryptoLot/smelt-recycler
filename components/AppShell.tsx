@@ -71,9 +71,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     ? (pendingSol / totalSupply).toFixed(6)
     : '0.000000';
 
-  if (pathname.startsWith('/admin') || pathname.startsWith('/foundry')) {
+  if (pathname.startsWith('/admin')) {
     return <>{children}</>;
   }
+
+  // Game pages keep the main app header (so users can navigate out) but skip
+  // the stats bar — the game has its own ingot/forge HUD and we don't want
+  // to eat too much vertical space on mobile.
+  const showStatsBar = !pathname.startsWith('/foundry');
 
   const allNavItems = [
     ...NAV_ITEMS,
@@ -222,6 +227,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </header>
 
       {/* STATS BAR */}
+      {showStatsBar && (
       <div className="bg-white/70 backdrop-blur-sm border-b border-green-100/60">
         {/* Mobile: 2×2 grid */}
         <div className="grid grid-cols-2 sm:hidden w-full divide-x divide-y divide-green-100/60">
@@ -260,9 +266,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           ))}
         </div>
       </div>
+      )}
 
       {/* PAGE CONTENT */}
-      <main className="flex-1 flex flex-col min-w-0">
+      <main className="flex-1 flex flex-col min-w-0 min-h-0">
         {children}
       </main>
     </div>

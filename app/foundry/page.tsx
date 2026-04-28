@@ -204,7 +204,7 @@ export default function FoundryWorldMap() {
   }, [mapData]);
 
   if (loading) return (
-    <div className="flex items-center justify-center h-screen bg-stone-900 text-amber-400 font-bold">
+    <div className="flex items-center justify-center flex-1 bg-stone-900 text-amber-400 font-bold">
       Loading world map…
     </div>
   );
@@ -212,7 +212,7 @@ export default function FoundryWorldMap() {
   const claimedCount = mapData?.forges.filter(f => f.tier !== 'empty').length ?? 0;
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden" style={{ background: '#0f1a0f' }}>
+    <div className="flex flex-col flex-1 min-h-0 overflow-hidden" style={{ background: '#0f1a0f' }}>
 
       {/* ── HUD ── */}
       <div className="flex-shrink-0 flex items-center gap-2 px-3 py-2"

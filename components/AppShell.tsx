@@ -71,12 +71,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     ? (pendingSol / totalSupply).toFixed(6)
     : '0.000000';
 
-  if (pathname.startsWith('/admin')) {
-    return (
-      <div className="h-screen bg-[#060f0d] text-white overflow-hidden">
-        {children}
-      </div>
-    );
+  if (pathname.startsWith('/admin') || pathname.startsWith('/foundry')) {
+    return <>{children}</>;
   }
 
   const allNavItems = [

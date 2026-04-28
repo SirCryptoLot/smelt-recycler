@@ -8,7 +8,7 @@ import {
   TOKEN_PROGRAM_ID,
 } from '@solana/spl-token';
 
-import Link from 'next/link';
+import { GameNav } from '@/components/foundry/GameNav';
 
 const SMELT_MINT      = new PublicKey('SME88JJYc8NrRvLVwWUgqk3kLuhuUwqu2JKDFeHdXb8');
 const VAULT_SMELT_ATA = new PublicKey('9TTxxr5tYAdq6HDWMUNRz1xgppBNmrAVzKyarEfhPdok');
@@ -29,14 +29,6 @@ const MUTED  = '#3a5020';
 function fmtNum(n: number) {
   return n.toLocaleString('en-US', { maximumFractionDigits: 4 });
 }
-
-const NAV_LINKS = [
-  { icon: '🗺️', label: 'Map',      href: '/foundry' },
-  { icon: '🏗️', label: 'Forge',    href: '/foundry' },
-  { icon: '⚗️', label: 'Exchange', href: '/foundry/exchange', active: true },
-  { icon: '📜', label: 'Reports',  href: '/foundry/reports' },
-  { icon: '🛒', label: 'Store',    href: '/foundry/store' },
-];
 
 export default function ExchangePage() {
   const { publicKey, sendTransaction } = useWallet();
@@ -177,18 +169,8 @@ export default function ExchangePage() {
         </div>
       </div>
 
-      {/* Nav tab bar */}
-      <div style={{ background: '#080c05', borderBottom: `1px solid ${BORDER}`, display: 'flex' }}>
-        {NAV_LINKS.map(n => (
-          <Link key={n.label} href={n.href} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, padding: '7px 4px', textDecoration: 'none', borderBottom: n.active ? `2px solid ${GOLD}` : '2px solid transparent' }}>
-            <span style={{ fontSize: 17 }}>{n.icon}</span>
-            <span style={{ fontSize: 9, fontWeight: 700, color: n.active ? GOLD : MUTED, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{n.label}</span>
-          </Link>
-        ))}
-      </div>
-
       {/* Content */}
-      <div style={{ maxWidth: 480, margin: '0 auto', padding: '16px' }}>
+      <div style={{ maxWidth: 480, margin: '0 auto', padding: '16px 16px 96px' }}>
 
         {/* Balance chips row */}
         <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
@@ -319,6 +301,8 @@ export default function ExchangePage() {
           </div>
         )}
       </div>
+
+      <GameNav />
     </div>
   );
 }

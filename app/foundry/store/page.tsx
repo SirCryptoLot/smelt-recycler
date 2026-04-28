@@ -5,6 +5,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import Link from 'next/link';
+import { GameNav } from '@/components/foundry/GameNav';
 import type { StoreResponse } from '@/app/api/foundry/store/route';
 import type { ItemId } from '@/lib/foundry-items';
 
@@ -104,16 +105,6 @@ export default function StorePage() {
     return 0;
   }
 
-  const forgeHref = storeData?.forgeId ? `/foundry/forge/${storeData.forgeId}` : '/foundry';
-
-  const NAV_LINKS = [
-    { icon: '🗺️', label: 'Map',      href: '/foundry' },
-    { icon: '🏗️', label: 'Forge',    href: forgeHref },
-    { icon: '⚗️', label: 'Exchange', href: '/foundry/exchange' },
-    { icon: '📜', label: 'Reports',  href: '/foundry/reports' },
-    { icon: '🛒', label: 'Store',    href: '/foundry/store', active: true },
-  ];
-
   return (
     <div style={{ minHeight: '100vh', background: BG, color: TEXT, fontFamily: 'inherit' }}>
       {/* Dark header */}
@@ -127,18 +118,8 @@ export default function StorePage() {
         </div>
       </div>
 
-      {/* Nav tab bar */}
-      <div style={{ background: '#080c05', borderBottom: `1px solid ${BORDER}`, display: 'flex' }}>
-        {NAV_LINKS.map(n => (
-          <Link key={n.label} href={n.href} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, padding: '7px 4px', textDecoration: 'none', borderBottom: n.active ? `2px solid ${GOLD}` : '2px solid transparent' }}>
-            <span style={{ fontSize: 17 }}>{n.icon}</span>
-            <span style={{ fontSize: 9, fontWeight: 700, color: n.active ? GOLD : MUTED, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{n.label}</span>
-          </Link>
-        ))}
-      </div>
-
       {/* Content */}
-      <div style={{ maxWidth: 480, margin: '0 auto', padding: '16px' }}>
+      <div style={{ maxWidth: 480, margin: '0 auto', padding: '16px 16px 96px' }}>
 
         {/* Not connected */}
         {!connected && (
@@ -272,6 +253,8 @@ export default function StorePage() {
           </div>
         )}
       </div>
+
+      <GameNav forgeId={storeData?.forgeId ?? null} />
     </div>
   );
 }

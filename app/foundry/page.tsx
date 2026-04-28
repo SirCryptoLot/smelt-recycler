@@ -6,6 +6,7 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import Link from 'next/link';
 import type { MapResponse, MapForge } from '@/app/api/foundry/map/route';
 import type { TerrainType } from '@/lib/foundry-map';
+import { GameNav } from '@/components/foundry/GameNav';
 
 // ── Terrain config ────────────────────────────────────────────────────────────
 
@@ -264,12 +265,27 @@ export default function FoundryWorldMap() {
       {/* ── Map ── */}
       <div
         ref={wrapRef}
-        style={{ flex: 1, position: 'relative', overflow: 'hidden', background: '#c8dff0', touchAction: 'none', cursor: 'grab' }}
+        style={{
+          flex: 1, position: 'relative', overflow: 'hidden',
+          background:
+            'radial-gradient(ellipse 90% 70% at 50% 50%, #1e5280 0%, #0d2a4a 55%, #04101e 100%)',
+          touchAction: 'none', cursor: 'grab',
+        }}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
       >
+        {/* Faint repeating wave pattern over the deep ocean — adds texture beyond grid edges */}
+        <div
+          aria-hidden
+          style={{
+            position: 'absolute', inset: 0, pointerEvents: 'none',
+            backgroundImage:
+              'repeating-linear-gradient(135deg, transparent 0 14px, rgba(255,255,255,0.018) 14px 28px)',
+            mixBlendMode: 'overlay',
+          }}
+        />
         {/* Grid */}
         <div style={{
           position: 'absolute', top: '50%', left: '50%',
@@ -381,6 +397,8 @@ export default function FoundryWorldMap() {
           </div>
         )}
       </div>
+
+      <GameNav forgeId={myForge?.plotId ?? null} />
 
       <style>{`
         @keyframes forge-glow {

@@ -144,8 +144,10 @@ export async function getTrashAccounts(walletAddress: PublicKey): Promise<TrashA
         tokenProgram: a.tokenProgram,
       };
     })
-    // Include empty accounts (usdValue=0) and dust accounts (usdValue<$0.10)
-    .filter((a) => a.usdValue < 0.10);
+    // Empty accounts are always safe to recycle (no tokens to lose).
+    // With balance: require known price < $0.10 — un-priced tokens may be valuable
+    // but un-indexed by Jupiter, so we exclude them defensively.
+    .filter((a) => a.balance === 0 || (a.pricePerToken > 0 && a.usdValue < 0.10));
 }
 
 const VAULT = new PublicKey('DgkyF4YnwVYFqMSMo9WvDz2sVkFJSjsWueFYDrKgu87Z');

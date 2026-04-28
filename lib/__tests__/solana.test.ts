@@ -83,7 +83,7 @@ describe('getTrashAccounts', () => {
     expect(result[0].pricePerToken).toBe(0.0000002);
   });
 
-  it('treats unlisted mints (no Jupiter entry) as pricePerToken 0', async () => {
+  it('excludes balance > 0 mints absent from Jupiter (defensive — could be un-indexed and valuable)', async () => {
     mockGetParsed.mockResolvedValue({
       value: [makeAccount(ACCT_BONK, MINT_BONK, 100)],
     } as any);
@@ -93,8 +93,7 @@ describe('getTrashAccounts', () => {
     });
 
     const result = await solanaModule.getTrashAccounts(WALLET);
-    expect(result[0].pricePerToken).toBe(0);
-    expect(result[0].usdValue).toBe(0);
+    expect(result).toEqual([]);
   });
 
   it('splits 110 mints into 3 parallel Jupiter requests', async () => {
@@ -114,15 +113,14 @@ describe('getTrashAccounts', () => {
     expect(global.fetch).toHaveBeenCalledTimes(3); // ceil(110 / 50) = 3
   });
 
-  it('treats Jupiter non-ok responses as unlisted (pricePerToken 0)', async () => {
+  it('excludes balance > 0 when Jupiter returns non-ok (price unknown)', async () => {
     mockGetParsed.mockResolvedValue({
       value: [makeAccount(ACCT_BONK, MINT_BONK, 100, '100000000', 6)],
     } as any);
     (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 429 });
 
     const result = await solanaModule.getTrashAccounts(WALLET);
-    expect(result[0].pricePerToken).toBe(0);
-    expect(result[0].usdValue).toBe(0);
+    expect(result).toEqual([]);
   });
 
   it('excludes accounts with usdValue === $0.10 (strict less-than boundary)', async () => {

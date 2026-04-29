@@ -295,21 +295,48 @@ export default function ForgePage() {
   return (
     <div style={{ minHeight: '100vh', background: BG, color: TEXT, fontFamily: 'sans-serif', paddingBottom: 96 }}>
 
-      {/* ── Hero: white → dark ── */}
-      <div style={{ background: 'linear-gradient(to bottom,#fff 0%,#f0e0b0 22%,#c89828 48%,#5a3010 66%,#1a2810 82%,#0d1409 100%)', padding: '18px 20px 26px', textAlign: 'center' }}>
-        <div style={{ width: 56, height: 56, borderRadius: '50%', margin: '0 auto 10px', background: 'radial-gradient(circle at 35% 35%,#5a3a10,#1e1008)', border: '2px solid #c8a030', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, boxShadow: '0 0 18px rgba(200,160,48,0.4)' }}>⚒</div>
-        <div style={{ fontSize: 18, fontWeight: 800, color: '#f5d060' }}>Forge #{state.forgeId}</div>
-        <div style={{ fontSize: 10, color: 'rgba(210,170,60,0.5)', marginTop: 2 }}>{state.owner.slice(0,6)}…{state.owner.slice(-4)}</div>
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
-          {[{ v: fmt(state.ingotBalance), l: '💰 Ingots' }, { v: String(totalStationed), l: '⚔️ Troops' }].map(({ v, l }) => (
-            <div key={l} style={{ background: 'rgba(0,0,0,0.55)', border: '1px solid rgba(200,160,48,0.2)', borderRadius: 8, padding: '5px 12px', backdropFilter: 'blur(4px)' }}>
-              <div style={{ fontSize: 14, fontWeight: 800, color: '#f5d060', lineHeight: 1 }}>{v}</div>
-              <div style={{ fontSize: 9, color: 'rgba(200,170,80,0.45)', marginTop: 2 }}>{l}</div>
-            </div>
-          ))}
+      {/* Dark sub-header — matches exchange/reports/store style */}
+      <div style={{ background: 'rgba(0,0,0,0.85)', borderBottom: `1px solid ${BORDER}`, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
+        <span style={{ fontSize: 20 }}>⚒</span>
+        <span style={{ fontSize: 15, fontWeight: 800, color: GOLD }}>Forge #{state.forgeId}</span>
+        <div style={{ marginLeft: 'auto' }}>
+          <div style={{ background: '#1e2d10', border: `1px solid ${BORDER}`, borderRadius: 9999, padding: '3px 10px', fontSize: 12, color: GOLD }}>
+            {fmt(state.ingotBalance)} Ingots
+          </div>
         </div>
-        {msg && <div style={{ marginTop: 10, fontSize: 12, color: msg.startsWith('❌') ? '#e08060' : '#90d060', background: 'rgba(0,0,0,0.45)', borderRadius: 8, padding: '5px 14px', display: 'inline-block' }}>{msg}</div>}
       </div>
+
+      {/* Compact stat strip — troops total + owner shorthand */}
+      <div style={{ maxWidth: 480, margin: '0 auto', padding: '12px 16px 0', display: 'flex', gap: 8 }}>
+        <div style={{ flex: 1, background: CARD, border: `1px solid ${BORDER}`, borderRadius: 10, padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 16 }}>⚔️</span>
+          <div>
+            <div style={{ fontSize: 9, color: DIM, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Troops</div>
+            <div style={{ fontSize: 13, fontWeight: 800, color: TEXT, lineHeight: 1.1 }}>{totalStationed}</div>
+          </div>
+        </div>
+        <div style={{ flex: 1, background: CARD, border: `1px solid ${BORDER}`, borderRadius: 10, padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 16 }}>🪪</span>
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div style={{ fontSize: 9, color: DIM, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Owner</div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: TEXT, lineHeight: 1.1, fontFamily: 'monospace' }}>{state.owner.slice(0, 4)}…{state.owner.slice(-4)}</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Status message banner */}
+      {msg && (
+        <div style={{ maxWidth: 480, margin: '10px auto 0', padding: '0 16px' }}>
+          <div style={{
+            background: msg.startsWith('❌') ? '#1a0e0e' : '#0e1e0e',
+            border: `1px solid ${msg.startsWith('❌') ? '#5a2a2a' : '#2a5a2a'}`,
+            borderRadius: 10, padding: '8px 14px', fontSize: 12,
+            color: msg.startsWith('❌') ? '#e06060' : '#70c070',
+          }}>
+            {msg}
+          </div>
+        </div>
+      )}
 
       {/* ── In-page tab strip — only 3 tabs, centered, gold underline ── */}
       <div style={{ maxWidth: 480, margin: '0 auto', padding: '0 16px' }}>

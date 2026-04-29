@@ -159,38 +159,46 @@ export default function FoundryWorldMap() {
   }, [mapData]);
 
   // ── Pointer-based drag + tap detection ───────────────────────────────────
+  // We attach move/up to the window during a drag so the gesture survives the
+  // pointer leaving the map element (e.g. onto the dock, header, or off-screen
+  // on mobile). setPointerCapture can throw (iOS Safari, synthetic events),
+  // so we guard it but keep going.
   const startPos = useRef({ x: 0, y: 0 });
 
   const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    e.currentTarget.setPointerCapture(e.pointerId);
+    try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* iOS Safari can throw — fine, window listeners cover it */ }
     dragging.current = true;
     lastPos.current = { x: e.clientX, y: e.clientY };
     startPos.current = { x: e.clientX, y: e.clientY };
-  };
 
-  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!dragging.current) return;
-    setOffset(o => ({
-      x: o.x + e.clientX - lastPos.current.x,
-      y: o.y + e.clientY - lastPos.current.y,
-    }));
-    lastPos.current = { x: e.clientX, y: e.clientY };
-  };
-
-  const onPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
-    dragging.current = false;
-    const dx = e.clientX - startPos.current.x;
-    const dy = e.clientY - startPos.current.y;
-    if (Math.abs(dx) < 5 && Math.abs(dy) < 5) {
-      // tap — find forge under pointer
-      const el = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null;
-      const forgeEl = el?.closest('[data-forge-id]');
-      if (forgeEl) {
-        const plotId = Number(forgeEl.getAttribute('data-forge-id'));
-        const forge = mapData?.forges.find(f => f.plotId === plotId && f.tier !== 'empty');
-        if (forge) setSelected(forge);
+    const handleMove = (ev: PointerEvent) => {
+      if (!dragging.current) return;
+      setOffset(o => ({
+        x: o.x + ev.clientX - lastPos.current.x,
+        y: o.y + ev.clientY - lastPos.current.y,
+      }));
+      lastPos.current = { x: ev.clientX, y: ev.clientY };
+    };
+    const handleUp = (ev: PointerEvent) => {
+      dragging.current = false;
+      const dx = ev.clientX - startPos.current.x;
+      const dy = ev.clientY - startPos.current.y;
+      if (Math.abs(dx) < 5 && Math.abs(dy) < 5) {
+        const el = document.elementFromPoint(ev.clientX, ev.clientY) as HTMLElement | null;
+        const forgeEl = el?.closest('[data-forge-id]');
+        if (forgeEl) {
+          const plotId = Number(forgeEl.getAttribute('data-forge-id'));
+          const forge = mapData?.forges.find(f => f.plotId === plotId && f.tier !== 'empty');
+          if (forge) setSelected(forge);
+        }
       }
-    }
+      window.removeEventListener('pointermove', handleMove);
+      window.removeEventListener('pointerup',     handleUp);
+      window.removeEventListener('pointercancel', handleUp);
+    };
+    window.addEventListener('pointermove', handleMove, { passive: true });
+    window.addEventListener('pointerup',     handleUp, { passive: true });
+    window.addEventListener('pointercancel', handleUp, { passive: true });
   };
 
   const zoom = (f: number) => setScale(s => Math.min(Math.max(s * f, 0.3), 3));
@@ -272,9 +280,6 @@ export default function FoundryWorldMap() {
           touchAction: 'none', cursor: 'grab',
         }}
         onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerCancel={onPointerUp}
       >
         {/* Faint repeating wave pattern over the deep ocean — adds texture beyond grid edges */}
         <div
@@ -307,7 +312,7 @@ export default function FoundryWorldMap() {
                   style={{
                     width: TILE_PX, height: TILE_PX,
                     background: TERRAIN_BG[terrain],
-                    border: '1px solid rgba(0,0,0,0.2)',
+                    border: '1px solid rgba(0,0,0,0.12)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: 12, position: 'relative',
                     overflow: forge && forge.tier !== 'empty' ? 'visible' : undefined,
@@ -316,13 +321,13 @@ export default function FoundryWorldMap() {
                   }}
                 >
                   {!forge && TERRAIN_ICON[terrain] && (
-                    <span style={{ opacity: 0.75, pointerEvents: 'none' }}>{TERRAIN_ICON[terrain]}</span>
+                    <span style={{ opacity: 0.7, pointerEvents: 'none' }}>{TERRAIN_ICON[terrain]}</span>
                   )}
                   {forge && forge.tier !== 'empty' && (
                     <TowerMarker tier={forge.tier === 'mine' ? 'mine' : 'neutral'} />
                   )}
                   {forge && forge.tier === 'empty' && (
-                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'rgba(255,200,100,0.25)', border: '1px solid rgba(255,200,100,0.4)' }} />
+                    <div style={{ width: 4, height: 4, borderRadius: '50%', background: 'rgba(255,200,100,0.18)' }} />
                   )}
                 </div>
               );

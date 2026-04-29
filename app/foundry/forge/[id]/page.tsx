@@ -129,13 +129,6 @@ export default function ForgePage() {
     { id: 'attack',    icon: '🗡️', label: 'Attack' },
   ];
 
-  const NAV_LINKS = [
-    { icon: '🗺️', label: 'Map',      href: '/foundry' },
-    { icon: '⚗️', label: 'Exchange', href: '/foundry/exchange' },
-    { icon: '📜', label: 'Reports',  href: '/foundry/reports' },
-    { icon: '🛒', label: 'Store',    href: '/foundry/store' },
-  ];
-
   // ── Tab content ─────────────────────────────────────────────────────────────
 
   function BuildingsTab() {
@@ -300,7 +293,7 @@ export default function ForgePage() {
   // ── Render ──────────────────────────────────────────────────────────────────
 
   return (
-    <div style={{ minHeight: '100vh', background: BG, color: TEXT, fontFamily: 'sans-serif' }}>
+    <div style={{ minHeight: '100vh', background: BG, color: TEXT, fontFamily: 'sans-serif', paddingBottom: 96 }}>
 
       {/* ── Hero: white → dark ── */}
       <div style={{ background: 'linear-gradient(to bottom,#fff 0%,#f0e0b0 22%,#c89828 48%,#5a3010 66%,#1a2810 82%,#0d1409 100%)', padding: '18px 20px 26px', textAlign: 'center' }}>
@@ -318,33 +311,48 @@ export default function ForgePage() {
         {msg && <div style={{ marginTop: 10, fontSize: 12, color: msg.startsWith('❌') ? '#e08060' : '#90d060', background: 'rgba(0,0,0,0.45)', borderRadius: 8, padding: '5px 14px', display: 'inline-block' }}>{msg}</div>}
       </div>
 
-      {/* ── Tab bar ── */}
-      <div style={{ background: '#080c05', borderBottom: `1px solid ${BORDER}`, display: 'flex' }}>
-        {/* In-page tabs */}
-        {TABS.map(t => (
-          <button key={t.id} onClick={() => setTab(t.id)}
-            style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, padding: '8px 4px', background: 'none', border: 'none', cursor: 'pointer', borderBottom: tab === t.id ? `2px solid ${GOLD}` : '2px solid transparent', transition: 'border-color 0.15s' }}>
-            <span style={{ fontSize: 17 }}>{t.icon}</span>
-            <span style={{ fontSize: 9, fontWeight: 700, color: tab === t.id ? GOLD : DIM, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t.label}</span>
-          </button>
-        ))}
-        {/* Divider */}
-        <div style={{ width: 1, background: BORDER, margin: '6px 0' }} />
-        {/* Nav links */}
-        {NAV_LINKS.map(n => (
-          <Link key={n.label} href={n.href} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, padding: '8px 4px', textDecoration: 'none', borderBottom: '2px solid transparent' }}>
-            <span style={{ fontSize: 17 }}>{n.icon}</span>
-            <span style={{ fontSize: 9, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{n.label}</span>
-          </Link>
-        ))}
+      {/* ── In-page tab strip — only 3 tabs, centered, gold underline ── */}
+      <div style={{ maxWidth: 480, margin: '0 auto', padding: '0 16px' }}>
+        <div style={{
+          display: 'flex',
+          background: CARD,
+          border: `1px solid ${BORDER}`,
+          borderRadius: 12,
+          marginTop: 14,
+          overflow: 'hidden',
+        }}>
+          {TABS.map(t => {
+            const active = tab === t.id;
+            return (
+              <button
+                key={t.id}
+                onClick={() => setTab(t.id)}
+                style={{
+                  flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                  padding: '11px 0', background: active ? '#1a2a10' : 'transparent', border: 'none',
+                  borderRight: t.id !== 'attack' ? `1px solid ${BORDER}` : 'none',
+                  cursor: 'pointer',
+                  color: active ? GOLD : DIM,
+                  fontSize: 12, fontWeight: 800, letterSpacing: '0.04em', textTransform: 'uppercase',
+                  transition: 'background 0.15s, color 0.15s',
+                }}
+              >
+                <span style={{ fontSize: 14 }}>{t.icon}</span>
+                <span>{t.label}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* ── Content ── */}
-      <div style={{ maxWidth: 480, margin: '0 auto', padding: '16px 16px 32px' }}>
+      <div style={{ maxWidth: 480, margin: '0 auto', padding: '14px 16px 32px' }}>
         {tab === 'buildings' && <BuildingsTab />}
         {tab === 'troops'    && <TroopsTab />}
         {tab === 'attack'    && <AttackTab />}
       </div>
+
+      <GameNav forgeId={state.forgeId} />
     </div>
   );
 }

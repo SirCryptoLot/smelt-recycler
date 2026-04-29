@@ -2,8 +2,9 @@
 import path from 'path';
 import fs from 'fs';
 import { DATA_DIR } from './paths';
-import { TroopCount, TROOP_META } from './foundry-troops';
-import { TerrainType } from './foundry-map';
+import { TroopCount, TROOP_META, getForgeTroops, saveForgeTroops, emptyTroopCount } from './foundry-troops';
+import { getForgeBuildings, saveForgeBuildings } from './foundry-buildings';
+import { TerrainType, getPlotPosition, getTileAt } from './foundry-map';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -127,4 +128,87 @@ export function saveAttack(record: AttackRecord): void {
   if (idx >= 0) store[idx] = record;
   else store.push(record);
   saveStore(store);
+}
+
+// ── Battle resolution ─────────────────────────────────────────────────────────
+
+function resolveBattle(attack: AttackRecord): AttackRecord {
+  const defPos = getPlotPosition(attack.defenderForgeId);
+  const terrain = defPos ? (getTileAt(defPos.row, defPos.col) ?? 'grass') : 'grass';
+
+  const defBuildings = getForgeBuildings(attack.defenderForgeId);
+  const defTroops    = getForgeTroops(attack.defenderForgeId);
+  const atkBuildings = getForgeBuildings(attack.attackerForgeId);
+  const atkTroops    = getForgeTroops(attack.attackerForgeId);
+
+  const rampartLevel   = defBuildings.levels['rampart'];
+  const vaultLevel     = defBuildings.levels['vault_storage'];
+  const vaultProtected = vaultLevel * 2_000;
+
+  const atkPower = calcAttackPower(attack.sentTroops);
+  const defPower = calcDefPower(defTroops.stationed, rampartLevel, terrain);
+
+  let ingotStolen = 0;
+  let outcome: AttackOutcome;
+  let attackerLosses = emptyTroopCount();
+  let defenderLosses = emptyTroopCount();
+
+  if (atkPower > defPower) {
+    outcome = 'attacker_wins';
+    ingotStolen = Math.floor(Math.max(0, defBuildings.ingotBalance - vaultProtected) * 0.25);
+    defenderLosses = { ...defTroops.stationed };
+    defTroops.stationed = emptyTroopCount();
+    const atkLossFrac = atkPower > 0 ? (defPower / atkPower) * 0.6 : 0;
+    attackerLosses = calcTroopLosses(attack.sentTroops, atkLossFrac);
+    const surviving = subtractTroops(attack.sentTroops, attackerLosses);
+    atkTroops.stationed = addTroops(atkTroops.stationed, surviving);
+    defBuildings.ingotBalance = Math.max(0, defBuildings.ingotBalance - ingotStolen);
+    atkBuildings.ingotBalance = atkBuildings.ingotBalance + ingotStolen;
+  } else {
+    outcome = 'defender_wins';
+    attackerLosses = { ...attack.sentTroops };
+    const defLossFrac = defPower > 0 ? (atkPower / defPower) * 0.4 : 0;
+    defenderLosses = calcTroopLosses(defTroops.stationed, defLossFrac);
+    defTroops.stationed = subtractTroops(defTroops.stationed, defenderLosses);
+  }
+
+  saveForgeBuildings(defBuildings);
+  saveForgeTroops(defTroops);
+  saveForgeBuildings(atkBuildings);
+  saveForgeTroops(atkTroops);
+
+  return {
+    ...attack,
+    resolvedAt: new Date().toISOString(),
+    outcome,
+    ingotStolen,
+    attackerLosses,
+    defenderLosses,
+  };
+}
+
+/**
+ * Resolve any pending attacks whose arrivesAt is in the past.
+ * If forgeIds is provided, only attacks involving those forges are considered.
+ * Returns the number of attacks resolved.
+ */
+export function resolvePendingAttacks(forgeIds?: number[]): number {
+  const now = new Date();
+  const ids = forgeIds ? new Set(forgeIds) : null;
+  const arrived = getPendingAttacks().filter(r => {
+    if (new Date(r.arrivesAt) > now) return false;
+    if (!ids) return true;
+    return ids.has(r.attackerForgeId) || ids.has(r.defenderForgeId);
+  });
+
+  let resolved = 0;
+  for (const attack of arrived) {
+    try {
+      saveAttack(resolveBattle(attack));
+      resolved++;
+    } catch (err) {
+      console.error('[resolvePendingAttacks] failed', attack.id, err);
+    }
+  }
+  return resolved;
 }

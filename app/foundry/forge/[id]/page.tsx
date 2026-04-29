@@ -5,7 +5,8 @@ import { useEffect, useState, useCallback } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import type { ForgeStateResponse } from '@/app/api/foundry/forge/[id]/route';
+import type { ForgeStateResponse, ForgePublicResponse, ForgeViewResponse } from '@/app/api/foundry/forge/[id]/route';
+import { GameNav } from '@/components/foundry/GameNav';
 import {
   BUILDING_META, ALL_BUILDINGS, buildCost, BuildingType,
   TROOP_META, ALL_TROOPS, TroopType,
@@ -39,7 +40,7 @@ export default function ForgePage() {
   const { publicKey } = useWallet();
   const wallet = publicKey?.toBase58() ?? '';
 
-  const [state, setState]   = useState<ForgeStateResponse | null>(null);
+  const [state, setState]   = useState<ForgeViewResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError]   = useState('');
   const [busy, setBusy]     = useState(false);
@@ -54,16 +55,21 @@ export default function ForgePage() {
   const fetchState = useCallback(async () => {
     setLoading(true); setError('');
     try {
-      const res = await fetch(`/api/foundry/forge/${id}`, { cache: 'no-store' });
+      const url = wallet
+        ? `/api/foundry/forge/${id}?wallet=${wallet}`
+        : `/api/foundry/forge/${id}`;
+      const res = await fetch(url, { cache: 'no-store' });
       if (!res.ok) { const d = await res.json(); setError(d.error ?? 'Failed'); }
       else setState(await res.json());
     } finally { setLoading(false); }
-  }, [id]);
+  }, [id, wallet]);
 
   useEffect(() => { fetchState(); }, [fetchState]);
   useEffect(() => { const t = setInterval(() => setTick(n => n + 1), 1000); return () => clearInterval(t); }, []);
 
-  const isOwner      = !!wallet && state?.owner === wallet;
+  const isOwner      = !!state && state.isPublic === false;
+  const ownerState   = isOwner ? state as ForgeStateResponse : null;
+  const publicState  = state?.isPublic ? state as ForgePublicResponse : null;
   const totalSendQty = sendQty.smelters + sendQty.ash_archers + sendQty.iron_guards;
 
   async function handleBuild(buildingType: BuildingType) {
@@ -109,6 +115,11 @@ export default function ForgePage() {
   if (loading) return <div style={{ minHeight: '100vh', background: BG, display: 'flex', alignItems: 'center', justifyContent: 'center', color: GOLD, fontSize: 14, fontWeight: 700 }}>Loading…</div>;
   if (error)   return <div style={{ minHeight: '100vh', background: BG, padding: '48px 20px' }}><p style={{ color: '#e05050', marginBottom: 8 }}>{error}</p><Link href="/foundry" style={{ color: GOLD }}>← Back</Link></div>;
   if (!state)  return null;
+
+  // Non-owner viewing — show a limited "scout" profile, not the full management UI.
+  if (state.isPublic) {
+    return <PublicForgeProfile state={state} />;
+  }
 
   const totalStationed = state.troops.smelters + state.troops.ash_archers + state.troops.iron_guards;
 
@@ -336,4 +347,114 @@ export default function ForgePage() {
       </div>
     </div>
   );
+}
+
+// ── Public scout view ─────────────────────────────────────────────────────────
+
+const LEAGUE_BADGE: Record<string, { label: string; color: string; bg: string }> = {
+  bronze: { label: 'Bronze', color: '#d49060', bg: 'rgba(180,90,30,0.18)' },
+  silver: { label: 'Silver', color: '#c8d0d8', bg: 'rgba(190,200,210,0.15)' },
+  gold:   { label: 'Gold',   color: '#f5d060', bg: 'rgba(220,160,40,0.18)' },
+};
+
+function PublicForgeProfile({ state }: { state: ForgePublicResponse }) {
+  const league = LEAGUE_BADGE[state.league] ?? LEAGUE_BADGE.bronze;
+  const lastBattleAgo = state.lastBattleAt
+    ? fmtAgo(state.lastBattleAt)
+    : 'No battles yet';
+
+  return (
+    <div style={{ minHeight: '100vh', background: BG, color: TEXT, fontFamily: 'sans-serif', paddingBottom: 96 }}>
+
+      {/* Hero — same gradient as owner view, but with a "scout" framing */}
+      <div style={{
+        background: 'linear-gradient(to bottom,#fff 0%,#f0e0b0 22%,#c89828 48%,#5a3010 66%,#1a2810 82%,#0d1409 100%)',
+        padding: '18px 20px 26px', textAlign: 'center',
+      }}>
+        <div style={{
+          width: 56, height: 56, borderRadius: '50%', margin: '0 auto 10px',
+          background: 'radial-gradient(circle at 35% 35%,#5a3a10,#1e1008)',
+          border: '2px solid #c8a030',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 24, boxShadow: '0 0 18px rgba(200,160,48,0.4)',
+        }}>⚒</div>
+        <div style={{ fontSize: 18, fontWeight: 800, color: '#f5d060' }}>Forge #{state.forgeId}</div>
+        <div style={{ fontSize: 10, color: 'rgba(210,170,60,0.5)', marginTop: 2 }}>
+          {state.owner.slice(0, 6)}…{state.owner.slice(-4)}
+        </div>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 10, padding: '4px 10px', borderRadius: 999, background: league.bg, border: `1px solid ${league.color}55`, fontSize: 11, fontWeight: 800, color: league.color }}>
+          🏆 {league.label} · {state.warScore} WS
+        </div>
+      </div>
+
+      <div style={{ maxWidth: 480, margin: '0 auto', padding: '16px' }}>
+
+        {/* Inscription */}
+        {state.inscription && (
+          <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 12, padding: '12px 14px', fontSize: 13, color: '#a0b870', fontStyle: 'italic', lineHeight: 1.55, marginBottom: 12 }}>
+            “{state.inscription}”
+          </div>
+        )}
+
+        {/* Stats grid — public-safe surface signals only */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12 }}>
+          <StatBox label="Position" value={state.position ? `${state.position.row},${state.position.col}` : '—'} />
+          <StatBox label="Recent battles" value={state.recentBattlesCount > 0 ? `${state.recentBattlesCount} · 7d` : 'None · 7d'} />
+          <StatBox label="Last battle" value={lastBattleAgo} />
+          <StatBox label="Status" value={
+            state.recentBattlesCount === 0 ? 'Quiet' :
+            state.recentBattlesCount < 3   ? 'Active' :
+                                             'Hot zone'
+          } accent />
+        </div>
+
+        {/* What's hidden — set expectations honestly */}
+        <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 12, padding: '12px 14px', fontSize: 11, color: MUTED, marginBottom: 14 }}>
+          <p style={{ marginBottom: 4, fontWeight: 700, color: DIM, textTransform: 'uppercase', letterSpacing: '0.06em', fontSize: 10 }}>🔒 Scouted view</p>
+          <p style={{ lineHeight: 1.6 }}>
+            Buildings, troop counts, and ingot reserves are private to the forge owner.
+            Send a raid from your own forge to test their defences.
+          </p>
+        </div>
+
+        {/* Raid hint — manual flow for now: copy ID, attack from own forge */}
+        <div style={{ background: '#1a0e0e', border: '1px solid #4a1a1a', borderRadius: 12, padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ fontSize: 22 }}>⚔️</div>
+          <div style={{ flex: 1, fontSize: 12, color: '#e0a0a0', lineHeight: 1.5 }}>
+            <strong style={{ color: '#ff8080' }}>Want to raid?</strong>{' '}
+            Open your forge, go to Attack tab, and enter <strong>#{state.forgeId}</strong>.
+          </div>
+        </div>
+
+        {/* Back to map */}
+        <div style={{ marginTop: 16, textAlign: 'center' }}>
+          <Link href="/foundry" style={{ color: GOLD, fontSize: 12, fontWeight: 700, textDecoration: 'none', borderBottom: `1px dashed ${GOLD}55`, paddingBottom: 1 }}>
+            ← Back to world map
+          </Link>
+        </div>
+      </div>
+
+      <GameNav />
+    </div>
+  );
+}
+
+function StatBox({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
+  return (
+    <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 10, padding: '10px 12px' }}>
+      <div style={{ fontSize: 9, fontWeight: 700, color: DIM, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>{label}</div>
+      <div style={{ fontSize: 14, fontWeight: 800, color: accent ? '#90d060' : TEXT, fontVariantNumeric: 'tabular-nums' }}>{value}</div>
+    </div>
+  );
+}
+
+function fmtAgo(iso: string): string {
+  const ms = Date.now() - new Date(iso).getTime();
+  if (ms < 60_000) return 'Just now';
+  const m = Math.floor(ms / 60_000);
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  const d = Math.floor(h / 24);
+  return `${d}d ago`;
 }

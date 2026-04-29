@@ -20,13 +20,14 @@ export interface ItemMeta {
   cost: number;       // SMELT
   type: 'permanent' | 'consumable';
   cap: number | null; // null = unlimited
+  comingSoon?: boolean; // shown in catalogue but not purchasable yet
 }
 
 export const ITEM_CATALOGUE: Record<ItemId, ItemMeta> = {
   lightning_rod:   { label: 'Lightning Rod',    icon: '⚡', description: '+15% war score (stacks, max 3)',          cost:  35, type: 'permanent',   cap: 3          },
-  crystal_bellows: { label: 'Crystal Bellows',  icon: '💎', description: '+20% SOL staking distribution weight',    cost:  50, type: 'permanent',   cap: null       },
-  nameplate:       { label: 'Forge Nameplate',  icon: '🏷️', description: 'Set a custom forge name (20 chars max)',  cost:  10, type: 'permanent',   cap: null       },
-  banner:          { label: 'Territorial Banner',icon: '🗺️', description: 'Custom map tile color for your forge',   cost:   8, type: 'permanent',   cap: null       },
+  crystal_bellows: { label: 'Crystal Bellows',  icon: '💎', description: '+20% SOL staking distribution weight',    cost:  50, type: 'permanent',   cap: null,      comingSoon: true },
+  nameplate:       { label: 'Forge Nameplate',  icon: '🏷️', description: 'Set a custom forge name (20 chars max)',  cost:  10, type: 'permanent',   cap: null,      comingSoon: true },
+  banner:          { label: 'Territorial Banner',icon: '🗺️', description: 'Custom map tile color for your forge',   cost:   8, type: 'permanent',   cap: null,      comingSoon: true },
   war_horn:        { label: 'War Horn',          icon: '📯', description: '2× war score for 7 days',                cost:  12, type: 'consumable',  cap: null       },
   iron_shield:     { label: 'Iron Shield',       icon: '🛡️', description: 'Block one league rank drop at season end', cost:  5, type: 'consumable',  cap: null       },
 };

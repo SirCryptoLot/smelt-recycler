@@ -8,7 +8,7 @@ import { useParams } from 'next/navigation';
 import type { ForgeStateResponse, ForgePublicResponse, ForgeViewResponse } from '@/app/api/foundry/forge/[id]/route';
 import { GameNav } from '@/components/foundry/GameNav';
 import {
-  BUILDING_META, ALL_BUILDINGS, buildCost, BuildingType,
+  BUILDING_META, ALL_BUILDINGS, buildCost, BuildingType, BUILD_TIME_MINS,
   TROOP_META, ALL_TROOPS, TroopType,
   TroopCount, TrainingItem, AttackRecord,
 } from '@/lib/foundry-constants';
@@ -96,6 +96,30 @@ export default function ForgePage() {
     } finally { setBusy(false); }
   }
 
+  async function handleCancelBuild() {
+    if (!wallet) return;
+    setBusy(true); setMsg('');
+    try {
+      const res = await fetch('/api/foundry/cancel-build', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ forgeId: parseInt(id), wallet }) });
+      const d = await res.json();
+      if (!res.ok) { setMsg(`❌ ${d.error}`); return; }
+      setMsg(`↩ ${BUILDING_META[d.buildingType as BuildingType].label} cancelled · refunded ${fmt(d.refunded)} ⚙`);
+      await fetchState();
+    } finally { setBusy(false); }
+  }
+
+  async function handleCancelTrain(completesAt: string) {
+    if (!wallet) return;
+    setBusy(true); setMsg('');
+    try {
+      const res = await fetch('/api/foundry/cancel-train', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ forgeId: parseInt(id), wallet, completesAt }) });
+      const d = await res.json();
+      if (!res.ok) { setMsg(`❌ ${d.error}`); return; }
+      setMsg(`↩ ${d.quantity}× ${TROOP_META[d.troopType as TroopType].label} cancelled · refunded ${fmt(d.refunded)} ⚙`);
+      await fetchState();
+    } finally { setBusy(false); }
+  }
+
   async function handleAttack() {
     if (!wallet) { setAttackMsg('Connect wallet first'); return; }
     const targetId = parseInt(attackTarget, 10);
@@ -132,12 +156,20 @@ export default function ForgePage() {
   // ── Tab content ─────────────────────────────────────────────────────────────
 
   function BuildingsTab() {
+    const c = state!.construction;
     return (
       <div>
-        {state!.construction && (
-          <div style={{ background: '#1c1608', border: `1px solid #6a4a10`, borderRadius: 10, padding: '9px 14px', fontSize: 12, color: '#e8c060', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-            🔨 <span><strong>{BUILDING_META[state!.construction.buildingType as BuildingType].label}</strong> → Lv{state!.construction.toLevel} · <span style={{ fontFamily: 'monospace', fontWeight: 700 }}>{fmtCountdown(state!.construction.completesAt)}</span></span>
-          </div>
+        {c && (
+          <QueuePanel title="Construction" iconHex="#e8c060">
+            <QueueRow
+              icon={BUILDING_META[c.buildingType as BuildingType].icon}
+              label={`${BUILDING_META[c.buildingType as BuildingType].label} → Lv ${c.toLevel}`}
+              completesAt={c.completesAt}
+              startMs={new Date(c.completesAt).getTime() - (BUILD_TIME_MINS[c.toLevel] ?? 0) * 60_000}
+              onCancel={isOwner ? handleCancelBuild : undefined}
+              busy={busy}
+            />
+          </QueuePanel>
         )}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           {ALL_BUILDINGS.map(type => {
@@ -181,8 +213,30 @@ export default function ForgePage() {
   }
 
   function TroopsTab() {
+    const queue = state!.trainingQueue;
     return (
       <div>
+        {queue.length > 0 && (
+          <QueuePanel title="Training" iconHex="#e8c060">
+            {queue.map((item, i) => {
+              // Each queue item starts at the previous item's completesAt (or now for the first)
+              const prevEnd = i > 0 ? new Date(queue[i - 1].completesAt).getTime() : Date.now();
+              const itemEnd = new Date(item.completesAt).getTime();
+              const startMs = Math.min(prevEnd, itemEnd);
+              return (
+                <QueueRow
+                  key={item.completesAt}
+                  icon={TROOP_META[item.type as TroopType].icon}
+                  label={`${item.quantity}× ${TROOP_META[item.type as TroopType].label}`}
+                  completesAt={item.completesAt}
+                  startMs={startMs}
+                  onCancel={isOwner ? () => handleCancelTrain(item.completesAt) : undefined}
+                  busy={busy}
+                />
+              );
+            })}
+          </QueuePanel>
+        )}
         <p style={{ fontSize: 11, color: MUTED, marginBottom: 10 }}>
           {totalStationed}/{state!.troopCapacity} stationed{state!.buildings['barracks'] < 1 && isOwner ? ' · Build Barracks first' : ''}
         </p>
@@ -227,17 +281,6 @@ export default function ForgePage() {
             );
           })}
         </div>
-        {state!.trainingQueue.length > 0 && (
-          <div style={{ marginTop: 10, background: CARD, border: `1px solid ${BORDER}`, borderRadius: 10, padding: '10px 14px' }}>
-            <p style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: MUTED, marginBottom: 6 }}>Queue</p>
-            {state!.trainingQueue.map((item: TrainingItem, i: number) => (
-              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: TEXT, marginBottom: 3 }}>
-                <span>{TROOP_META[item.type as TroopType].icon} {item.quantity}× {TROOP_META[item.type as TroopType].label}</span>
-                <span style={{ fontFamily: 'monospace', color: GOLD }}>{fmtCountdown(item.completesAt)}</span>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
     );
   }
@@ -479,6 +522,99 @@ function StatBox({ label, value, accent }: { label: string; value: string; accen
     <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 10, padding: '10px 12px' }}>
       <div style={{ fontSize: 9, fontWeight: 700, color: DIM, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>{label}</div>
       <div style={{ fontSize: 14, fontWeight: 800, color: accent ? '#90d060' : TEXT, fontVariantNumeric: 'tabular-nums' }}>{value}</div>
+    </div>
+  );
+}
+
+// ── Queue panel — shared by Construction (Buildings tab) and Training (Troops tab)
+
+function QueuePanel({ title, iconHex, children }: { title: string; iconHex: string; children: React.ReactNode }) {
+  return (
+    <div style={{
+      background: 'linear-gradient(180deg, #1c1608, #0e0c04)',
+      border: `1px solid ${iconHex}55`,
+      borderRadius: 12,
+      padding: '12px 14px',
+      marginBottom: 14,
+      boxShadow: `0 0 18px ${iconHex}15`,
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+        <span style={{
+          width: 7, height: 7, borderRadius: '50%', background: iconHex,
+          boxShadow: `0 0 8px ${iconHex}aa`,
+          animation: 'queue-pulse 1.6s ease-in-out infinite',
+        }} />
+        <span style={{
+          fontSize: 10, fontWeight: 800, color: iconHex,
+          textTransform: 'uppercase', letterSpacing: '0.12em',
+        }}>
+          {title} · in progress
+        </span>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {children}
+      </div>
+      <style>{`@keyframes queue-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }`}</style>
+    </div>
+  );
+}
+
+function QueueRow({
+  icon, label, completesAt, startMs, onCancel, busy,
+}: {
+  icon: string;
+  label: string;
+  completesAt: string;
+  startMs: number;
+  onCancel?: () => void;
+  busy?: boolean;
+}) {
+  const endMs = new Date(completesAt).getTime();
+  const now = Date.now();
+  const total = Math.max(1, endMs - startMs);
+  const elapsed = Math.min(total, Math.max(0, now - startMs));
+  const pct = (elapsed / total) * 100;
+  const queued = startMs > now;
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      <span style={{ fontSize: 18, flexShrink: 0 }}>{icon}</span>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 4 }}>
+          <span style={{ fontSize: 12, fontWeight: 700, color: TEXT }}>{label}</span>
+          <span style={{ marginLeft: 'auto', fontSize: 11, fontFamily: 'monospace', fontWeight: 700, color: queued ? '#7a8a5a' : '#e8c060' }}>
+            {queued ? 'Queued' : fmtCountdown(completesAt)}
+          </span>
+        </div>
+        <div style={{ height: 4, background: 'rgba(0,0,0,0.45)', borderRadius: 2, overflow: 'hidden' }}>
+          <div style={{
+            height: '100%',
+            width: `${pct}%`,
+            background: queued ? '#3a4a18' : 'linear-gradient(90deg, #b45309, #f5d060)',
+            transition: 'width 1s linear',
+          }} />
+        </div>
+      </div>
+      {onCancel && (
+        <button
+          onClick={onCancel}
+          disabled={busy}
+          style={{
+            flexShrink: 0,
+            background: 'transparent',
+            border: '1px solid #5a2a2a',
+            color: '#e08080',
+            borderRadius: 8,
+            padding: '5px 10px',
+            fontSize: 10, fontWeight: 700, letterSpacing: '0.04em',
+            textTransform: 'uppercase',
+            cursor: busy ? 'not-allowed' : 'pointer',
+          }}
+          title="Cancel and refund full ingot cost"
+        >
+          ✕ Cancel
+        </button>
+      )}
     </div>
   );
 }

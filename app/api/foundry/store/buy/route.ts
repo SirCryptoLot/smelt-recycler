@@ -26,6 +26,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     if (!meta) {
       return NextResponse.json({ error: 'Unknown item' }, { status: 400 });
     }
+    if (meta.comingSoon) {
+      return NextResponse.json({ error: 'Coming soon — not yet available' }, { status: 400 });
+    }
 
     // Verify ownership
     const plots = getPlots();

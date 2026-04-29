@@ -174,21 +174,39 @@ export default function StorePage() {
               const noForge   = !storeData.forgeId;
               const isBuying  = buying === item.id;
               const needsInput = isNP || isBN;
-              const btnDisabled = !connected || noForge || atCap || isBuying;
+              const comingSoon = item.comingSoon === true;
+              const btnDisabled = comingSoon || !connected || noForge || atCap || isBuying;
 
               return (
                 <div
                   key={item.id}
-                  style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 12, padding: '12px 14px', display: 'flex', alignItems: 'flex-start', gap: 12 }}
+                  style={{
+                    background: CARD,
+                    border: `1px solid ${BORDER}`,
+                    borderRadius: 12,
+                    padding: '12px 14px',
+                    display: 'flex', alignItems: 'flex-start', gap: 12,
+                    opacity: comingSoon ? 0.55 : 1,
+                  }}
                 >
                   {/* Icon */}
-                  <span style={{ fontSize: 22, flexShrink: 0 }}>{item.icon}</span>
+                  <span style={{ fontSize: 22, flexShrink: 0, filter: comingSoon ? 'grayscale(0.6)' : 'none' }}>{item.icon}</span>
 
                   {/* Info */}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 2 }}>
                       <span style={{ fontSize: 13, fontWeight: 700, color: TEXT }}>{item.label}</span>
-                      {item.cap !== null && (
+                      {comingSoon && (
+                        <span style={{
+                          background: 'rgba(120,120,150,0.15)', color: '#9090b8',
+                          border: '1px solid rgba(120,120,150,0.3)',
+                          borderRadius: 20, padding: '2px 8px', fontSize: 9, fontWeight: 800,
+                          textTransform: 'uppercase', letterSpacing: '0.08em',
+                        }}>
+                          In development
+                        </span>
+                      )}
+                      {!comingSoon && item.cap !== null && (
                         <span style={{ fontSize: 10, color: DIM }}>{ownedCount(item.id)}/{item.cap}</span>
                       )}
                       {isWH && hornOn && owned?.warHornExpiresAt && (
@@ -204,8 +222,8 @@ export default function StorePage() {
                     </div>
                     <p style={{ fontSize: 11, color: MUTED, marginTop: 2, marginBottom: needsInput && buying === item.id ? 6 : 0 }}>{item.description}</p>
 
-                    {/* Value input for nameplate/banner */}
-                    {needsInput && buying === item.id && (
+                    {/* Value input for nameplate/banner — hidden when coming-soon */}
+                    {!comingSoon && needsInput && buying === item.id && (
                       <input
                         type="text"
                         value={valueInput}
@@ -225,6 +243,7 @@ export default function StorePage() {
                   {/* Buy button */}
                   <button
                     onClick={() => {
+                      if (comingSoon) return;
                       if (needsInput && buying !== item.id) {
                         setBuying(item.id);
                         return;
@@ -235,13 +254,13 @@ export default function StorePage() {
                     style={{
                       flexShrink: 0, borderRadius: 10, padding: '6px 12px', fontSize: 11, fontWeight: 700,
                       cursor: btnDisabled ? 'not-allowed' : 'pointer',
-                      background: atCap || !connected || noForge ? '#0e1408' : '#2d4a10',
-                      border: `1px solid ${atCap || !connected || noForge ? '#1a2810' : '#4a7a20'}`,
-                      color: atCap || !connected || noForge ? '#2a3d18' : '#90d050',
+                      background: comingSoon ? 'transparent' : (atCap || !connected || noForge ? '#0e1408' : '#2d4a10'),
+                      border: `1px solid ${comingSoon ? 'rgba(120,120,150,0.25)' : (atCap || !connected || noForge ? '#1a2810' : '#4a7a20')}`,
+                      color: comingSoon ? '#7080a0' : (atCap || !connected || noForge ? '#2a3d18' : '#90d050'),
                       whiteSpace: 'nowrap',
                     }}
                   >
-                    {isBuying && !needsInput
+                    {comingSoon ? 'Soon' : isBuying && !needsInput
                       ? '…'
                       : atCap
                       ? 'Maxed'
